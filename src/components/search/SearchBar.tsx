@@ -65,9 +65,9 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search companies by name, e.g. Google, Amazon..."
+            placeholder="Search by company name..."
             className={cn(
-              "w-full pl-12 pr-24 py-4 text-base rounded-2xl border border-gray-200",
+              "w-full pl-11 sm:pl-12 pr-20 sm:pr-28 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border border-gray-200",
               "bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
               "placeholder:text-gray-400 transition-shadow"
             )}
@@ -103,19 +103,22 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
               type="submit"
               disabled={loading || query.trim().length < 1}
               className={cn(
-                "px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium",
+                "px-2.5 sm:px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium",
                 "hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed",
-                "transition-colors"
+                "transition-colors whitespace-nowrap"
               )}
             >
-              {loading ? 'Searching...' : 'Search'}
+              <Search className="w-4 h-4 sm:hidden" />
+              <span className="hidden sm:inline">
+                {loading ? 'Searching...' : 'Search'}
+              </span>
             </button>
           </div>
         </div>
 
         {showFilters && (
           <div className="mt-2 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
-            <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 sm:items-center">
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600 font-medium">State</label>
                 <select
