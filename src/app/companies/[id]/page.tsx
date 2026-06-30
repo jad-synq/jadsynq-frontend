@@ -5,20 +5,55 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, CheckCircle, XCircle, TrendingUp,
-  DollarSign, Building2, MapPin, Briefcase
+  DollarSign, Building2, MapPin, Briefcase, Bookmark, BookmarkCheck
 } from 'lucide-react'
-import { getCompany, getCompanyH1B, CompanyProfile, H1BYearSummary } from '@/lib/api'
+import { getCompany, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, CompanyProfile, H1BYearSummary } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function CompanyPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
+  const { user } = useAuth()
 
   const [company, setCompany] = useState<CompanyProfile | null>(null)
   const [h1bHistory, setH1bHistory] = useState<H1BYearSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSaved, setIsSaved] = useState(false)
+  const [saveLoading, setSaveLoading] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      setIsSaved(false)
+      return
+    }
+    getSavedCompanies()
+      .then(res => setIsSaved(res.data.some(c => c.company_id === id)))
+      .catch(() => setIsSaved(false))
+  }, [user, id])
+
+  const toggleSave = async () => {
+    if (!user) {
+      router.push('/auth')
+      return
+    }
+    setSaveLoading(true)
+    try {
+      if (isSaved) {
+        await unsaveCompany(id)
+        setIsSaved(false)
+      } else {
+        await saveCompany(id)
+        setIsSaved(true)
+      }
+    } catch {
+      // silently ignore -- not critical to surface a toast for this yet
+    } finally {
+      setSaveLoading(false)
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,16 +138,34 @@ export default function CompanyPage() {
                 </p>
               )}
             </div>
-            <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium shrink-0",
-              isEnrolled
-                ? "bg-green-50 text-green-700"
-                : "bg-gray-50 text-gray-500"
-            )}>
-              {isEnrolled
-                ? <><CheckCircle className="w-4 h-4" /> E-Verify Enrolled</>
-                : <><XCircle className="w-4 h-4" /> Not E-Verify Enrolled</>
-              }
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
+                isEnrolled
+                  ? "bg-green-50 text-green-700"
+                  : "bg-gray-50 text-gray-500"
+              )}>
+                {isEnrolled
+                  ? <><CheckCircle className="w-4 h-4" /> E-Verify Enrolled</>
+                  : <><XCircle className="w-4 h-4" /> Not E-Verify Enrolled</>
+                }
+              </div>
+              <button
+                onClick={toggleSave}
+                disabled={saveLoading}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                  "disabled:opacity-50",
+                  isSaved
+                    ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                )}
+              >
+                {isSaved
+                  ? <><BookmarkCheck className="w-4 h-4" /> Saved</>
+                  : <><Bookmark className="w-4 h-4" /> Save</>
+                }
+              </button>
             </div>
           </div>
 
