@@ -1,101 +1,127 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState } from 'react'
+import SearchBar, { SearchFilters } from '@/components/search/SearchBar'
+import SearchResultCard from '@/components/search/SearchResultCard'
+import { searchCompanies, SearchResult } from '@/lib/api'
+
+export default function HomePage() {
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hasSearched, setHasSearched] = useState(false)
+  const [lastQuery, setLastQuery] = useState('')
+
+  const handleSearch = async (query: string, filters: SearchFilters) => {
+    setLoading(true)
+    setError(null)
+    setLastQuery(query)
+    setHasSearched(true)
+
+    try {
+      const response = await searchCompanies(query, {
+        state: filters.state,
+        everify_only: filters.everify_only || undefined,
+        h1b_only: filters.h1b_only || undefined,
+        limit: 20,
+      })
+      setResults(response.data)
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <main className="min-h-screen bg-gray-50">
+      {/* Hero / Search Section */}
+      <div className={`transition-all duration-300 ${hasSearched ? 'py-8' : 'py-24'}`}>
+        <div className="max-w-4xl mx-auto px-4">
+          {!hasSearched && (
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                JAD Synq
+              </h1>
+              <p className="text-lg text-gray-500 max-w-xl mx-auto">
+                Search US companies by H-1B sponsorship history and E-Verify enrollment.
+                Real data from government filings.
+              </p>
+            </div>
+          )}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          {hasSearched && (
+            <div className="mb-6">
+              <a href="/" className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+                JAD Synq
+              </a>
+            </div>
+          )}
+
+          <SearchBar
+            onSearch={handleSearch}
+            loading={loading}
+            initialQuery={lastQuery}
+          />
+
+          {!hasSearched && (
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple'].map(company => (
+                <button
+                  key={company}
+                  onClick={() => handleSearch(company, { everify_only: false, h1b_only: false })}
+                  className="px-3 py-1.5 text-sm text-gray-500 bg-white border border-gray-200 rounded-full hover:border-blue-300 hover:text-blue-600 transition-colors"
+                >
+                  {company}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+      </div>
+
+      {/* Results Section */}
+      {hasSearched && (
+        <div className="max-w-4xl mx-auto px-4 pb-16">
+          {loading && (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
+                  <div className="h-5 bg-gray-100 rounded w-1/3 mb-3" />
+                  <div className="h-4 bg-gray-100 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="text-center py-12">
+              <p className="text-red-500">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && results.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">No companies found for &quot;{lastQuery}&quot;</p>
+              <p className="text-gray-400 text-sm mt-1">Try a different name or remove filters</p>
+            </div>
+          )}
+
+          {!loading && !error && results.length > 0 && (
+            <>
+              <p className="text-sm text-gray-500 mb-3">
+                {results.length} result{results.length !== 1 ? 's' : ''} for &quot;{lastQuery}&quot;
+              </p>
+              <div className="space-y-3">
+                {results.map(result => (
+                  <SearchResultCard key={result.id} result={result} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </main>
+  )
 }
