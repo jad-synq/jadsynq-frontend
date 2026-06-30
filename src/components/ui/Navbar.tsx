@@ -12,8 +12,13 @@ export default function Navbar() {
   return (
     <nav className="border-b border-gray-100 bg-white">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="font-bold text-gray-900">
-          JAD Synq
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- logo-full.svg is a complex 485KB vector lockup; next/image optimization adds little value here and the file renders correctly as a plain img */}
+          <img
+            src="/logo-full.svg"
+            alt="JAD Synq"
+            className="h-12 w-auto"
+          />
         </Link>
 
         <div className="flex items-center gap-3">
@@ -54,7 +59,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/auth"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+              className="text-sm font-medium text-green-700 hover:text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
             >
               Sign in
             </Link>
