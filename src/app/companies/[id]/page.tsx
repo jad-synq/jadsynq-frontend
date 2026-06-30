@@ -7,6 +7,7 @@ import {
   ArrowLeft, CheckCircle, XCircle, TrendingUp,
   DollarSign, Building2, MapPin, Briefcase, Bookmark, BookmarkCheck
 } from 'lucide-react'
+import { isAxiosError } from 'axios'
 import { getCompany, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, CompanyProfile, H1BYearSummary } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -64,8 +65,8 @@ export default function CompanyPage() {
         ])
         setCompany(companyRes.data)
         setH1bHistory(h1bRes.data)
-      } catch (err: any) {
-        if (err?.response?.status === 404) {
+      } catch (err) {
+        if (isAxiosError(err) && err.response?.status === 404) {
           setError('Company not found')
         } else {
           setError('Something went wrong. Please try again.')
@@ -176,7 +177,7 @@ export default function CompanyPage() {
 
         {/* Stats grid */}
         {company.h1b_summary && (
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 text-gray-500 mb-1">
                 <TrendingUp className="w-4 h-4" />
@@ -215,7 +216,7 @@ export default function CompanyPage() {
               </div>
               <div className="space-y-1 mt-1">
                 {company.h1b_summary.top_job_titles.slice(0, 3).map((title, i) => (
-                  <p key={i} className="text-sm text-gray-700 truncate">{title}</p>
+                  <p key={i} className="text-sm text-gray-700">{title}</p>
                 ))}
               </div>
             </div>
@@ -229,7 +230,7 @@ export default function CompanyPage() {
               <Building2 className="w-4 h-4 text-gray-400" />
               E-Verify Details
             </h2>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-gray-500">Status</p>
                 <p className="font-medium text-gray-900 capitalize">{company.everify.status}</p>

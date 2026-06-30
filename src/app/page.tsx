@@ -26,7 +26,7 @@ export default function HomePage() {
         limit: 20,
       })
       setResults(response.data)
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.')
       setResults([])
     } finally {
@@ -37,14 +37,14 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Hero / Search Section */}
-      <div className={`transition-all duration-300 ${hasSearched ? 'py-8' : 'py-24'}`}>
+      <div className={`transition-all duration-300 ${hasSearched ? 'py-6 sm:py-8' : 'py-12 sm:py-24'}`}>
         <div className="max-w-4xl mx-auto px-4">
           {!hasSearched && (
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
                 JAD Synq
               </h1>
-              <p className="text-lg text-gray-500 max-w-xl mx-auto">
+              <p className="text-base sm:text-lg text-gray-500 max-w-xl mx-auto px-2">
                 Search US companies by H-1B sponsorship history and E-Verify enrollment.
                 Real data from government filings.
               </p>

@@ -23,10 +23,10 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1.5 sm:gap-2 text-sm text-gray-700 hover:text-gray-900 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors max-w-[140px] sm:max-w-none"
               >
-                <User className="w-4 h-4" />
-                {user.email}
+                <User className="w-4 h-4 shrink-0" />
+                <span className="truncate">{user.email}</span>
               </button>
               {menuOpen && (
                 <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-10">
