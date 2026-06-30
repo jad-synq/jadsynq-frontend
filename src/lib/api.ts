@@ -76,3 +76,19 @@ export const getCompany = (id: string) =>
 
 export const getCompanyH1B = (id: string) =>
   api.get<H1BYearSummary[]>(`/api/companies/${id}/h1b`)
+
+export interface SavedCompany {
+  company_id: string
+  legal_name: string
+  alert_jobs: boolean
+  saved_at: string
+}
+
+export const getSavedCompanies = () =>
+  api.get<SavedCompany[]>('/api/users/me/saved-companies')
+
+export const saveCompany = (companyId: string, alertJobs = false) =>
+  api.put(`/api/users/me/saved-companies/${companyId}`, { alert_jobs: alertJobs })
+
+export const unsaveCompany = (companyId: string) =>
+  api.delete(`/api/users/me/saved-companies/${companyId}`)
