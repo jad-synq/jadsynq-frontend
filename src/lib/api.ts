@@ -34,6 +34,9 @@ export interface CompanyProfile {
   dba_name: string | null
   ein: string | null
   website: string | null
+  logo_url: string | null
+  careers_url: string | null
+  domain: string | null
   industry: string | null
   aliases: string[]
   everify: {
