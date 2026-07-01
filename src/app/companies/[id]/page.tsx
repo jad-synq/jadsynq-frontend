@@ -128,16 +128,41 @@ export default function CompanyPage() {
         {/* Header */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{company.legal_name}</h1>
-              {company.dba_name && (
-                <p className="text-gray-500 mt-1">DBA: {company.dba_name}</p>
+            <div className="flex items-start gap-4">
+              {company.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element -- Clearbit logo URLs are external, next/image requires domain allowlisting
+                <img
+                  src={company.logo_url}
+                  alt={company.legal_name}
+                  className="w-14 h-14 rounded-xl object-contain border border-gray-100 bg-white p-1 shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
               )}
-              {company.aliases.length > 1 && (
-                <p className="text-sm text-gray-400 mt-1">
-                  Also known as: {company.aliases.filter(a => a !== company.legal_name).join(', ')}
-                </p>
-              )}
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{company.legal_name}</h1>
+                {company.dba_name && (
+                  <p className="text-gray-500 mt-1">DBA: {company.dba_name}</p>
+                )}
+                {company.aliases.length > 1 && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    Also known as: {company.aliases.filter(a => a !== company.legal_name).join(', ')}
+                  </p>
+                )}
+                <div className="flex items-center gap-3 mt-2">
+                  {company.website && (
+                    <a href={company.website} target="_blank" rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                      🌐 Website
+                    </a>
+                  )}
+                  {company.careers_url && (
+                    <a href={company.careers_url} target="_blank" rel="noopener noreferrer"
+                      className="text-sm text-green-600 hover:underline flex items-center gap-1">
+                      💼 Careers
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               <div className={cn(
