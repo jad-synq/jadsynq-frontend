@@ -95,3 +95,32 @@ export const saveCompany = (companyId: string, alertJobs = false) =>
 
 export const unsaveCompany = (companyId: string) =>
   api.delete(`/api/users/me/saved-companies/${companyId}`)
+
+export interface CompanyListItem {
+  id: string
+  legal_name: string
+  dba_name: string | null
+  everify_status: string
+  h1b_petitions_last_year: number
+  approval_rate: number | null
+  avg_wage: number | null
+  logo_url: string | null
+  domain: string | null
+  match_confidence: number
+}
+
+export interface CompaniesListResponse {
+  companies: CompanyListItem[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export const getCompanies = (params: {
+  q?: string
+  page?: number
+  per_page?: number
+  everify_only?: boolean
+  h1b_only?: boolean
+  sort?: 'petitions' | 'approval_rate' | 'avg_wage' | 'name'
+}) => api.get<CompaniesListResponse>('/api/companies', { params })
