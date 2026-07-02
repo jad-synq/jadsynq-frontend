@@ -12,6 +12,7 @@ export default function Navbar() {
   return (
     <nav className="border-b border-gray-100 bg-white">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-6">
         <Link href="/" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element -- logo-full.svg is a complex 485KB vector lockup; next/image optimization adds little value here and the file renders correctly as a plain img */}
           <img
@@ -20,6 +21,10 @@ export default function Navbar() {
             className="h-12 w-auto"
           />
         </Link>
+          <Link href="/companies-list" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
+            Companies
+          </Link>
+        </div>
 
         <div className="flex items-center gap-3">
           {loading ? (
