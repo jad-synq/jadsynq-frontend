@@ -46,7 +46,7 @@ export default function AuthPage() {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="max-w-sm w-full bg-white rounded-2xl border border-gray-100 p-8 text-center">
-          <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
+          <CheckCircle className="w-10 h-10 text-[#4ade80] mx-auto mb-3" />
           <h1 className="text-lg font-semibold text-gray-900">Check your email</h1>
           <p className="text-sm text-gray-500 mt-2">
             We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.

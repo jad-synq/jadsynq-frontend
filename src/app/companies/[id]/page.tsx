@@ -157,7 +157,7 @@ export default function CompanyPage() {
                   )}
                   {company.careers_url && (
                     <a href={company.careers_url} target="_blank" rel="noopener noreferrer"
-                      className="text-sm text-green-600 hover:underline flex items-center gap-1">
+                      className="text-sm text-[#16a34a] hover:underline flex items-center gap-1">
                       💼 Careers
                     </a>
                   )}
@@ -168,7 +168,7 @@ export default function CompanyPage() {
               <div className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
                 isEnrolled
-                  ? "bg-green-50 text-green-700"
+                  ? "bg-[#f0fdf4] text-[#14532d]"
                   : "bg-gray-50 text-gray-500"
               )}>
                 {isEnrolled
@@ -219,7 +219,7 @@ export default function CompanyPage() {
               </div>
               <p className={cn(
                 "text-2xl font-bold",
-                company.h1b_summary.approval_rate >= 0.95 ? "text-green-600" :
+                company.h1b_summary.approval_rate >= 0.95 ? "text-[#16a34a]" :
                 company.h1b_summary.approval_rate >= 0.80 ? "text-yellow-600" : "text-red-600"
               )}>
                 {formatApprovalRate(company.h1b_summary.approval_rate)}
@@ -319,7 +319,7 @@ export default function CompanyPage() {
                     <tr key={year.fiscal_year} className="text-gray-700">
                       <td className="py-2.5 font-medium">FY{year.fiscal_year}</td>
                       <td className="py-2.5">{year.petitions.toLocaleString()}</td>
-                      <td className="py-2.5 text-green-600">{year.certified.toLocaleString()}</td>
+                      <td className="py-2.5 text-[#16a34a]">{year.certified.toLocaleString()}</td>
                       <td className="py-2.5 text-red-500">{year.denied.toLocaleString()}</td>
                       <td className="py-2.5">{formatWage(year.avg_wage)}</td>
                     </tr>
