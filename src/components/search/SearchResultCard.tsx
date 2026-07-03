@@ -30,7 +30,7 @@ export default function SearchResultCard({ result }: SearchResultCardProps) {
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {isEnrolled ? (
-              <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+              <span className="flex items-center gap-1 text-xs font-medium text-[#14532d] bg-[#f0fdf4] px-2 py-1 rounded-full">
                 <CheckCircle className="w-3 h-3" />
                 E-Verify
               </span>
@@ -55,7 +55,7 @@ export default function SearchResultCard({ result }: SearchResultCardProps) {
               <span className="text-gray-500">Approval:</span>
               <span className={cn(
                 "font-medium",
-                result.approval_rate >= 0.95 ? "text-green-600" :
+                result.approval_rate >= 0.95 ? "text-[#16a34a]" :
                 result.approval_rate >= 0.80 ? "text-yellow-600" : "text-red-600"
               )}>
                 {formatApprovalRate(result.approval_rate)}
