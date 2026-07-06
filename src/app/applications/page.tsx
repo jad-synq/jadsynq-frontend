@@ -1,8 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { Briefcase, Plus, Trash2, ExternalLink, ChevronDown, ArrowRight, Send, Phone, Users, PartyPopper, XCircle, MinusCircle } from 'lucide-react'
+import {
+  Briefcase, Plus, Trash2, ExternalLink, ChevronDown,
+  Send, Phone, Users, PartyPopper, XCircle, MinusCircle,
+  Pencil, X, CheckCircle, Building2, CalendarDays,
+  StickyNote, Link2, TrendingUp, Award, Sparkles, ArrowUpRight
+} from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import {
   getApplications, createApplication, updateApplication, deleteApplication,
@@ -10,479 +15,574 @@ import {
 } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
-const STATUS_LABELS: Record<AppStatus, string> = {
-  applied: 'Applied',
-  phone_screen: 'Phone Screen',
-  onsite: 'Onsite',
-  offer: 'Offer',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-}
+// ─── Config ──────────────────────────────────────────────────────────────────
 
-const STATUS_COLORS: Record<AppStatus, string> = {
-  applied: 'bg-blue-50 text-blue-700',
-  phone_screen: 'bg-purple-50 text-purple-700',
-  onsite: 'bg-orange-50 text-orange-700',
-  offer: 'bg-green-50 text-green-700',
-  rejected: 'bg-red-50 text-red-600',
-  withdrawn: 'bg-gray-50 text-gray-500',
-}
-
-const STATUS_ICONS: Record<AppStatus, React.ReactNode> = {
-  applied: <Send className="w-4 h-4" />,
-  phone_screen: <Phone className="w-4 h-4" />,
-  onsite: <Users className="w-4 h-4" />,
-  offer: <PartyPopper className="w-4 h-4" />,
-  rejected: <XCircle className="w-4 h-4" />,
-  withdrawn: <MinusCircle className="w-4 h-4" />,
-}
-
-const STATUS_BG: Record<AppStatus, string> = {
-  applied: 'bg-blue-600',
-  phone_screen: 'bg-purple-600',
-  onsite: 'bg-orange-500',
-  offer: 'bg-green-600',
-  rejected: 'bg-red-500',
-  withdrawn: 'bg-gray-400',
+const STATUS_META: Record<AppStatus, {
+  label: string; icon: React.ReactNode
+  text: string; bg: string; border: string; bar: string; dot: string
+}> = {
+  applied:      { label: 'Applied',      icon: <Send className="w-3.5 h-3.5" />,        text: 'text-blue-700',    bg: 'bg-blue-50',    border: 'border-blue-200',   bar: 'bg-blue-400',    dot: 'bg-blue-400'    },
+  phone_screen: { label: 'Phone Screen', icon: <Phone className="w-3.5 h-3.5" />,        text: 'text-yellow-700',  bg: 'bg-yellow-50',  border: 'border-yellow-200', bar: 'bg-yellow-400',  dot: 'bg-yellow-400'  },
+  onsite:       { label: 'On-site',      icon: <Users className="w-3.5 h-3.5" />,        text: 'text-violet-700',  bg: 'bg-violet-50',  border: 'border-violet-200', bar: 'bg-violet-400',  dot: 'bg-violet-400'  },
+  offer:        { label: 'Offer',        icon: <PartyPopper className="w-3.5 h-3.5" />,  text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200',bar: 'bg-emerald-500', dot: 'bg-emerald-500' },
+  rejected:     { label: 'Rejected',     icon: <XCircle className="w-3.5 h-3.5" />,      text: 'text-red-600',     bg: 'bg-red-50',     border: 'border-red-200',    bar: 'bg-red-400',     dot: 'bg-red-400'     },
+  withdrawn:    { label: 'Withdrawn',    icon: <MinusCircle className="w-3.5 h-3.5" />,  text: 'text-gray-500',    bg: 'bg-gray-100',   border: 'border-gray-200',   bar: 'bg-gray-300',    dot: 'bg-gray-300'    },
 }
 
 const ALL_STATUSES: AppStatus[] = ['applied', 'phone_screen', 'onsite', 'offer', 'rejected', 'withdrawn']
+const ACTIVE_STATUSES: AppStatus[] = ['applied', 'phone_screen', 'onsite']
 
-function StatusBadge({ status }: { status: AppStatus }) {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function StatusBadge({ status, sm }: { status: AppStatus; sm?: boolean }) {
+  const m = STATUS_META[status]
   return (
-    <span className={cn('px-2.5 py-1 rounded-full text-xs font-medium', STATUS_COLORS[status])}>
-      {STATUS_LABELS[status]}
+    <span className={cn(
+      'inline-flex items-center gap-1.5 font-semibold rounded-full border',
+      sm ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs',
+      m.text, m.bg, m.border
+    )}>
+      {m.icon} {m.label}
     </span>
   )
 }
 
-function UnauthenticatedView() {
-  const pipeline: AppStatus[] = ['applied', 'phone_screen', 'onsite', 'offer']
-  const mockApps = [
-    { company: 'Google', title: 'Software Engineer', status: 'onsite' as AppStatus, date: '2026-06-28' },
-    { company: 'Amazon', title: 'SDE II', status: 'phone_screen' as AppStatus, date: '2026-07-01' },
-    { company: 'Microsoft', title: 'SWE', status: 'applied' as AppStatus, date: '2026-07-04' },
-  ]
+// ─── Add / Edit Modal ─────────────────────────────────────────────────────────
 
-  return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4">
-            <Briefcase className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Tracker</h1>
-          <p className="text-gray-500 max-w-sm mx-auto">
-            Track every job application in one place — from first apply to offer.
-          </p>
-        </div>
-
-        {/* Pipeline visual */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your pipeline</p>
-          <div className="flex items-center gap-1">
-            {pipeline.map((s, i) => (
-              <div key={s} className="flex items-center gap-1 flex-1">
-                <div className={cn(
-                  'flex-1 py-2 px-3 rounded-xl text-xs font-medium text-center',
-                  STATUS_COLORS[s]
-                )}>
-                  {STATUS_LABELS[s]}
-                </div>
-                {i < pipeline.length - 1 && (
-                  <ArrowRight className="w-3 h-3 text-gray-300 shrink-0" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mock app cards */}
-        <div className="space-y-2 mb-6 opacity-60 pointer-events-none select-none">
-          {mockApps.map((app, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-gray-900">{app.company}</p>
-                  <p className="text-sm text-gray-500">{app.title}</p>
-                </div>
-                <StatusBadge status={app.status} />
-              </div>
-              <p className="text-xs text-gray-400 mt-2">{app.date}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* CTA */}
-        <div className="bg-blue-600 rounded-2xl p-6 text-center text-white">
-          <p className="font-semibold text-lg mb-1">Ready to get organized?</p>
-          <p className="text-blue-200 text-sm mb-4">Sign in free — no credit card needed.</p>
-          <Link
-            href="/auth"
-            className="inline-block bg-white text-blue-700 font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-blue-50 transition-colors"
-          >
-            Sign in to start tracking
-          </Link>
-        </div>
-      </div>
-    </main>
-  )
+interface AppForm {
+  company_name: string; job_title: string; job_url: string
+  status: AppStatus; applied_date: string; notes: string
 }
 
-function AddApplicationForm({ onAdd, onCancel }: {
-  onAdd: (app: JobApplication) => void
-  onCancel: () => void
+const EMPTY_FORM: AppForm = {
+  company_name: '', job_title: '', job_url: '',
+  status: 'applied', applied_date: new Date().toISOString().split('T')[0], notes: '',
+}
+
+function AppModal({ initial, title, submitLabel, onSubmit, onClose }: {
+  initial: AppForm
+  title: string
+  submitLabel: string
+  onSubmit: (f: AppForm) => Promise<void>
+  onClose: () => void
 }) {
-  const [companyName, setCompanyName] = useState('')
-  const [jobTitle, setJobTitle] = useState('')
-  const [jobUrl, setJobUrl] = useState('')
-  const [status, setStatus] = useState<AppStatus>('applied')
-  const [appliedDate, setAppliedDate] = useState(new Date().toISOString().split('T')[0])
-  const [notes, setNotes] = useState('')
+  const [form, setForm] = useState<AppForm>(initial)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const set = (k: keyof AppForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setForm(prev => ({ ...prev, [k]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!companyName.trim()) return
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await createApplication({
-        company_name: companyName.trim(),
-        job_title: jobTitle || undefined,
-        job_url: jobUrl || undefined,
-        status,
-        applied_date: appliedDate || undefined,
-        notes: notes || undefined,
-      })
-      onAdd(res.data)
-    } catch {
-      setError('Failed to add application.')
-    } finally {
-      setLoading(false)
-    }
+    if (!form.company_name.trim()) return
+    setLoading(true); setError(null)
+    try { await onSubmit(form) }
+    catch { setError('Something went wrong. Please try again.') }
+    finally { setLoading(false) }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-blue-200 p-5 mb-4">
-      <h3 className="font-semibold text-gray-900 mb-4">New Application</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Company *</label>
-          <input
-            required
-            value={companyName}
-            onChange={e => setCompanyName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Google"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Job Title</label>
-          <input
-            value={jobTitle}
-            onChange={e => setJobTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Software Engineer"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
-          <select
-            value={status}
-            onChange={e => setStatus(e.target.value as AppStatus)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            {ALL_STATUSES.map(s => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Applied Date</label>
-          <input
-            type="date"
-            value={appliedDate}
-            onChange={e => setAppliedDate(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-gray-600 mb-1">Job URL</label>
-          <input
-            type="url"
-            value={jobUrl}
-            onChange={e => setJobUrl(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="https://..."
-          />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={2}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            placeholder="Referral from Jane, remote-friendly..."
-          />
-        </div>
-      </div>
-      {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
-      <div className="flex gap-2 mt-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
-        >
-          {loading ? 'Adding...' : 'Add Application'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function ApplicationCard({ app, onStatusChange, onDelete }: {
-  app: JobApplication
-  onStatusChange: (id: string, status: AppStatus) => void
-  onDelete: (id: string) => void
-}) {
-  const [showStatusMenu, setShowStatusMenu] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-
-  const handleDelete = async () => {
-    if (!confirm('Remove this application?')) return
-    setDeleting(true)
-    try {
-      await deleteApplication(app.id)
-      onDelete(app.id)
-    } catch {
-      setDeleting(false)
-    }
-  }
-
-  const handleStatusChange = async (newStatus: AppStatus) => {
-    setShowStatusMenu(false)
-    try {
-      await updateApplication(app.id, { status: newStatus })
-      onStatusChange(app.id, newStatus)
-    } catch {
-      // silently revert on failure
-    }
-  }
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-blue-100 transition-colors">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 truncate">{app.company_name}</p>
-          {app.job_title && (
-            <p className="text-sm text-gray-500 mt-0.5 truncate">{app.job_title}</p>
-          )}
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <div className="relative">
-              <button
-                onClick={() => setShowStatusMenu(!showStatusMenu)}
-                className="flex items-center gap-1"
-              >
-                <StatusBadge status={app.status} />
-                <ChevronDown className="w-3 h-3 text-gray-400" />
-              </button>
-              {showStatusMenu && (
-                <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-10">
-                  {ALL_STATUSES.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => handleStatusChange(s)}
-                      className={cn(
-                        'w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50',
-                        s === app.status ? 'font-medium text-blue-600' : 'text-gray-700'
-                      )}
-                    >
-                      {STATUS_LABELS[s]}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {app.applied_date && (
-              <span className="text-xs text-gray-400">{app.applied_date}</span>
-            )}
-            {app.job_url && (
-              <a
-                href={app.job_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                onClick={e => e.stopPropagation()}
-              >
-                <ExternalLink className="w-3 h-3" /> Job posting
-              </a>
-            )}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white px-6 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between rounded-t-3xl sm:rounded-t-2xl">
+          <div>
+            <h2 className="font-bold text-gray-900 text-base">{title}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">All fields except company are optional</p>
           </div>
-          {app.notes && (
-            <p className="text-xs text-gray-400 mt-2 truncate">{app.notes}</p>
-          )}
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
         </div>
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="p-1.5 text-gray-300 hover:text-red-500 transition-colors shrink-0 disabled:opacity-40"
-          title="Delete"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {/* Company + Title */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Company <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input required value={form.company_name} onChange={set('company_name')}
+                  className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent"
+                  placeholder="Google" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Title</label>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input value={form.job_title} onChange={set('job_title')}
+                  className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent"
+                  placeholder="Software Engineer" />
+              </div>
+            </div>
+          </div>
+
+          {/* Status + Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Status</label>
+              <select value={form.status} onChange={set('status')}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent bg-white">
+                {ALL_STATUSES.map(s => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Applied Date</label>
+              <div className="relative">
+                <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input type="date" value={form.applied_date} onChange={set('applied_date')}
+                  className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent" />
+              </div>
+            </div>
+          </div>
+
+          {/* URL */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Posting URL</label>
+            <div className="relative">
+              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input type="url" value={form.job_url} onChange={set('job_url')}
+                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent"
+                placeholder="https://careers.google.com/jobs/..." />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">Notes</label>
+            <div className="relative">
+              <StickyNote className="absolute left-3 top-3 w-3.5 h-3.5 text-gray-400" />
+              <textarea value={form.notes} onChange={set('notes')} rows={3}
+                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent resize-none"
+                placeholder="Referral from Jane, remote role, FAANG target..." />
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+              <XCircle className="w-4 h-4 shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-1 pb-2">
+            <button type="submit" disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors">
+              {loading ? 'Saving…' : <><CheckCircle className="w-4 h-4" /> {submitLabel}</>}
+            </button>
+            <button type="button" onClick={onClose}
+              className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-xl transition-colors">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
 }
 
+// ─── Application Card ─────────────────────────────────────────────────────────
+
+function AppCard({ app, onStatusChange, onDelete, onEdit }: {
+  app: JobApplication
+  onStatusChange: (id: string, status: AppStatus) => void
+  onDelete: (id: string) => void
+  onEdit: (app: JobApplication) => void
+}) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const handleDelete = async () => {
+    if (!confirm(`Remove "${app.company_name}" from your tracker?`)) return
+    setDeleting(true)
+    try { await deleteApplication(app.id); onDelete(app.id) }
+    catch { setDeleting(false) }
+  }
+
+  const handleStatus = async (s: AppStatus) => {
+    setMenuOpen(false)
+    try { await updateApplication(app.id, { status: s }); onStatusChange(app.id, s) }
+    catch { /**/ }
+  }
+
+  const m = STATUS_META[app.status as AppStatus]
+
+  return (
+    <div className={cn(
+      'bg-white rounded-2xl border hover:shadow-md transition-all group',
+      app.status === 'offer'    ? 'border-emerald-200 bg-gradient-to-r from-white to-emerald-50/30' :
+      app.status === 'rejected' ? 'border-gray-100 opacity-75' :
+      'border-gray-100 hover:border-gray-200'
+    )}>
+      {/* Left accent bar */}
+      <div className="flex">
+        <div className={cn('w-1 rounded-l-2xl shrink-0', m.bar)} />
+
+        <div className="flex-1 p-4">
+          <div className="flex items-start justify-between gap-3">
+            {/* Company + role */}
+            <div className="flex items-start gap-3 min-w-0">
+              <div className={cn(
+                'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-black border',
+                m.bg, m.border
+              )}>
+                {app.company_name[0]?.toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-gray-900 truncate">{app.company_name}</p>
+                <p className="text-sm text-gray-500 truncate mt-0.5">
+                  {app.job_title || <span className="italic text-gray-300">No title set</span>}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => onEdit(app)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-40">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Meta row */}
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            {/* Status dropdown */}
+            <div className="relative" ref={menuRef}>
+              <button onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                <StatusBadge status={app.status as AppStatus} sm />
+                <ChevronDown className="w-3 h-3 text-gray-400" />
+              </button>
+              {menuOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-44 bg-white border border-gray-100 rounded-2xl shadow-xl py-1.5 z-20 overflow-hidden">
+                  <p className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Move to</p>
+                  {ALL_STATUSES.map(s => (
+                    <button key={s} onClick={() => handleStatus(s)}
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
+                        s === app.status ? 'font-bold' : 'text-gray-700'
+                      )}>
+                      <span className={cn('w-2 h-2 rounded-full shrink-0', STATUS_META[s].dot)} />
+                      {STATUS_META[s].label}
+                      {s === app.status && <CheckCircle className="w-3.5 h-3.5 text-[#16a34a] ml-auto" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {app.applied_date && (
+              <span className="flex items-center gap-1 text-xs text-gray-400">
+                <CalendarDays className="w-3 h-3" /> {app.applied_date}
+              </span>
+            )}
+
+            {app.job_url && (
+              <a href={app.job_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-[#16a34a] hover:underline font-medium">
+                <ExternalLink className="w-3 h-3" /> View posting
+              </a>
+            )}
+          </div>
+
+          {app.notes && (
+            <p className="mt-2.5 text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2 line-clamp-2 border border-gray-100">
+              {app.notes}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Unauthenticated ─────────────────────────────────────────────────────────
+
+function UnauthenticatedView() {
+  const mockApps = [
+    { company: 'Google',    title: 'Software Engineer',    status: 'onsite'       as AppStatus },
+    { company: 'Amazon',    title: 'SDE II',               status: 'phone_screen' as AppStatus },
+    { company: 'Stripe',    title: 'Backend Engineer',     status: 'offer'        as AppStatus },
+    { company: 'Microsoft', title: 'Software Engineer',    status: 'applied'      as AppStatus },
+  ]
+  return (
+    <div className="min-h-screen bg-[#f0fdf4]">
+      <div className="bg-gradient-to-br from-[#0f2d1a] via-[#14532d] to-[#166534] px-6 py-14 text-center">
+        <div className="inline-flex items-center justify-center w-14 h-14 bg-white/10 border border-white/20 rounded-2xl mb-4">
+          <Briefcase className="w-7 h-7 text-white" />
+        </div>
+        <h1 className="text-3xl font-black text-white mb-2">Application Tracker</h1>
+        <p className="text-green-200 text-sm max-w-xs mx-auto">
+          Track every job application — from first apply to offer letter.
+        </p>
+        <Link href="/auth"
+          className="inline-flex items-center gap-2 mt-6 bg-white text-[#16a34a] font-bold text-sm px-7 py-3 rounded-xl hover:bg-green-50 transition-colors shadow-lg">
+          Start tracking free <ArrowUpRight className="w-4 h-4" />
+        </Link>
+      </div>
+      <div className="max-w-lg mx-auto px-6 -mt-6 space-y-2.5 pb-12">
+        {mockApps.map((a, i) => (
+          <div key={i} className={cn(
+            'bg-white rounded-2xl border p-4 flex items-center gap-3',
+            a.status === 'offer' ? 'border-emerald-200' : 'border-gray-100'
+          )}>
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border',
+              STATUS_META[a.status].bg, STATUS_META[a.status].border, STATUS_META[a.status].text)}>
+              {a.company[0]}
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-gray-900 text-sm">{a.company}</p>
+              <p className="text-xs text-gray-400">{a.title}</p>
+            </div>
+            <StatusBadge status={a.status} sm />
+          </div>
+        ))}
+        <div className="text-center pt-4 text-xs text-gray-400">Sign in to track your own applications</div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 export default function ApplicationsPage() {
   const { user, loading: authLoading } = useAuth()
-  const [apps, setApps] = useState<JobApplication[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [filterStatus, setFilterStatus] = useState<AppStatus | 'all'>('all')
+  const [apps, setApps]               = useState<JobApplication[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [showAdd, setShowAdd]         = useState(false)
+  const [editApp, setEditApp]         = useState<JobApplication | null>(null)
+  const [filter, setFilter]           = useState<AppStatus | 'all'>('all')
 
   useEffect(() => {
     if (authLoading) return
     if (!user) { setLoading(false); return }
     getApplications()
-      .then(res => setApps(res.data))
+      .then(r => setApps(r.data))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [user, authLoading])
 
   if (authLoading || (loading && user)) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-3">
+      <div className="min-h-screen bg-[#f0fdf4]">
+        <div className="max-w-2xl mx-auto px-6 py-8 space-y-3">
+          <div className="h-32 bg-white rounded-2xl border border-gray-100 animate-pulse" />
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
           ))}
         </div>
-      </main>
+      </div>
     )
   }
 
   if (!user) return <UnauthenticatedView />
 
-  const handleAdd = (app: JobApplication) => {
-    setApps(prev => [app, ...prev])
-    setShowForm(false)
+  // Derived
+  const counts = ALL_STATUSES.reduce<Record<string, number>>((a, s) => {
+    a[s] = apps.filter(x => x.status === s).length; return a
+  }, {})
+  const active  = ACTIVE_STATUSES.reduce((s, st) => s + (counts[st] || 0), 0)
+  const offers  = counts.offer || 0
+  const winRate = apps.length ? Math.round((offers / apps.length) * 100) : 0
+  const filtered = filter === 'all' ? apps : apps.filter(a => a.status === filter)
+
+  const handleAdd = async (f: AppForm) => {
+    const res = await createApplication({
+      company_name: f.company_name.trim(),
+      job_title:    f.job_title || undefined,
+      job_url:      f.job_url   || undefined,
+      status:       f.status,
+      applied_date: f.applied_date || undefined,
+      notes:        f.notes       || undefined,
+    })
+    setApps(prev => [res.data, ...prev])
+    setShowAdd(false)
   }
 
-  const handleStatusChange = (id: string, status: AppStatus) => {
+  const handleEdit = async (f: AppForm) => {
+    if (!editApp) return
+    const res = await updateApplication(editApp.id, {
+      status:       f.status,
+      job_title:    f.job_title  || undefined,
+      job_url:      f.job_url    || undefined,
+      applied_date: f.applied_date || undefined,
+      notes:        f.notes      || undefined,
+    })
+    setApps(prev => prev.map(a => a.id === editApp.id ? res.data : a))
+    setEditApp(null)
+  }
+
+  const handleStatusChange = (id: string, status: AppStatus) =>
     setApps(prev => prev.map(a => a.id === id ? { ...a, status } : a))
-  }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string) =>
     setApps(prev => prev.filter(a => a.id !== id))
-  }
-
-  const filtered = filterStatus === 'all' ? apps : apps.filter(a => a.status === filterStatus)
-
-  const counts = ALL_STATUSES.reduce((acc, s) => {
-    acc[s] = apps.filter(a => a.status === s).length
-    return acc
-  }, {} as Record<AppStatus, number>)
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-blue-600" />
-              Applications
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">{apps.length} total</p>
-          </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#f0fdf4]">
 
-        {/* Pipeline summary */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">
-          {ALL_STATUSES.map(s => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(filterStatus === s ? 'all' : s)}
-              className={cn(
-                'flex flex-col items-center p-3 rounded-xl border transition-all',
-                filterStatus === s
-                  ? 'border-transparent shadow-sm scale-[1.02]'
-                  : 'border-gray-100 bg-white hover:border-gray-200'
-              )}
-              style={filterStatus === s ? {} : {}}
-            >
-              {filterStatus === s ? (
-                <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center text-white mb-1.5', STATUS_BG[s])}>
-                  {STATUS_ICONS[s]}
-                </div>
-              ) : (
-                <span className="text-xl font-bold text-gray-900 mb-1">{counts[s]}</span>
-              )}
-              {filterStatus === s ? (
-                <span className="text-lg font-bold text-gray-900">{counts[s]}</span>
-              ) : null}
-              <span className={cn('text-xs leading-tight text-center', filterStatus === s ? 'text-gray-600 font-medium mt-0.5' : 'text-gray-400')}>
-                {STATUS_LABELS[s]}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {showForm && (
-          <AddApplicationForm onAdd={handleAdd} onCancel={() => setShowForm(false)} />
-        )}
-
-        {filtered.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <Briefcase className="w-6 h-6 text-blue-500" />
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-2xl mx-auto px-6 py-5">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-[#16a34a]" /> Application Tracker
+              </h1>
+              <p className="text-xs text-gray-400 mt-0.5">{apps.length} application{apps.length !== 1 ? 's' : ''} tracked</p>
             </div>
-            <p className="text-gray-700 font-semibold">
-              {filterStatus === 'all' ? 'No applications yet' : `No ${STATUS_LABELS[filterStatus]} applications`}
-            </p>
-            <p className="text-sm text-gray-400 mt-1 mb-4">
-              {filterStatus === 'all' ? 'Start tracking your job search' : 'Try a different filter'}
-            </p>
-            {filterStatus === 'all' && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
-              >
-                <Plus className="w-4 h-4" /> Add your first application
-              </button>
-            )}
+            <button onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+              <Plus className="w-4 h-4" /> Add Application
+            </button>
           </div>
-        )}
 
-        <div className="space-y-2">
-          {filtered.map(app => (
-            <ApplicationCard
-              key={app.id}
-              app={app}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-            />
-          ))}
+          {/* Stats strip */}
+          <div className="grid grid-cols-4 gap-2 mb-5">
+            {[
+              { n: apps.length, l: 'Total',    icon: <Briefcase className="w-3.5 h-3.5" />, color: 'text-[#16a34a] bg-green-50'  },
+              { n: active,      l: 'Active',   icon: <TrendingUp className="w-3.5 h-3.5" />, color: 'text-blue-600 bg-blue-50'    },
+              { n: offers,      l: 'Offers',   icon: <Award className="w-3.5 h-3.5" />,      color: 'text-amber-600 bg-amber-50'  },
+              { n: `${winRate}%`,l:'Win Rate', icon: <Sparkles className="w-3.5 h-3.5" />,   color: 'text-violet-600 bg-violet-50'},
+            ].map(s => (
+              <div key={s.l} className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-center">
+                <p className="text-lg font-black text-gray-900">{s.n}</p>
+                <p className="text-[10px] font-semibold text-gray-400 mt-0.5">{s.l}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Segmented pipeline bar */}
+          {apps.length > 0 && (
+            <div className="mb-4">
+              <div className="flex h-2 rounded-full overflow-hidden gap-px bg-gray-100">
+                {ALL_STATUSES.map(s => {
+                  const pct = (counts[s] || 0) / apps.length * 100
+                  if (pct === 0) return null
+                  return <div key={s} className={cn('h-full', STATUS_META[s].bar)} style={{ width: `${pct}%` }} />
+                })}
+              </div>
+              <div className="flex gap-3 mt-2 flex-wrap">
+                {ALL_STATUSES.filter(s => (counts[s] || 0) > 0).map(s => (
+                  <span key={s} className="flex items-center gap-1 text-[10px] text-gray-500">
+                    <span className={cn('w-2 h-2 rounded-full', STATUS_META[s].dot)} />
+                    {STATUS_META[s].label} ({counts[s]})
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Filter tabs */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+            <button onClick={() => setFilter('all')}
+              className={cn(
+                'shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all',
+                filter === 'all'
+                  ? 'bg-[#16a34a] text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              )}>
+              All ({apps.length})
+            </button>
+            {ALL_STATUSES.filter(s => (counts[s] || 0) > 0).map(s => (
+              <button key={s} onClick={() => setFilter(filter === s ? 'all' : s)}
+                className={cn(
+                  'shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border',
+                  filter === s
+                    ? cn(STATUS_META[s].bg, STATUS_META[s].text, STATUS_META[s].border)
+                    : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
+                )}>
+                {STATUS_META[s].icon} {STATUS_META[s].label} ({counts[s]})
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-    </main>
+
+      {/* List */}
+      <div className="max-w-2xl mx-auto px-6 py-5 space-y-2.5">
+        {filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <Briefcase className="w-6 h-6 text-[#16a34a]" />
+            </div>
+            <p className="font-bold text-gray-700 mb-1">
+              {filter === 'all' ? 'No applications yet' : `No ${STATUS_META[filter as AppStatus].label} applications`}
+            </p>
+            <p className="text-sm text-gray-400 mb-5">
+              {filter === 'all'
+                ? 'Log your first application or browse jobs to find H-1B sponsors'
+                : 'Try a different filter'}
+            </p>
+            {filter === 'all' && (
+              <div className="flex items-center justify-center gap-2">
+                <button onClick={() => setShowAdd(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] text-white text-sm font-bold rounded-xl hover:bg-[#15803d] transition-colors">
+                  <Plus className="w-4 h-4" /> Add Application
+                </button>
+                <Link href="/jobs"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                  <Sparkles className="w-4 h-4 text-[#16a34a]" /> Browse Jobs
+                </Link>
+              </div>
+            )}
+          </div>
+        ) : (
+          filtered.map(app => (
+            <AppCard key={app.id} app={app}
+              onStatusChange={handleStatusChange}
+              onDelete={handleDelete}
+              onEdit={setEditApp}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Add modal */}
+      {showAdd && (
+        <AppModal
+          title="Log New Application"
+          submitLabel="Add Application"
+          initial={EMPTY_FORM}
+          onSubmit={handleAdd}
+          onClose={() => setShowAdd(false)}
+        />
+      )}
+
+      {/* Edit modal */}
+      {editApp && (
+        <AppModal
+          title={`Edit — ${editApp.company_name}`}
+          submitLabel="Save Changes"
+          initial={{
+            company_name: editApp.company_name,
+            job_title:    editApp.job_title    ?? '',
+            job_url:      editApp.job_url      ?? '',
+            status:       editApp.status as AppStatus,
+            applied_date: editApp.applied_date ?? '',
+            notes:        editApp.notes        ?? '',
+          }}
+          onSubmit={handleEdit}
+          onClose={() => setEditApp(null)}
+        />
+      )}
+    </div>
   )
 }
