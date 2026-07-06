@@ -2,9 +2,43 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X } from 'lucide-react'
-import { getCompanies, CompanyListItem } from '@/lib/api'
+import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck } from 'lucide-react'
+import { getCompanies, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
+
+function SaveButton({ companyId }: { companyId: string }) {
+  const { user } = useAuth()
+  const router = useRouter()
+  const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) { router.push('/auth'); return }
+    setLoading(true)
+    try {
+      if (saved) { await unsaveCompany(companyId); setSaved(false) }
+      else { await saveCompany(companyId); setSaved(true) }
+    } catch { /* ignore */ } finally { setLoading(false) }
+  }
+
+  return (
+    <button
+      onClick={handleSave}
+      disabled={loading}
+      title={saved ? 'Unsave' : 'Save company'}
+      className={cn(
+        'p-2 rounded-lg transition-colors disabled:opacity-40 shrink-0',
+        saved ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50'
+      )}
+    >
+      {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+    </button>
+  )
+}
 
 const SORT_OPTIONS = [
   { value: 'petitions', label: 'Most H-1B Petitions' },
@@ -261,6 +295,7 @@ export default function CompaniesPage() {
                     {formatApprovalRate(company.approval_rate)}
                   </div>
                 )}
+                <SaveButton companyId={company.id} />
               </Link>
             ))}
           </div>

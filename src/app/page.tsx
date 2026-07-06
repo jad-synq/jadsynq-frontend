@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { TrendingUp, Briefcase, ChevronRight, Database, Shield } from 'lucide-react'
+import { TrendingUp, Briefcase, ChevronRight, Database, Shield, RotateCcw } from 'lucide-react'
 import SearchBar, { SearchFilters } from '@/components/search/SearchBar'
 import SearchResultCard from '@/components/search/SearchResultCard'
 import { searchCompanies, SearchResult } from '@/lib/api'
@@ -74,10 +74,16 @@ export default function HomePage() {
           )}
 
           {hasSearched && (
-            <div className="mb-6">
+            <div className="mb-4 flex items-center justify-between">
               <a href="/" className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
                 JAD Synq
               </a>
+              <button
+                onClick={() => { setHasSearched(false); setResults([]); setError(null) }}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> New search
+              </button>
             </div>
           )}
 
@@ -88,17 +94,34 @@ export default function HomePage() {
           />
 
           {!hasSearched && (
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple'].map(company => (
-                <button
-                  key={company}
-                  onClick={() => handleSearch(company, { everify_only: false, h1b_only: false })}
-                  className="px-3 py-1.5 text-sm text-gray-500 bg-white border border-gray-200 rounded-full hover:border-blue-300 hover:text-blue-600 transition-colors"
-                >
-                  {company}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <span className="text-xs text-gray-400 w-full text-center mb-1">Try searching for</span>
+                {['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'Deloitte', 'Infosys'].map(company => (
+                  <button
+                    key={company}
+                    onClick={() => handleSearch(company, { everify_only: false, h1b_only: false })}
+                    className="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-full hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium"
+                  >
+                    {company}
+                  </button>
+                ))}
+              </div>
+
+              {/* Stats bar */}
+              <div className="mt-8 grid grid-cols-3 gap-3 max-w-lg mx-auto text-center">
+                {[
+                  { value: '80,000+', label: 'Companies' },
+                  { value: '3.5M+', label: 'H-1B Filings' },
+                  { value: '100%', label: 'Gov. Data' },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-white rounded-xl border border-gray-100 py-3 px-2">
+                    <p className="text-lg font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -200,23 +223,48 @@ export default function HomePage() {
           )}
 
           {!loading && error && (
-            <div className="text-center py-12">
-              <p className="text-red-500">{error}</p>
+            <div className="text-center py-12 bg-white rounded-2xl border border-red-100">
+              <p className="text-red-500 font-medium mb-3">{error}</p>
+              <button
+                onClick={() => handleSearch(lastQuery, { everify_only: false, h1b_only: false })}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" /> Try again
+              </button>
             </div>
           )}
 
           {!loading && !error && results.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No companies found for &quot;{lastQuery}&quot;</p>
-              <p className="text-gray-400 text-sm mt-1">Try a different name or remove filters</p>
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+              <p className="text-gray-700 font-semibold text-lg mb-1">No results for &quot;{lastQuery}&quot;</p>
+              <p className="text-gray-400 text-sm mb-5">Try a different spelling, or browse all companies</p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <button
+                  onClick={() => { setHasSearched(false); setResults([]) }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  <RotateCcw className="w-4 h-4" /> New search
+                </button>
+                <Link
+                  href="/companies-list"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  <Database className="w-4 h-4" /> Browse all companies
+                </Link>
+              </div>
             </div>
           )}
 
           {!loading && !error && results.length > 0 && (
             <>
-              <p className="text-sm text-gray-500 mb-3">
-                {results.length} result{results.length !== 1 ? 's' : ''} for &quot;{lastQuery}&quot;
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-gray-500">
+                  {results.length} result{results.length !== 1 ? 's' : ''} for &quot;{lastQuery}&quot;
+                </p>
+                <Link href="/companies-list" className="text-xs text-blue-600 hover:underline font-medium">
+                  Browse all →
+                </Link>
+              </div>
               <div className="space-y-3">
                 {results.map(result => (
                   <SearchResultCard key={result.id} result={result} />
