@@ -1,9 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle, XCircle, TrendingUp, DollarSign, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle, XCircle, TrendingUp, DollarSign, ChevronRight, Bookmark, BookmarkCheck } from 'lucide-react'
 import { cn, formatWage, formatApprovalRate } from '@/lib/utils'
+import { saveCompany, unsaveCompany } from '@/lib/api'
 import type { SearchResult } from '@/lib/api'
+import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
 
 interface SearchResultCardProps {
   result: SearchResult
@@ -12,6 +16,21 @@ interface SearchResultCardProps {
 export default function SearchResultCard({ result }: SearchResultCardProps) {
   const isEnrolled = result.everify_status === 'enrolled'
   const hasH1B = result.h1b_petitions_last_year > 0
+  const { user } = useAuth()
+  const router = useRouter()
+  const [saved, setSaved] = useState(false)
+  const [saveLoading, setSaveLoading] = useState(false)
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) { router.push('/auth'); return }
+    setSaveLoading(true)
+    try {
+      if (saved) { await unsaveCompany(result.id); setSaved(false) }
+      else { await saveCompany(result.id); setSaved(true) }
+    } catch { /* ignore */ } finally { setSaveLoading(false) }
+  }
 
   return (
     <Link href={`/companies/${result.id}`}>
@@ -51,6 +70,17 @@ export default function SearchResultCard({ result }: SearchResultCardProps) {
                 No E-Verify
               </span>
             )}
+            <button
+              onClick={handleSave}
+              disabled={saveLoading}
+              title={saved ? 'Remove from saved' : 'Save company'}
+              className={cn(
+                'p-1.5 rounded-lg transition-colors disabled:opacity-40',
+                saved ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50'
+              )}
+            >
+              {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 

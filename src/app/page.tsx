@@ -43,13 +43,33 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4">
           {!hasSearched && (
             <div className="text-center mb-6 sm:mb-8">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-                JAD Synq
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full mb-4 border border-blue-100">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                Real data from government filings
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+                Find your next<br className="hidden sm:block" /> H-1B sponsor
               </h1>
-              <p className="text-base sm:text-lg text-gray-500 max-w-xl mx-auto px-2">
-                Search US companies by H-1B sponsorship history and E-Verify enrollment.
-                Real data from government filings.
+              <p className="text-base sm:text-lg text-gray-500 max-w-lg mx-auto px-2 mb-6">
+                Search 80,000+ US companies by H-1B sponsorship history and E-Verify enrollment.
               </p>
+              {/* Hero CTA buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+                <Link
+                  href="/companies-list"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-md shadow-blue-100"
+                >
+                  <Database className="w-4 h-4" />
+                  Browse All Companies
+                </Link>
+                <Link
+                  href="/applications"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-sm transition-colors border border-gray-200 shadow-sm"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  Track Applications
+                </Link>
+              </div>
             </div>
           )}
 
