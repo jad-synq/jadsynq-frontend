@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Search, Building2, Briefcase, Bookmark, User,
   LogOut, Menu, X, BriefcaseBusiness
 } from 'lucide-react'
+
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
@@ -42,7 +43,6 @@ function NavItem({ href, icon: Icon, label, active, onClick }: {
 export default function Sidebar() {
   const { user, loading, signOut } = useAuth()
   const pathname = usePathname()
-  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const isActive = (href: string) =>
