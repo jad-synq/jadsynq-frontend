@@ -153,12 +153,15 @@ export default function CompanyPage() {
               >
                 {isSaved ? <><BookmarkCheck className="w-4 h-4" /> Saved</> : <><Bookmark className="w-4 h-4" /> Save</>}
               </button>
-              <Link
-                href={`/applications?company=${encodeURIComponent(company.legal_name)}`}
+              <button
+                onClick={() => {
+                  if (!user) { router.push('/auth'); return }
+                  router.push(`/applications?prefill=${encodeURIComponent(company.legal_name)}`)
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white/10 text-white hover:bg-white/20 border border-white/20 transition-all whitespace-nowrap"
               >
                 <Plus className="w-4 h-4" /> Log App
-              </Link>
+              </button>
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Briefcase, Plus, Trash2, ExternalLink, ChevronDown,
@@ -364,11 +365,18 @@ function UnauthenticatedView() {
 
 export default function ApplicationsPage() {
   const { user, loading: authLoading } = useAuth()
+  const searchParams = useSearchParams()
+  const prefill = searchParams.get('prefill') ?? ''
   const [apps, setApps]               = useState<JobApplication[]>([])
   const [loading, setLoading]         = useState(true)
   const [showAdd, setShowAdd]         = useState(false)
   const [editApp, setEditApp]         = useState<JobApplication | null>(null)
   const [filter, setFilter]           = useState<AppStatus | 'all'>('all')
+
+  // Auto-open add modal when ?prefill= is present
+  useEffect(() => {
+    if (prefill && !authLoading && user) setShowAdd(true)
+  }, [prefill, authLoading, user])
 
   useEffect(() => {
     if (authLoading) return
@@ -560,7 +568,7 @@ export default function ApplicationsPage() {
         <AppModal
           title="Log New Application"
           submitLabel="Add Application"
-          initial={EMPTY_FORM}
+          initial={{ ...EMPTY_FORM, company_name: prefill || EMPTY_FORM.company_name }}
           onSubmit={handleAdd}
           onClose={() => setShowAdd(false)}
         />

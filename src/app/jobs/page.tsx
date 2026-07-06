@@ -9,6 +9,7 @@ import {
   BookmarkCheck, Sparkles, X
 } from 'lucide-react'
 import { searchJobs, getJobTitleSuggestions, createApplication, saveCompany, unsaveCompany, JobRoleResult, JobTitleSuggestion } from '@/lib/api'
+import { isAxiosError } from 'axios'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -34,6 +35,11 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
       if (saved) { await unsaveCompany(job.company_id); setSaved(false) }
       else { await saveCompany(job.company_id); setSaved(true) }
     } catch { /* ignore */ } finally { setSaveLoading(false) }
+  }
+
+  const handleLogApp = () => {
+    if (!user) { router.push('/auth'); return }
+    onLogApp(job)
   }
 
   const indeedUrl = `https://www.indeed.com/jobs?q=${encodeURIComponent(job.job_title + ' ' + job.legal_name)}`
@@ -100,7 +106,7 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
           {/* Actions */}
           <div className="flex flex-wrap gap-2 mt-4">
             <button
-              onClick={() => onLogApp(job)}
+              onClick={handleLogApp}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors"
             >
               <Plus className="w-3.5 h-3.5" /> Log Application
@@ -135,6 +141,7 @@ function LogAppModal({ job, onClose, onDone }: {
   onClose: () => void
   onDone: () => void
 }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -150,8 +157,17 @@ function LogAppModal({ job, onClose, onDone }: {
         applied_date: new Date().toISOString().split('T')[0],
       })
       onDone()
-    } catch {
-      setError('Failed to log application. Please try again.')
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 401) {
+        onClose()
+        router.push('/auth')
+        return
+      }
+      setError(
+        isAxiosError(err) && err.response?.data?.detail
+          ? String(err.response.data.detail)
+          : 'Failed to log application. Please try again.'
+      )
     } finally {
       setLoading(false)
     }
