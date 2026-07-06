@@ -3,397 +3,452 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  User, CheckCircle, Shield, Briefcase, Bookmark, Search,
-  ChevronRight, TrendingUp, Clock, Award, Target,
-  Building2, LogOut, Settings, Bell, Mail,
-  CalendarDays, BarChart3, Sparkles
+  CheckCircle, Shield, Briefcase, Bookmark, Search,
+  ChevronRight, TrendingUp, Award,
+  Building2, LogOut, Settings, Mail,
+  BarChart3, Sparkles, Target, Clock,
+  ArrowUpRight, FileText, Star
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { getMe, updateMe, getApplications, getSavedCompanies, VisaType, AppStatus, JobApplication } from '@/lib/api'
+import {
+  getMe, updateMe, getApplications, getSavedCompanies,
+  VisaType, AppStatus, JobApplication
+} from '@/lib/api'
 import { cn } from '@/lib/utils'
 
-const VISA_OPTIONS: { value: VisaType; label: string; desc: string; color: string; ring: string }[] = [
-  { value: 'OPT',     label: 'OPT',        desc: 'Optional Practical Training',  color: 'border-blue-200 bg-blue-50 text-blue-700',    ring: 'ring-blue-400' },
-  { value: 'STEM_OPT',label: 'STEM OPT',   desc: '24-month STEM extension',      color: 'border-purple-200 bg-purple-50 text-purple-700', ring: 'ring-purple-400' },
-  { value: 'H1B',     label: 'H-1B',       desc: 'H-1B visa holder',             color: 'border-orange-200 bg-orange-50 text-orange-700', ring: 'ring-orange-400' },
-  { value: 'GC',      label: 'Green Card', desc: 'Permanent resident',           color: 'border-green-200 bg-green-50 text-green-700',  ring: 'ring-green-400' },
-  { value: 'CITIZEN', label: 'US Citizen', desc: 'No sponsorship needed',        color: 'border-gray-200 bg-gray-50 text-gray-700',     ring: 'ring-gray-400' },
-  { value: 'OTHER',   label: 'Other',      desc: 'Other visa status',            color: 'border-gray-200 bg-gray-50 text-gray-700',     ring: 'ring-gray-400' },
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const VISA_OPTIONS: {
+  value: VisaType; label: string; desc: string
+  bg: string; text: string; border: string; ring: string
+}[] = [
+  { value: 'OPT',      label: 'OPT',        desc: 'Optional Practical Training',   bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   ring: 'ring-blue-400'   },
+  { value: 'STEM_OPT', label: 'STEM OPT',   desc: '24-month STEM extension',       bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', ring: 'ring-violet-400' },
+  { value: 'H1B',      label: 'H-1B',       desc: 'Employer-sponsored visa',       bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', ring: 'ring-orange-400' },
+  { value: 'GC',       label: 'Green Card', desc: 'Permanent resident',            bg: 'bg-emerald-50',text: 'text-emerald-700',border: 'border-emerald-200',ring: 'ring-emerald-400'},
+  { value: 'CITIZEN',  label: 'US Citizen', desc: 'No sponsorship needed',         bg: 'bg-gray-50',   text: 'text-gray-700',   border: 'border-gray-200',   ring: 'ring-gray-400'   },
+  { value: 'OTHER',    label: 'Other',      desc: 'Other visa status',             bg: 'bg-gray-50',   text: 'text-gray-600',   border: 'border-gray-200',   ring: 'ring-gray-300'   },
 ]
 
-const VISA_TIPS: Record<VisaType, { title: string; tip: string; next: string | null }> = {
-  OPT:      { title: 'You\'re on OPT', tip: 'You have up to 12 months to find H-1B sponsorship. Focus on E-Verify enrolled companies.', next: 'Apply for STEM OPT extension if eligible' },
-  STEM_OPT: { title: 'You\'re on STEM OPT', tip: '24-month extension gives you more time. Your employer must be E-Verify enrolled.', next: 'Get H-1B sponsor before STEM OPT expires' },
-  H1B:      { title: 'You\'re on H-1B', tip: 'You can transfer your H-1B to a new employer. Look for companies with high approval rates.', next: 'Consider Green Card sponsorship (EB-2/EB-3)' },
-  GC:       { title: 'Green Card Holder', tip: 'You can work anywhere without sponsorship restrictions.', next: 'Consider US citizenship after 5 years' },
-  CITIZEN:  { title: 'US Citizen', tip: 'No sponsorship needed — all companies are available to you.', next: null },
-  OTHER:    { title: 'Other Visa Status', tip: 'Check with your employer or attorney about your work authorization.', next: null },
+const VISA_TIPS: Record<VisaType, { headline: string; body: string; next: string | null; urgent: boolean }> = {
+  OPT:      { headline: 'OPT — 12 months remaining',         body: 'Focus on E-Verify enrolled companies with high H-1B approval rates. Start applications early — the H-1B lottery cap fills fast.',            next: 'Apply for STEM OPT extension if eligible',             urgent: true  },
+  STEM_OPT: { headline: 'STEM OPT — up to 24 months',        body: 'Your employer must be E-Verify enrolled. Use this window to secure an H-1B sponsor. Look for companies with consecutive approval years.',    next: 'Secure H-1B sponsor before STEM OPT expires',          urgent: true  },
+  H1B:      { headline: 'H-1B — employer sponsored',         body: 'You can transfer your H-1B to a new employer without re-entering the lottery. Target companies with EB-2/EB-3 Green Card pipelines.',        next: 'Consider initiating Green Card sponsorship (EB-2/EB-3)',urgent: false },
+  GC:       { headline: 'Green Card — permanent resident',   body: 'You may work for any employer without restriction. No sponsorship needed. Explore career growth without visa constraints.',                   next: 'Eligible for citizenship after 5 years as a GC holder', urgent: false },
+  CITIZEN:  { headline: 'US Citizen — no restrictions',      body: 'All companies are available to you. No sponsorship needed. Focus entirely on role fit, compensation, and growth.',                            next: null,                                                    urgent: false },
+  OTHER:    { headline: 'Other visa status',                  body: 'Check with your employer or an immigration attorney to understand your work authorisation and sponsorship options.',                          next: null,                                                    urgent: false },
 }
 
-const STATUS_CONFIG: Record<AppStatus, { label: string; color: string; bg: string; dot: string }> = {
-  applied:      { label: 'Applied',       color: 'text-blue-700',   bg: 'bg-blue-50',   dot: 'bg-blue-400' },
-  phone_screen: { label: 'Phone Screen',  color: 'text-yellow-700', bg: 'bg-yellow-50', dot: 'bg-yellow-400' },
-  onsite:       { label: 'Onsite',        color: 'text-purple-700', bg: 'bg-purple-50', dot: 'bg-purple-400' },
-  offer:        { label: 'Offer',         color: 'text-green-700',  bg: 'bg-green-50',  dot: 'bg-green-400' },
-  rejected:     { label: 'Rejected',      color: 'text-red-600',    bg: 'bg-red-50',    dot: 'bg-red-400' },
-  withdrawn:    { label: 'Withdrawn',     color: 'text-gray-500',   bg: 'bg-gray-50',   dot: 'bg-gray-300' },
+const STATUS_META: Record<AppStatus, { label: string; text: string; bg: string; bar: string; dot: string }> = {
+  applied:      { label: 'Applied',       text: 'text-blue-700',    bg: 'bg-blue-50',    bar: 'bg-blue-400',    dot: 'bg-blue-400'    },
+  phone_screen: { label: 'Phone Screen',  text: 'text-yellow-700',  bg: 'bg-yellow-50',  bar: 'bg-yellow-400',  dot: 'bg-yellow-400'  },
+  onsite:       { label: 'On-site',       text: 'text-violet-700',  bg: 'bg-violet-50',  bar: 'bg-violet-400',  dot: 'bg-violet-400'  },
+  offer:        { label: 'Offer',         text: 'text-emerald-700', bg: 'bg-emerald-50', bar: 'bg-emerald-500', dot: 'bg-emerald-500' },
+  rejected:     { label: 'Rejected',      text: 'text-red-600',     bg: 'bg-red-50',     bar: 'bg-red-400',     dot: 'bg-red-400'     },
+  withdrawn:    { label: 'Withdrawn',     text: 'text-gray-500',    bg: 'bg-gray-100',   bar: 'bg-gray-300',    dot: 'bg-gray-300'    },
 }
 
-function StatCard({ icon, label, value, sub, color }: {
-  icon: React.ReactNode; label: string; value: string | number; sub?: string; color: string
+const JOURNEY = [
+  { key: 'OPT',     label: 'OPT',        sub: '12 months',   after: ['STEM_OPT','H1B','GC','CITIZEN'] },
+  { key: 'STEM_OPT',label: 'STEM OPT',   sub: '24 months',   after: ['H1B','GC','CITIZEN'] },
+  { key: 'H1B',     label: 'H-1B',       sub: '3-yr + ext.', after: ['GC','CITIZEN'] },
+  { key: 'GC',      label: 'Green Card', sub: 'Permanent',   after: ['CITIZEN'] },
+  { key: 'CITIZEN', label: 'Citizenship',sub: 'After 5 yrs', after: [] },
+]
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function Avatar({ email }: { email: string }) {
+  const initials = email.split('@')[0].slice(0, 2).toUpperCase()
+  return (
+    <div className="relative">
+      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#16a34a] to-[#0f7a34] flex items-center justify-center text-white text-2xl font-black shadow-lg border-4 border-white/20">
+        {initials}
+      </div>
+      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 border-2 border-white rounded-full" />
+    </div>
+  )
+}
+
+function MetricCard({ icon, value, label, sub, accent }: {
+  icon: React.ReactNode; value: number | string; label: string; sub?: string; accent: string
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4">
-      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-3', color)}>
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+      <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center mb-3', accent)}>
         {icon}
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm font-medium text-gray-600 mt-0.5">{label}</p>
+      <p className="text-3xl font-black text-gray-900 leading-none">{value}</p>
+      <p className="text-sm font-semibold text-gray-600 mt-1">{label}</p>
       {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
   )
 }
 
+// ─── Unauthenticated ─────────────────────────────────────────────────────────
+
 function UnauthenticatedView() {
   return (
     <div className="min-h-screen bg-[#f0fdf4]">
-      <div className="max-w-lg mx-auto px-6 py-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#16a34a] rounded-2xl mb-4">
-            <User className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Profile</h1>
-          <p className="text-gray-500 max-w-xs mx-auto">
-            Track applications, save companies, and get personalised H-1B insights.
-          </p>
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-[#0f2d1a] via-[#14532d] to-[#16a34a] px-6 py-16 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur border border-white/20 rounded-2xl mb-5">
+          <FileText className="w-8 h-8 text-white" />
         </div>
+        <h1 className="text-3xl font-black text-white mb-3">Your Profile</h1>
+        <p className="text-green-200 max-w-sm mx-auto text-sm leading-relaxed">
+          Track your H-1B job search, monitor application pipeline, and get visa-specific guidance.
+        </p>
+        <Link href="/auth"
+          className="inline-flex items-center gap-2 mt-6 bg-white text-[#16a34a] font-bold text-sm px-7 py-3 rounded-xl hover:bg-green-50 transition-colors shadow-lg">
+          Get started free <ArrowUpRight className="w-4 h-4" />
+        </Link>
+      </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">What you get</p>
-          <div className="space-y-3">
-            {[
-              { icon: <BarChart3 className="w-4 h-4 text-[#16a34a]" />, text: 'Application pipeline dashboard' },
-              { icon: <Target className="w-4 h-4 text-blue-500" />, text: 'Visa timeline & sponsorship tips' },
-              { icon: <Bookmark className="w-4 h-4 text-amber-500" />, text: 'Save companies & track progress' },
-              { icon: <Bell className="w-4 h-4 text-purple-500" />, text: 'Alerts for H-1B sponsor companies' },
-            ].map(item => (
-              <div key={item.text} className="flex items-center gap-3">
-                <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center shrink-0">{item.icon}</div>
-                <p className="text-sm text-gray-700">{item.text}</p>
+      {/* Feature list */}
+      <div className="max-w-md mx-auto px-6 -mt-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-50 overflow-hidden">
+          {[
+            { icon: <BarChart3 className="w-4 h-4 text-[#16a34a]" />,   title: 'Application Dashboard',   desc: 'Pipeline view of every application stage' },
+            { icon: <Target className="w-4 h-4 text-blue-500" />,        title: 'Visa Timeline',           desc: 'Step-by-step journey from OPT to Citizenship' },
+            { icon: <Star className="w-4 h-4 text-amber-500" />,         title: 'Saved Companies',         desc: 'Bookmark sponsors and track their H-1B data' },
+            { icon: <Shield className="w-4 h-4 text-violet-500" />,      title: 'Private by Default',      desc: 'Your data is never shared or sold' },
+          ].map(f => (
+            <div key={f.title} className="flex items-center gap-4 px-5 py-4">
+              <div className="w-8 h-8 bg-gray-50 rounded-xl flex items-center justify-center shrink-0">{f.icon}</div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{f.title}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{f.desc}</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
-          <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-[#16a34a] mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Private by default</p>
-              <p className="text-xs text-gray-500 mt-0.5">Your data is never shared. Visa status only personalises your experience.</p>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-[#16a34a] rounded-2xl p-6 text-center text-white">
-          <p className="font-bold text-lg mb-1">Ready to track your job search?</p>
-          <p className="text-green-200 text-sm mb-4">Sign in to unlock your profile dashboard.</p>
-          <Link href="/auth"
-            className="inline-block bg-white text-[#16a34a] font-bold text-sm px-8 py-2.5 rounded-xl hover:bg-green-50 transition-colors">
-            Get started free →
-          </Link>
+          ))}
         </div>
       </div>
     </div>
   )
 }
 
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#f0fdf4]">
+      <div className="bg-gradient-to-br from-[#0f2d1a] to-[#16a34a] h-44 animate-pulse" />
+      <div className="max-w-2xl mx-auto px-6 -mt-6 space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-24 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 export default function ProfilePage() {
   const { user, loading: authLoading, signOut } = useAuth()
-  const [visaType, setVisaType] = useState<VisaType | null>(null)
-  const [selected, setSelected] = useState<VisaType | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [applications, setApplications] = useState<JobApplication[]>([])
+  const [visaType, setVisaType]     = useState<VisaType | null>(null)
+  const [selected, setSelected]     = useState<VisaType | null>(null)
+  const [loading, setLoading]       = useState(true)
+  const [saving, setSaving]         = useState(false)
+  const [saveOk, setSaveOk]         = useState(false)
+  const [applications, setApps]     = useState<JobApplication[]>([])
   const [savedCount, setSavedCount] = useState(0)
-  const [activeTab, setActiveTab] = useState<'overview' | 'visa' | 'settings'>('overview')
+  const [tab, setTab]               = useState<'overview' | 'visa' | 'settings'>('overview')
 
   useEffect(() => {
     if (authLoading) return
     if (!user) { setLoading(false); return }
     Promise.all([
       getMe(),
-      getApplications().catch(() => ({ data: [] })),
+      getApplications().catch(() => ({ data: [] as JobApplication[] })),
       getSavedCompanies().catch(() => ({ data: [] })),
     ]).then(([me, apps, saved]) => {
       setVisaType(me.data.visa_type as VisaType | null)
       setSelected(me.data.visa_type as VisaType | null)
-      setApplications(apps.data)
+      setApps(apps.data)
       setSavedCount(saved.data.length)
     }).finally(() => setLoading(false))
   }, [user, authLoading])
 
-  if (authLoading || (loading && user)) {
-    return (
-      <div className="min-h-screen bg-[#f0fdf4]">
-        <div className="max-w-2xl mx-auto px-6 py-8 space-y-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
+  if (authLoading || (loading && user)) return <LoadingSkeleton />
   if (!user) return <UnauthenticatedView />
 
-  // Compute stats
-  const statusCounts = applications.reduce((acc, app) => {
-    acc[app.status] = (acc[app.status] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-
-  const activeApps = (statusCounts['applied'] || 0) + (statusCounts['phone_screen'] || 0) + (statusCounts['onsite'] || 0)
-  const offers = statusCounts['offer'] || 0
-  const recentApps = [...applications].slice(0, 5)
+  // Derived stats
+  const counts = applications.reduce<Record<string, number>>((a, x) => {
+    a[x.status] = (a[x.status] || 0) + 1; return a
+  }, {})
+  const active = (counts.applied || 0) + (counts.phone_screen || 0) + (counts.onsite || 0)
+  const offers = counts.offer || 0
+  const winRate = applications.length
+    ? Math.round(((counts.offer || 0) / applications.length) * 100)
+    : 0
+  const handle = user.email?.split('@')[0] ?? 'User'
+  const currentVisa = VISA_OPTIONS.find(v => v.value === visaType)
+  const tip = visaType ? VISA_TIPS[visaType] : null
 
   const handleSave = async () => {
     if (!selected) return
-    setSaving(true)
-    setSaved(false)
+    setSaving(true); setSaveOk(false)
     try {
       await updateMe(selected)
-      setVisaType(selected)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch { /* ignore */ } finally { setSaving(false) }
+      setVisaType(selected); setSaveOk(true)
+      setTimeout(() => setSaveOk(false), 3000)
+    } catch { /**/ } finally { setSaving(false) }
   }
 
-  const visaTip = visaType ? VISA_TIPS[visaType] : null
+  const TABS = [
+    { id: 'overview' as const, label: 'Overview',    icon: <BarChart3 className="w-3.5 h-3.5" /> },
+    { id: 'visa'     as const, label: 'Visa Status', icon: <Target className="w-3.5 h-3.5" />   },
+    { id: 'settings' as const, label: 'Settings',    icon: <Settings className="w-3.5 h-3.5" /> },
+  ]
 
   return (
     <div className="min-h-screen bg-[#f0fdf4]">
-      {/* Hero header */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-2xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#16a34a] flex items-center justify-center text-white text-xl font-bold shadow-sm">
-                {(user.email ?? '?')[0].toUpperCase()}
-              </div>
+
+      {/* ── Hero banner ── */}
+      <div className="bg-gradient-to-br from-[#0f2d1a] via-[#14532d] to-[#166534] pb-0">
+        <div className="max-w-2xl mx-auto px-6 pt-8 pb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-5">
+              <Avatar email={user.email ?? 'U'} />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{user.email?.split('@')[0]}</h1>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <Mail className="w-3.5 h-3.5 text-gray-400" />
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                <h1 className="text-xl font-black text-white tracking-tight">{handle}</h1>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Mail className="w-3 h-3 text-green-400" />
+                  <p className="text-xs text-green-300">{user.email}</p>
                 </div>
-                {visaType && (
+                {currentVisa && (
                   <span className={cn(
-                    'inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border',
-                    VISA_OPTIONS.find(v => v.value === visaType)?.color
+                    'inline-flex items-center gap-1 mt-2 px-2.5 py-0.5 rounded-full text-xs font-bold border',
+                    currentVisa.bg, currentVisa.text, currentVisa.border
                   )}>
-                    {VISA_OPTIONS.find(v => v.value === visaType)?.label}
+                    {currentVisa.label}
                   </span>
                 )}
               </div>
             </div>
             <button onClick={signOut}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-              <LogOut className="w-4 h-4" /> Sign out
+              className="flex items-center gap-1.5 text-xs font-medium text-green-300 hover:text-red-300 transition-colors px-2 py-1.5 rounded-lg hover:bg-white/5">
+              <LogOut className="w-3.5 h-3.5" /> Sign out
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 mt-5 border-b border-gray-100">
-            {([
-              { id: 'overview', label: 'Overview', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-              { id: 'visa',     label: 'Visa Status', icon: <Target className="w-3.5 h-3.5" /> },
-              { id: 'settings', label: 'Settings', icon: <Settings className="w-3.5 h-3.5" /> },
-            ] as const).map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+          {/* Inline stats strip */}
+          <div className="grid grid-cols-4 gap-2 mt-6">
+            {[
+              { n: applications.length, l: 'Applied'   },
+              { n: active,              l: 'Active'     },
+              { n: offers,              l: 'Offers'     },
+              { n: `${winRate}%`,       l: 'Win rate'   },
+            ].map(s => (
+              <div key={s.l} className="bg-white/10 backdrop-blur rounded-xl px-3 py-2.5 text-center border border-white/10">
+                <p className="text-lg font-black text-white">{s.n}</p>
+                <p className="text-[10px] text-green-300 mt-0.5 font-medium">{s.l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="max-w-2xl mx-auto px-6">
+          <div className="flex gap-0.5">
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
                 className={cn(
-                  'flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors',
-                  activeTab === tab.id
-                    ? 'border-[#16a34a] text-[#16a34a]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                  'flex items-center gap-1.5 px-4 py-3 text-sm font-semibold rounded-t-xl transition-all',
+                  tab === t.id
+                    ? 'bg-[#f0fdf4] text-[#16a34a]'
+                    : 'text-green-300/70 hover:text-green-200 hover:bg-white/5'
                 )}>
-                {tab.icon} {tab.label}
+                {t.icon}{t.label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 py-6">
+      {/* ── Tab content ── */}
+      <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
 
-        {/* ── OVERVIEW TAB ── */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Stats grid */}
+        {/* ════ OVERVIEW ════ */}
+        {tab === 'overview' && (
+          <>
+            {/* Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard
-                icon={<Briefcase className="w-4.5 h-4.5 text-[#16a34a]" style={{ width: 18, height: 18 }} />}
-                label="Total Applied"
-                value={applications.length}
-                color="bg-green-50"
-              />
-              <StatCard
-                icon={<TrendingUp className="w-4.5 h-4.5 text-blue-500" style={{ width: 18, height: 18 }} />}
-                label="In Progress"
-                value={activeApps}
-                sub="active interviews"
-                color="bg-blue-50"
-              />
-              <StatCard
-                icon={<Award className="w-4.5 h-4.5 text-amber-500" style={{ width: 18, height: 18 }} />}
-                label="Offers"
-                value={offers}
-                color="bg-amber-50"
-              />
-              <StatCard
-                icon={<Bookmark className="w-4.5 h-4.5 text-purple-500" style={{ width: 18, height: 18 }} />}
-                label="Saved"
-                value={savedCount}
-                sub="companies"
-                color="bg-purple-50"
-              />
+              <MetricCard icon={<Briefcase className="w-4 h-4 text-[#16a34a]" />}  value={applications.length} label="Total Applied"  accent="bg-green-50"  />
+              <MetricCard icon={<TrendingUp className="w-4 h-4 text-blue-500" />}   value={active}              label="In Progress"    sub="active now"      accent="bg-blue-50"   />
+              <MetricCard icon={<Award className="w-4 h-4 text-amber-500" />}       value={offers}              label="Offers"         sub="received"        accent="bg-amber-50"  />
+              <MetricCard icon={<Bookmark className="w-4 h-4 text-violet-500" />}   value={savedCount}          label="Saved"          sub="companies"       accent="bg-violet-50" />
             </div>
 
-            {/* Application pipeline */}
-            {applications.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900">Application Pipeline</h3>
-                  <Link href="/applications" className="text-xs text-[#16a34a] font-semibold hover:underline">
-                    View all →
+            {/* Pipeline */}
+            {applications.length > 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="font-bold text-gray-900">Application Pipeline</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">{applications.length} total applications</p>
+                  </div>
+                  <Link href="/applications"
+                    className="flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline">
+                    Manage all <ArrowUpRight className="w-3 h-3" />
                   </Link>
                 </div>
-                <div className="space-y-2.5">
-                  {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
-                    const count = statusCounts[status] || 0
-                    if (count === 0 && status !== 'applied') return null
-                    const pct = applications.length > 0 ? (count / applications.length) * 100 : 0
-                    return (
-                      <div key={status} className="flex items-center gap-3">
-                        <div className={cn('w-2 h-2 rounded-full shrink-0', cfg.dot)} />
-                        <span className="text-sm text-gray-600 w-28 shrink-0">{cfg.label}</span>
-                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className={cn('h-full rounded-full transition-all', cfg.dot)}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-semibold text-gray-700 w-6 text-right shrink-0">{count}</span>
-                      </div>
-                    )
+
+                {/* Segmented bar */}
+                <div className="flex h-2.5 rounded-full overflow-hidden mb-5 gap-px">
+                  {Object.entries(STATUS_META).map(([s, m]) => {
+                    const pct = applications.length ? ((counts[s] || 0) / applications.length) * 100 : 0
+                    if (pct === 0) return null
+                    return <div key={s} className={cn('h-full', m.bar)} style={{ width: `${pct}%` }} />
                   })}
                 </div>
-              </div>
-            )}
 
-            {/* Recent applications */}
-            {recentApps.length > 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900">Recent Applications</h3>
-                  <Link href="/applications" className="text-xs text-[#16a34a] font-semibold hover:underline">
-                    Manage →
-                  </Link>
-                </div>
-                <div className="space-y-3">
-                  {recentApps.map(app => {
-                    const cfg = STATUS_CONFIG[app.status as AppStatus]
+                <div className="space-y-2">
+                  {Object.entries(STATUS_META).map(([s, m]) => {
+                    const n = counts[s] || 0
+                    if (n === 0) return null
+                    const pct = Math.round((n / applications.length) * 100)
                     return (
-                      <div key={app.id} className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
-                          <Building2 className="w-4 h-4 text-gray-400" />
+                      <div key={s} className="flex items-center gap-3">
+                        <div className={cn('w-2.5 h-2.5 rounded-full shrink-0', m.dot)} />
+                        <span className="text-sm text-gray-600 flex-1">{m.label}</span>
+                        <div className="w-28 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className={cn('h-full rounded-full', m.bar)} style={{ width: `${pct}%` }} />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{app.company_name}</p>
-                          <p className="text-xs text-gray-400 truncate">{app.job_title || 'No title'}</p>
-                        </div>
-                        <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold shrink-0', cfg.bg, cfg.color)}>
-                          {cfg.label}
-                        </span>
+                        <span className="text-xs font-bold text-gray-500 w-5 text-right">{n}</span>
                       </div>
                     )
                   })}
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center">
-                <Briefcase className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-gray-500 mb-1">No applications yet</p>
-                <p className="text-xs text-gray-400 mb-4">Search for jobs and log your first application</p>
+              <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center shadow-sm">
+                <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Briefcase className="w-6 h-6 text-[#16a34a]" />
+                </div>
+                <p className="font-bold text-gray-700 mb-1">No applications yet</p>
+                <p className="text-sm text-gray-400 mb-5">Browse jobs and log your first application in one click</p>
                 <Link href="/jobs"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#16a34a] text-white text-sm font-bold rounded-xl">
-                  <Sparkles className="w-3.5 h-3.5" /> Browse jobs
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] text-white text-sm font-bold rounded-xl hover:bg-[#15803d] transition-colors">
+                  <Sparkles className="w-4 h-4" /> Browse Jobs
                 </Link>
               </div>
             )}
 
-            {/* Quick links */}
-            <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
+            {/* Recent activity */}
+            {applications.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+                  <h3 className="font-bold text-gray-900">Recent Activity</h3>
+                  <Link href="/applications" className="text-xs font-semibold text-[#16a34a] hover:underline flex items-center gap-1">
+                    View all <ArrowUpRight className="w-3 h-3" />
+                  </Link>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {applications.slice(0, 6).map(app => {
+                    const m = STATUS_META[app.status as AppStatus]
+                    return (
+                      <div key={app.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 flex items-center justify-center shrink-0">
+                          <Building2 className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{app.company_name}</p>
+                          <p className="text-xs text-gray-400 truncate">{app.job_title || '—'}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={cn('px-2 py-0.5 rounded-full text-xs font-bold', m.bg, m.text)}>
+                            {m.label}
+                          </span>
+                          {app.applied_date && (
+                            <span className="text-[10px] text-gray-400">{app.applied_date}</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Nav shortcuts */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <p className="px-5 pt-4 pb-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Quick Access</p>
               {[
-                { href: '/jobs',          icon: <Sparkles className="w-4 h-4 text-[#16a34a]" />,  label: 'Browse Jobs',         desc: 'Find H-1B sponsor roles' },
-                { href: '/',              icon: <Search className="w-4 h-4 text-blue-500" />,      label: 'Search Companies',    desc: 'Find H-1B sponsors' },
-                { href: '/applications',  icon: <Briefcase className="w-4 h-4 text-purple-500" />, label: 'My Applications',     desc: 'Track job applications' },
-                { href: '/saved',         icon: <Bookmark className="w-4 h-4 text-amber-500" />,   label: 'Saved Companies',     desc: `${savedCount} bookmarked` },
+                { href: '/jobs',         icon: <Sparkles className="w-4 h-4 text-[#16a34a]" />,   accent: 'bg-green-50',  label: 'Browse Jobs',        desc: 'Jobs with H-1B sponsorship data' },
+                { href: '/',             icon: <Search className="w-4 h-4 text-blue-500" />,       accent: 'bg-blue-50',   label: 'Search Companies',   desc: 'Find verified H-1B sponsors' },
+                { href: '/applications', icon: <Briefcase className="w-4 h-4 text-violet-500" />,  accent: 'bg-violet-50', label: 'My Applications',    desc: `${applications.length} tracked` },
+                { href: '/saved',        icon: <Bookmark className="w-4 h-4 text-amber-500" />,    accent: 'bg-amber-50',  label: 'Saved Companies',    desc: `${savedCount} bookmarked` },
               ].map(item => (
                 <Link key={item.href} href={item.href}
-                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
-                  <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center shrink-0">{item.icon}</div>
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors border-t border-gray-50 first-of-type:border-0">
+                  <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0', item.accent)}>{item.icon}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{item.label}</p>
+                    <p className="text-sm font-semibold text-gray-900">{item.label}</p>
                     <p className="text-xs text-gray-400">{item.desc}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-300" />
                 </Link>
               ))}
             </div>
-          </div>
+          </>
         )}
 
-        {/* ── VISA TAB ── */}
-        {activeTab === 'visa' && (
-          <div className="space-y-5">
-            {/* Visa tip banner */}
-            {visaTip && (
-              <div className="bg-[#16a34a] rounded-2xl p-5 text-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-4 h-4" />
-                  <p className="font-bold text-sm">{visaTip.title}</p>
-                </div>
-                <p className="text-green-100 text-sm leading-relaxed">{visaTip.tip}</p>
-                {visaTip.next && (
-                  <div className="mt-3 flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                    <Clock className="w-3.5 h-3.5 text-green-200 shrink-0" />
-                    <p className="text-xs text-green-100 font-medium">Next: {visaTip.next}</p>
+        {/* ════ VISA STATUS ════ */}
+        {tab === 'visa' && (
+          <>
+            {/* Tip card */}
+            {tip && (
+              <div className={cn(
+                'rounded-2xl p-5 border',
+                tip.urgent
+                  ? 'bg-amber-50 border-amber-200'
+                  : 'bg-green-50 border-green-200'
+              )}>
+                <div className="flex items-start gap-3">
+                  <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
+                    tip.urgent ? 'bg-amber-100' : 'bg-green-100')}>
+                    {tip.urgent
+                      ? <Clock className="w-4 h-4 text-amber-600" />
+                      : <CheckCircle className="w-4 h-4 text-[#16a34a]" />}
                   </div>
-                )}
+                  <div>
+                    <p className={cn('font-bold text-sm', tip.urgent ? 'text-amber-800' : 'text-green-800')}>
+                      {tip.headline}
+                    </p>
+                    <p className={cn('text-sm mt-1 leading-relaxed', tip.urgent ? 'text-amber-700' : 'text-green-700')}>
+                      {tip.body}
+                    </p>
+                    {tip.next && (
+                      <div className={cn('mt-3 flex items-center gap-1.5 text-xs font-semibold',
+                        tip.urgent ? 'text-amber-600' : 'text-green-600')}>
+                        <ArrowUpRight className="w-3.5 h-3.5" /> Next step: {tip.next}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Visa selector */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 mb-1">Work Authorization</h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Helps us surface the most relevant companies for your situation.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
+              <p className="text-sm text-gray-400 mb-5">Select your current status so we can tailor results.</p>
+              <div className="grid grid-cols-2 gap-2.5">
                 {VISA_OPTIONS.map(opt => (
                   <button key={opt.value} onClick={() => setSelected(opt.value)}
                     className={cn(
-                      'flex flex-col items-start p-3.5 rounded-xl border text-left transition-all',
+                      'flex flex-col items-start p-4 rounded-xl border-2 text-left transition-all',
                       selected === opt.value
-                        ? cn(opt.color, 'ring-2 ring-offset-1', opt.ring)
-                        : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
+                        ? cn(opt.bg, opt.text, opt.border, 'ring-2 ring-offset-1', opt.ring)
+                        : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/70'
                     )}>
-                    <span className={cn('text-sm font-semibold', selected === opt.value ? '' : 'text-gray-900')}>
+                    <span className={cn('text-sm font-bold', selected === opt.value ? '' : 'text-gray-900')}>
                       {opt.label}
                     </span>
-                    <span className={cn('text-xs mt-0.5', selected === opt.value ? 'opacity-80' : 'text-gray-400')}>
+                    <span className={cn('text-xs mt-1', selected === opt.value ? 'opacity-70' : 'text-gray-400')}>
                       {opt.desc}
                     </span>
                   </button>
@@ -403,130 +458,143 @@ export default function ProfilePage() {
               <div className="flex items-center gap-3 mt-5">
                 <button onClick={handleSave}
                   disabled={saving || selected === visaType || !selected}
-                  className="px-5 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors">
-                  {saving ? 'Saving…' : 'Save changes'}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl disabled:opacity-40 transition-colors">
+                  {saving ? 'Saving…' : <><CheckCircle className="w-4 h-4" /> Save changes</>}
                 </button>
-                {saved && (
-                  <span className="flex items-center gap-1.5 text-sm text-[#16a34a] font-medium">
-                    <CheckCircle className="w-4 h-4" /> Saved!
-                  </span>
-                )}
-                {visaType && !saved && (
-                  <span className="text-xs text-gray-400">
-                    Current: {VISA_OPTIONS.find(o => o.value === visaType)?.label}
+                {saveOk && (
+                  <span className="flex items-center gap-1.5 text-sm text-[#16a34a] font-semibold">
+                    <CheckCircle className="w-4 h-4" /> Saved
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Visa journey */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h3 className="font-bold text-gray-900 mb-4">Typical international journey</h3>
-              <div className="space-y-3">
+            {/* Journey timeline */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h3 className="font-bold text-gray-900 mb-1">International Work Journey</h3>
+              <p className="text-xs text-gray-400 mb-5">Typical path from student visa to US citizen</p>
+              <div className="relative">
+                {/* Vertical connector */}
+                <div className="absolute left-4 top-5 bottom-5 w-0.5 bg-gray-100" />
+                <div className="space-y-5">
+                  {JOURNEY.map((step, i) => {
+                    const realDone = visaType ? step.after.some(a => a === visaType) || (step.key !== 'CITIZEN' && ['GC','CITIZEN'].includes(visaType) && ['OPT','STEM_OPT','H1B'].includes(step.key)) || (step.key === 'GC' && visaType === 'CITIZEN') : false
+                    const realActive = visaType === step.key
+                    const realFuture = !realDone && !realActive
+                    return (
+                      <div key={step.key} className="flex items-start gap-4 relative">
+                        <div className={cn(
+                          'w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-black border-2 z-10',
+                          realDone   ? 'bg-[#16a34a] border-[#16a34a] text-white' :
+                          realActive ? 'bg-white border-[#16a34a] text-[#16a34a] ring-4 ring-green-100' :
+                                       'bg-white border-gray-200 text-gray-300'
+                        )}>
+                          {realDone ? <CheckCircle className="w-4 h-4" /> : i + 1}
+                        </div>
+                        <div className={cn('flex-1 pb-1', realFuture ? 'opacity-40' : '')}>
+                          <div className="flex items-center gap-2">
+                            <p className={cn('text-sm font-bold',
+                              realDone || realActive ? 'text-gray-900' : 'text-gray-400')}>
+                              {step.label}
+                            </p>
+                            {realActive && (
+                              <span className="px-2 py-0.5 bg-green-100 text-[#16a34a] text-[10px] font-bold rounded-full">
+                                You are here
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">{step.sub}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ════ SETTINGS ════ */}
+        {tab === 'settings' && (
+          <>
+            {/* Account */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <p className="px-5 pt-4 pb-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Account</p>
+              <div className="divide-y divide-gray-50">
+                <div className="flex items-center gap-3 px-5 py-4">
+                  <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">Email address</p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{user.email}</p>
+                  </div>
+                  <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                    <CheckCircle className="w-3 h-3" /> Verified
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 px-5 py-4">
+                  <div className="w-8 h-8 bg-violet-50 rounded-xl flex items-center justify-center shrink-0">
+                    <Target className="w-4 h-4 text-violet-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Visa status</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{currentVisa?.label ?? 'Not set'}</p>
+                  </div>
+                  <button onClick={() => setTab('visa')}
+                    className="text-xs font-semibold text-[#16a34a] hover:underline">
+                    Edit
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Privacy */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <p className="px-5 pt-4 pb-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Privacy</p>
+              <div className="divide-y divide-gray-50">
                 {[
-                  { step: 'OPT', desc: '12-month post-graduation work auth', done: visaType ? ['STEM_OPT','H1B','GC','CITIZEN'].includes(visaType) : false, active: visaType === 'OPT' },
-                  { step: 'STEM OPT', desc: '24-month extension for STEM graduates', done: visaType ? ['H1B','GC','CITIZEN'].includes(visaType) : false, active: visaType === 'STEM_OPT' },
-                  { step: 'H-1B', desc: 'Employer-sponsored specialty occupation visa', done: visaType ? ['GC','CITIZEN'].includes(visaType) : false, active: visaType === 'H1B' },
-                  { step: 'Green Card', desc: 'Permanent resident status (EB-2/EB-3)', done: visaType === 'CITIZEN', active: visaType === 'GC' },
-                  { step: 'US Citizen', desc: 'Full citizenship after 5 years as GC', done: false, active: visaType === 'CITIZEN' },
-                ].map((item, i) => (
-                  <div key={item.step} className="flex items-start gap-3">
-                    <div className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold mt-0.5 border-2',
-                      item.done ? 'bg-[#16a34a] border-[#16a34a] text-white' :
-                      item.active ? 'border-[#16a34a] text-[#16a34a] bg-green-50' :
-                      'border-gray-200 text-gray-400 bg-white'
-                    )}>
-                      {item.done ? <CheckCircle className="w-3.5 h-3.5" /> : i + 1}
-                    </div>
+                  { icon: <Shield className="w-4 h-4 text-[#16a34a]" />,    accent: 'bg-green-50',  title: 'Visa status is private',      desc: 'Only personalises your feed — never shared externally.' },
+                  { icon: <Bookmark className="w-4 h-4 text-amber-500" />,  accent: 'bg-amber-50',  title: 'Saved companies are private',  desc: 'Only visible to you when logged in.' },
+                  { icon: <Briefcase className="w-4 h-4 text-blue-500" />,  accent: 'bg-blue-50',   title: 'Applications are private',     desc: 'Your tracker is only accessible to you.' },
+                ].map(item => (
+                  <div key={item.title} className="flex items-start gap-3 px-5 py-4">
+                    <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0', item.accent)}>{item.icon}</div>
                     <div>
-                      <p className={cn('text-sm font-semibold',
-                        item.done || item.active ? 'text-gray-900' : 'text-gray-400')}>
-                        {item.step} {item.active && <span className="text-xs font-normal text-[#16a34a] ml-1">← you are here</span>}
-                      </p>
+                      <p className="text-sm font-semibold text-gray-900">{item.title}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* ── SETTINGS TAB ── */}
-        {activeTab === 'settings' && (
-          <div className="space-y-5">
-            {/* Account info */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h3 className="font-bold text-gray-900 mb-4">Account</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-gray-50">
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Email address</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Verified</span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <CalendarDays className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Member since</p>
-                      <p className="text-xs text-gray-500">JAD Synq account</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Privacy */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h3 className="font-bold text-gray-900 mb-4">Privacy</h3>
-              <div className="space-y-3">
+            {/* Stats snapshot */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Your Data Snapshot</p>
+              <div className="grid grid-cols-3 gap-3">
                 {[
-                  { icon: <Shield className="w-4 h-4 text-[#16a34a]" />, title: 'Visa status is private', desc: 'Only used to personalise your feed — never shared.' },
-                  { icon: <Bookmark className="w-4 h-4 text-amber-500" />, title: 'Saved companies are private', desc: 'Only visible to you.' },
-                  { icon: <Briefcase className="w-4 h-4 text-blue-500" />, title: 'Applications are private', desc: 'Your job tracker is only accessible to you.' },
-                ].map(item => (
-                  <div key={item.title} className="flex items-start gap-3">
-                    <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center shrink-0 mt-0.5">{item.icon}</div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
-                    </div>
+                  { n: applications.length, l: 'Applications', bg: 'bg-green-50',  t: 'text-[#16a34a]' },
+                  { n: savedCount,          l: 'Saved',        bg: 'bg-amber-50',  t: 'text-amber-600' },
+                  { n: offers,              l: 'Offers',       bg: 'bg-violet-50', t: 'text-violet-600' },
+                ].map(s => (
+                  <div key={s.l} className={cn('rounded-xl p-3 text-center', s.bg)}>
+                    <p className={cn('text-2xl font-black', s.t)}>{s.n}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 font-medium">{s.l}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Data stats */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h3 className="font-bold text-gray-900 mb-4">Your Data</h3>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xl font-bold text-gray-900">{applications.length}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Applications</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xl font-bold text-gray-900">{savedCount}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Saved</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xl font-bold text-gray-900">{offers}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Offers</p>
-                </div>
-              </div>
+            {/* Danger zone */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Session</p>
+              <button onClick={signOut}
+                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 rounded-xl text-sm font-bold transition-all">
+                <LogOut className="w-4 h-4" /> Sign out of JAD Synq
+              </button>
             </div>
-
-            {/* Sign out */}
-            <button onClick={signOut}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-red-100 text-red-500 hover:bg-red-50 rounded-2xl text-sm font-semibold transition-colors">
-              <LogOut className="w-4 h-4" /> Sign out
-            </button>
-          </div>
+          </>
         )}
       </div>
     </div>
