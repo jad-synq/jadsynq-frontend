@@ -94,29 +94,27 @@ export default function CompaniesPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Page header */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 py-6">
-          <div className="flex items-start justify-between gap-4">
+        <div className="max-w-5xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Company Database</h1>
               <p className="text-sm text-gray-500 mt-1">
-                {loading ? '…' : total.toLocaleString()} companies with H-1B or E-Verify data
+                {loading ? '…' : <><span className="font-semibold text-[#16a34a]">{total.toLocaleString()}</span> companies with H-1B or E-Verify data</>}
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> E-Verify enrolled
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> H-1B history
-                </span>
-              </div>
+            <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500">
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 font-medium">
+                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> E-Verify enrolled
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 font-medium">
+                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> H-1B sponsor
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-6 py-6">
         {/* Search bar */}
         <form onSubmit={handleSearch} className="flex gap-2 mb-3">
           <div className="relative flex-1">
@@ -134,7 +132,7 @@ export default function CompaniesPage() {
               </button>
             )}
           </div>
-          <button type="submit" className="px-5 py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+          <button type="submit" className="px-5 py-3 bg-[#16a34a] text-white rounded-xl text-sm font-semibold hover:bg-[#15803d] transition-colors">
             Search
           </button>
           <button
@@ -182,7 +180,7 @@ export default function CompaniesPage() {
                   onClick={() => setEverifyOnly(!everifyOnly)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                    everifyOnly ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    everifyOnly ? 'bg-[#16a34a] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   )}
                 >
                   <CheckCircle className="w-3.5 h-3.5" /> E-Verify only
@@ -191,7 +189,7 @@ export default function CompaniesPage() {
                   onClick={() => setH1bOnly(!h1bOnly)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                    h1bOnly ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    h1bOnly ? 'bg-[#16a34a] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   )}
                 >
                   <TrendingUp className="w-3.5 h-3.5" /> H-1B sponsors only
