@@ -5,17 +5,18 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import {
   Search, Building2, Briefcase, Bookmark, User,
-  LogOut, ChevronDown, Menu, X
+  LogOut, Menu, X, BriefcaseBusiness
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
 const NAV = [
-  { href: '/',               icon: Search,    label: 'Search'       },
-  { href: '/companies-list', icon: Building2, label: 'Companies'    },
-  { href: '/applications',   icon: Briefcase, label: 'Applications' },
-  { href: '/saved',          icon: Bookmark,  label: 'Saved'        },
-  { href: '/profile',        icon: User,      label: 'Profile'      },
+  { href: '/',               icon: Search,            label: 'Search'       },
+  { href: '/companies-list', icon: Building2,         label: 'Companies'    },
+  { href: '/jobs',           icon: BriefcaseBusiness, label: 'Jobs'         },
+  { href: '/applications',   icon: Briefcase,         label: 'Applications' },
+  { href: '/saved',          icon: Bookmark,          label: 'Saved'        },
+  { href: '/profile',        icon: User,              label: 'Profile'      },
 ]
 
 function NavItem({ href, icon: Icon, label, active, onClick }: {

@@ -180,3 +180,47 @@ export const deleteApplication = (id: string) =>
 
 export const submitOPTReport = (companyId: string, data: { supports_opt: boolean; supports_stem_opt: boolean }) =>
   api.post(`/api/companies/${companyId}/opt-report`, data)
+
+// ── Jobs ─────────────────────────────────────────────────────────────────────
+
+export interface JobRoleResult {
+  company_id: string
+  legal_name: string
+  logo_url: string | null
+  careers_url: string | null
+  domain: string | null
+  everify_status: string
+  job_title: string
+  petitions: number
+  approved: number
+  denied: number
+  approval_rate: number | null
+  avg_wage: number | null
+}
+
+export interface JobTitleSuggestion {
+  title: string
+  company_count: number
+  total_petitions: number
+}
+
+export interface JobSearchResponse {
+  jobs: JobRoleResult[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export const searchJobs = (params: {
+  title: string
+  everify_only?: boolean
+  min_petitions?: number
+  limit?: number
+  offset?: number
+}) => api.get<JobSearchResponse>('/api/jobs/search', { params })
+
+export const getJobTitleSuggestions = (q: string) =>
+  api.get<JobTitleSuggestion[]>('/api/jobs/titles', { params: { q, limit: 8 } })
+
+export const getCompanyJobRoles = (companyId: string) =>
+  api.get<JobRoleResult[]>(`/api/jobs/company/${companyId}`)
