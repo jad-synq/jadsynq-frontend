@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { TrendingUp, CheckCircle, Briefcase, ChevronRight, Database, Shield } from 'lucide-react'
 import SearchBar, { SearchFilters } from '@/components/search/SearchBar'
 import SearchResultCard from '@/components/search/SearchResultCard'
 import { searchCompanies, SearchResult } from '@/lib/api'
@@ -80,6 +82,88 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
+      {/* Feature Cards — only shown before search */}
+      {!hasSearched && (
+        <div className="max-w-4xl mx-auto px-4 pb-16">
+          <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">
+            What you can do with JAD Synq
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:border-blue-200 hover:shadow-sm transition-all">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
+                <Database className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">H-1B Intelligence</h3>
+              <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+                Browse 80,000+ companies with real H-1B petition data from government filings.
+              </p>
+              <Link
+                href="/companies-list"
+                className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Browse all companies <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:border-green-200 hover:shadow-sm transition-all">
+              <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center mb-4">
+                <Shield className="w-5 h-5 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">E-Verify Status</h3>
+              <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+                See which companies are enrolled in E-Verify — a key indicator for OPT and STEM-OPT eligibility.
+              </p>
+              <button
+                onClick={() => handleSearch('', { everify_only: true, h1b_only: false })}
+                className="inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
+              >
+                E-Verify companies <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:border-purple-200 hover:shadow-sm transition-all">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
+                <Briefcase className="w-5 h-5 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Application Tracker</h3>
+              <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+                Track every job application — from applied to offer — with status updates and notes.
+              </p>
+              <Link
+                href="/applications"
+                className="inline-flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
+              >
+                Track applications <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white text-center">
+            <TrendingUp className="w-8 h-8 mx-auto mb-3 opacity-90" />
+            <h3 className="font-bold text-lg mb-1">Ready to find your next sponsor?</h3>
+            <p className="text-blue-100 text-sm mb-4">
+              Search by company name and filter by H-1B history or E-Verify enrollment.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/companies-list"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-blue-700 rounded-xl text-sm font-semibold hover:bg-blue-50 transition-colors"
+              >
+                <Database className="w-4 h-4" />
+                Browse Companies
+              </Link>
+              <Link
+                href="/applications"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-semibold hover:bg-blue-400 transition-colors border border-blue-400"
+              >
+                <Briefcase className="w-4 h-4" />
+                Track Applications
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Results Section */}
       {hasSearched && (

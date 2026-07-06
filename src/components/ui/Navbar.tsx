@@ -24,6 +24,11 @@ export default function Navbar() {
           <Link href="/companies-list" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
             Companies
           </Link>
+          {user && (
+            <Link href="/applications" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
+              Applications
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -81,7 +86,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/auth"
-              className="text-sm font-medium text-[#14532d] hover:text-green-800 px-3 py-1.5 rounded-lg hover:bg-[#f0fdf4] transition-colors"
+              className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors shadow-sm"
             >
               Sign in
             </Link>

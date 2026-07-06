@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle, XCircle, TrendingUp, DollarSign } from 'lucide-react'
+import { CheckCircle, XCircle, TrendingUp, DollarSign, ChevronRight } from 'lucide-react'
 import { cn, formatWage, formatApprovalRate } from '@/lib/utils'
 import type { SearchResult } from '@/lib/api'
 
@@ -86,6 +86,19 @@ export default function SearchResultCard({ result }: SearchResultCardProps) {
             Fuzzy match — {Math.round(result.match_confidence * 100)}% confidence
           </p>
         )}
+
+        <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
+          <div className="flex gap-2">
+            {result.careers_url && (
+              <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">
+                Careers page
+              </span>
+            )}
+          </div>
+          <span className="text-xs font-medium text-blue-600 group-hover:text-blue-700 flex items-center gap-0.5">
+            View Details <ChevronRight className="w-3 h-3" />
+          </span>
+        </div>
       </div>
     </Link>
   )
