@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { User, CheckCircle, Shield } from 'lucide-react'
+import { User, CheckCircle, Shield, Briefcase, Bookmark, Search, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { getMe, updateMe, VisaType } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -172,9 +172,9 @@ export default function ProfilePage() {
             <button
               onClick={handleSave}
               disabled={saving || selected === visaType || !selected}
-              className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? 'Saving...' : 'Save changes'}
             </button>
             {saved && (
               <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
@@ -185,6 +185,28 @@ export default function ProfilePage() {
               <span className="text-xs text-gray-400">Current: {VISA_OPTIONS.find(o => o.value === visaType)?.label}</span>
             )}
           </div>
+        </div>
+
+        {/* Quick links */}
+        <div className="mt-4 bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
+          {[
+            { href: '/', icon: <Search className="w-4 h-4 text-blue-500" />, label: 'Search companies', desc: 'Find H-1B sponsors' },
+            { href: '/applications', icon: <Briefcase className="w-4 h-4 text-purple-500" />, label: 'My applications', desc: 'Track job applications' },
+            { href: '/saved', icon: <Bookmark className="w-4 h-4 text-amber-500" />, label: 'Saved companies', desc: 'Bookmarked companies' },
+          ].map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
+            >
+              <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center shrink-0">{item.icon}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">{item.label}</p>
+                <p className="text-xs text-gray-400">{item.desc}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </Link>
+          ))}
         </div>
       </div>
     </main>

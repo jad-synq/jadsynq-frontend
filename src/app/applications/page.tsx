@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Briefcase, Plus, Trash2, ExternalLink, ChevronDown, ArrowRight } from 'lucide-react'
+import { Briefcase, Plus, Trash2, ExternalLink, ChevronDown, ArrowRight, Send, Phone, Users, PartyPopper, XCircle, MinusCircle } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import {
   getApplications, createApplication, updateApplication, deleteApplication,
@@ -26,6 +26,24 @@ const STATUS_COLORS: Record<AppStatus, string> = {
   offer: 'bg-green-50 text-green-700',
   rejected: 'bg-red-50 text-red-600',
   withdrawn: 'bg-gray-50 text-gray-500',
+}
+
+const STATUS_ICONS: Record<AppStatus, React.ReactNode> = {
+  applied: <Send className="w-4 h-4" />,
+  phone_screen: <Phone className="w-4 h-4" />,
+  onsite: <Users className="w-4 h-4" />,
+  offer: <PartyPopper className="w-4 h-4" />,
+  rejected: <XCircle className="w-4 h-4" />,
+  withdrawn: <MinusCircle className="w-4 h-4" />,
+}
+
+const STATUS_BG: Record<AppStatus, string> = {
+  applied: 'bg-blue-600',
+  phone_screen: 'bg-purple-600',
+  onsite: 'bg-orange-500',
+  offer: 'bg-green-600',
+  rejected: 'bg-red-500',
+  withdrawn: 'bg-gray-400',
 }
 
 const ALL_STATUSES: AppStatus[] = ['applied', 'phone_screen', 'onsite', 'offer', 'rejected', 'withdrawn']
@@ -404,16 +422,24 @@ export default function ApplicationsPage() {
               key={s}
               onClick={() => setFilterStatus(filterStatus === s ? 'all' : s)}
               className={cn(
-                'flex flex-col items-center p-2 rounded-xl border text-xs transition-colors',
+                'flex flex-col items-center p-3 rounded-xl border transition-all',
                 filterStatus === s
-                  ? 'border-blue-300 bg-blue-50'
+                  ? 'border-transparent shadow-sm scale-[1.02]'
                   : 'border-gray-100 bg-white hover:border-gray-200'
               )}
+              style={filterStatus === s ? {} : {}}
             >
-              <span className={cn('text-lg font-bold', filterStatus === s ? 'text-blue-700' : 'text-gray-900')}>
-                {counts[s]}
-              </span>
-              <span className="text-gray-500 mt-0.5 leading-tight text-center">
+              {filterStatus === s ? (
+                <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center text-white mb-1.5', STATUS_BG[s])}>
+                  {STATUS_ICONS[s]}
+                </div>
+              ) : (
+                <span className="text-xl font-bold text-gray-900 mb-1">{counts[s]}</span>
+              )}
+              {filterStatus === s ? (
+                <span className="text-lg font-bold text-gray-900">{counts[s]}</span>
+              ) : null}
+              <span className={cn('text-xs leading-tight text-center', filterStatus === s ? 'text-gray-600 font-medium mt-0.5' : 'text-gray-400')}>
                 {STATUS_LABELS[s]}
               </span>
             </button>
@@ -426,16 +452,21 @@ export default function ApplicationsPage() {
 
         {filtered.length === 0 && (
           <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-            <Briefcase className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <Briefcase className="w-6 h-6 text-blue-500" />
+            </div>
+            <p className="text-gray-700 font-semibold">
               {filterStatus === 'all' ? 'No applications yet' : `No ${STATUS_LABELS[filterStatus]} applications`}
+            </p>
+            <p className="text-sm text-gray-400 mt-1 mb-4">
+              {filterStatus === 'all' ? 'Start tracking your job search' : 'Try a different filter'}
             </p>
             {filterStatus === 'all' && (
               <button
                 onClick={() => setShowForm(true)}
-                className="mt-3 text-sm text-blue-600 hover:underline"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
               >
-                Add your first application
+                <Plus className="w-4 h-4" /> Add your first application
               </button>
             )}
           </div>
