@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { TrendingUp, CheckCircle, Briefcase, ChevronRight, Database, Shield } from 'lucide-react'
+import { TrendingUp, Briefcase, ChevronRight, Database, Shield } from 'lucide-react'
 import SearchBar, { SearchFilters } from '@/components/search/SearchBar'
 import SearchResultCard from '@/components/search/SearchResultCard'
 import { searchCompanies, SearchResult } from '@/lib/api'
