@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Briefcase, Plus, Trash2, ExternalLink, ChevronDown } from 'lucide-react'
+import { Briefcase, Plus, Trash2, ExternalLink, ChevronDown, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import {
   getApplications, createApplication, updateApplication, deleteApplication,
@@ -35,6 +35,80 @@ function StatusBadge({ status }: { status: AppStatus }) {
     <span className={cn('px-2.5 py-1 rounded-full text-xs font-medium', STATUS_COLORS[status])}>
       {STATUS_LABELS[status]}
     </span>
+  )
+}
+
+function UnauthenticatedView() {
+  const pipeline: AppStatus[] = ['applied', 'phone_screen', 'onsite', 'offer']
+  const mockApps = [
+    { company: 'Google', title: 'Software Engineer', status: 'onsite' as AppStatus, date: '2026-06-28' },
+    { company: 'Amazon', title: 'SDE II', status: 'phone_screen' as AppStatus, date: '2026-07-01' },
+    { company: 'Microsoft', title: 'SWE', status: 'applied' as AppStatus, date: '2026-07-04' },
+  ]
+
+  return (
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4">
+            <Briefcase className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Tracker</h1>
+          <p className="text-gray-500 max-w-sm mx-auto">
+            Track every job application in one place — from first apply to offer.
+          </p>
+        </div>
+
+        {/* Pipeline visual */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your pipeline</p>
+          <div className="flex items-center gap-1">
+            {pipeline.map((s, i) => (
+              <div key={s} className="flex items-center gap-1 flex-1">
+                <div className={cn(
+                  'flex-1 py-2 px-3 rounded-xl text-xs font-medium text-center',
+                  STATUS_COLORS[s]
+                )}>
+                  {STATUS_LABELS[s]}
+                </div>
+                {i < pipeline.length - 1 && (
+                  <ArrowRight className="w-3 h-3 text-gray-300 shrink-0" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mock app cards */}
+        <div className="space-y-2 mb-6 opacity-60 pointer-events-none select-none">
+          {mockApps.map((app, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-gray-900">{app.company}</p>
+                  <p className="text-sm text-gray-500">{app.title}</p>
+                </div>
+                <StatusBadge status={app.status} />
+              </div>
+              <p className="text-xs text-gray-400 mt-2">{app.date}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div className="bg-blue-600 rounded-2xl p-6 text-center text-white">
+          <p className="font-semibold text-lg mb-1">Ready to get organized?</p>
+          <p className="text-blue-200 text-sm mb-4">Sign in free — no credit card needed.</p>
+          <Link
+            href="/auth"
+            className="inline-block bg-white text-blue-700 font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-blue-50 transition-colors"
+          >
+            Sign in to start tracking
+          </Link>
+        </div>
+      </div>
+    </main>
   )
 }
 
@@ -270,6 +344,20 @@ export default function ApplicationsPage() {
       .finally(() => setLoading(false))
   }, [user, authLoading])
 
+  if (authLoading || (loading && user)) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+          ))}
+        </div>
+      </main>
+    )
+  }
+
+  if (!user) return <UnauthenticatedView />
+
   const handleAdd = (app: JobApplication) => {
     setApps(prev => [app, ...prev])
     setShowForm(false)
@@ -289,29 +377,6 @@ export default function ApplicationsPage() {
     acc[s] = apps.filter(a => a.status === s).length
     return acc
   }, {} as Record<AppStatus, number>)
-
-  if (authLoading || loading) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
-          ))}
-        </div>
-      </main>
-    )
-  }
-
-  if (!user) {
-    return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-gray-500 text-lg">Sign in to track your applications</p>
-          <Link href="/auth" className="mt-3 inline-block text-blue-600 hover:underline">Sign in</Link>
-        </div>
-      </main>
-    )
-  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -349,7 +414,7 @@ export default function ApplicationsPage() {
                 {counts[s]}
               </span>
               <span className="text-gray-500 mt-0.5 leading-tight text-center">
-                {STATUS_LABELS[s].replace(' ', '\n')}
+                {STATUS_LABELS[s]}
               </span>
             </button>
           ))}
@@ -360,14 +425,15 @@ export default function ApplicationsPage() {
         )}
 
         {filtered.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">
+          <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+            <Briefcase className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+            <p className="text-gray-500 font-medium">
               {filterStatus === 'all' ? 'No applications yet' : `No ${STATUS_LABELS[filterStatus]} applications`}
             </p>
             {filterStatus === 'all' && (
               <button
                 onClick={() => setShowForm(true)}
-                className="mt-2 text-sm text-blue-600 hover:underline"
+                className="mt-3 text-sm text-blue-600 hover:underline"
               >
                 Add your first application
               </button>
