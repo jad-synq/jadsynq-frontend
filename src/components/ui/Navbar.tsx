@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { User, LogOut, Bookmark } from 'lucide-react'
+import { User, LogOut, Bookmark, Briefcase } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function Navbar() {
@@ -48,6 +48,23 @@ export default function Navbar() {
                     <Bookmark className="w-4 h-4" />
                     Saved Companies
                   </Link>
+                  <Link
+                    href="/applications"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    Applications
+                  </Link>
+                  <Link
+                    href="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <User className="w-4 h-4" />
+                    Profile
+                  </Link>
+                  <div className="border-t border-gray-50 my-1" />
                   <button
                     onClick={() => {
                       signOut()

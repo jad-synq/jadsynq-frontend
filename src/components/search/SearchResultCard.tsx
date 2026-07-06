@@ -20,13 +20,24 @@ export default function SearchResultCard({ result }: SearchResultCardProps) {
         "hover:shadow-md transition-all cursor-pointer group"
       )}>
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-              {result.legal_name}
-            </h3>
-            {result.dba_name && (
-              <p className="text-sm text-gray-500 mt-0.5">DBA: {result.dba_name}</p>
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {result.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={result.logo_url}
+                alt={result.legal_name}
+                className="w-9 h-9 rounded-lg object-contain border border-gray-100 bg-white p-0.5 shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
             )}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                {result.legal_name}
+              </h3>
+              {result.dba_name && (
+                <p className="text-sm text-gray-500 mt-0.5">DBA: {result.dba_name}</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {isEnrolled ? (

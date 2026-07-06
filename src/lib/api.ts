@@ -26,6 +26,9 @@ export interface SearchResult {
   approval_rate: number | null
   avg_wage: number | null
   match_confidence: number
+  logo_url: string | null
+  domain: string | null
+  careers_url: string | null
 }
 
 export interface CompanyProfile {
@@ -124,3 +127,56 @@ export const getCompanies = (params: {
   h1b_only?: boolean
   sort?: 'petitions' | 'approval_rate' | 'avg_wage' | 'name'
 }) => api.get<CompaniesListResponse>('/api/companies', { params })
+
+export type VisaType = 'OPT' | 'STEM_OPT' | 'H1B' | 'GC' | 'CITIZEN' | 'OTHER'
+export type AppStatus = 'applied' | 'phone_screen' | 'onsite' | 'offer' | 'rejected' | 'withdrawn'
+
+export interface UserProfile {
+  id: string
+  email: string | null
+  visa_type: VisaType | null
+}
+
+export const getMe = () => api.get<UserProfile>('/api/users/me')
+
+export const updateMe = (visa_type: VisaType) =>
+  api.patch<UserProfile>('/api/users/me', { visa_type })
+
+export interface JobApplication {
+  id: string
+  company_id: string | null
+  company_name: string
+  job_title: string | null
+  job_url: string | null
+  status: AppStatus
+  applied_date: string | null
+  notes: string | null
+  updated_at: string
+}
+
+export const getApplications = (status?: AppStatus) =>
+  api.get<JobApplication[]>('/api/users/me/applications', { params: status ? { status } : {} })
+
+export const createApplication = (data: {
+  company_name: string
+  company_id?: string
+  job_title?: string
+  job_url?: string
+  status?: AppStatus
+  applied_date?: string
+  notes?: string
+}) => api.post<JobApplication>('/api/users/me/applications', data)
+
+export const updateApplication = (id: string, data: {
+  status?: AppStatus
+  job_title?: string
+  job_url?: string
+  applied_date?: string
+  notes?: string
+}) => api.patch<JobApplication>(`/api/users/me/applications/${id}`, data)
+
+export const deleteApplication = (id: string) =>
+  api.delete(`/api/users/me/applications/${id}`)
+
+export const submitOPTReport = (companyId: string, data: { supports_opt: boolean; supports_stem_opt: boolean }) =>
+  api.post(`/api/companies/${companyId}/opt-report`, data)

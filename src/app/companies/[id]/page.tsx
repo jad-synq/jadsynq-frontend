@@ -5,10 +5,10 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, CheckCircle, XCircle, TrendingUp,
-  DollarSign, Building2, MapPin, Briefcase, Bookmark, BookmarkCheck
+  DollarSign, Building2, MapPin, Briefcase, Bookmark, BookmarkCheck, ThumbsUp
 } from 'lucide-react'
 import { isAxiosError } from 'axios'
-import { getCompany, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, CompanyProfile, H1BYearSummary } from '@/lib/api'
+import { getCompany, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, CompanyProfile, H1BYearSummary } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -24,6 +24,8 @@ export default function CompanyPage() {
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [saveLoading, setSaveLoading] = useState(false)
+  const [optSubmitted, setOptSubmitted] = useState(false)
+  const [optLoading, setOptLoading] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -111,6 +113,19 @@ export default function CompanyPage() {
   }
 
   const isEnrolled = company.everify?.status === 'enrolled'
+
+  const handleOPTReport = async (supportsOpt: boolean, supportsStemOpt: boolean) => {
+    if (!user) { router.push('/auth'); return }
+    setOptLoading(true)
+    try {
+      await submitOPTReport(id, { supports_opt: supportsOpt, supports_stem_opt: supportsStemOpt })
+      setOptSubmitted(true)
+    } catch {
+      // silently ignore
+    } finally {
+      setOptLoading(false)
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -329,6 +344,51 @@ export default function CompanyPage() {
             </div>
           </div>
         )}
+
+        {/* OPT / STEM OPT crowdsourced report */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-4">
+          <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            <ThumbsUp className="w-4 h-4 text-gray-400" />
+            OPT / STEM OPT Support
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Has this company sponsored OPT or STEM OPT? Help others by sharing what you know.
+          </p>
+          {optSubmitted ? (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3">
+              <CheckCircle className="w-4 h-4" /> Thank you for your report!
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleOPTReport(true, true)}
+                disabled={optLoading}
+                className="px-4 py-2 text-sm font-medium bg-green-50 text-green-700 rounded-xl hover:bg-green-100 disabled:opacity-50 transition-colors"
+              >
+                Supports OPT + STEM OPT
+              </button>
+              <button
+                onClick={() => handleOPTReport(true, false)}
+                disabled={optLoading}
+                className="px-4 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 disabled:opacity-50 transition-colors"
+              >
+                OPT only
+              </button>
+              <button
+                onClick={() => handleOPTReport(false, false)}
+                disabled={optLoading}
+                className="px-4 py-2 text-sm font-medium bg-red-50 text-red-600 rounded-xl hover:bg-red-100 disabled:opacity-50 transition-colors"
+              >
+                Does not support
+              </button>
+              {!user && (
+                <p className="w-full text-xs text-gray-400 mt-1">
+                  <Link href="/auth" className="text-blue-600 hover:underline">Sign in</Link> to submit a report
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
       </div>
     </main>
