@@ -9,6 +9,7 @@ import {
   BookmarkCheck, Sparkles, X
 } from 'lucide-react'
 import { searchJobs, getJobTitleSuggestions, createApplication, saveCompany, unsaveCompany, JobRoleResult, JobTitleSuggestion } from '@/lib/api'
+import CompanyLogo from '@/components/ui/CompanyLogo'
 import { isAxiosError } from 'axios'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -49,16 +50,12 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
     <div className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all p-5">
       <div className="flex items-start gap-4">
         {/* Logo */}
-        <div className="w-12 h-12 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-          {job.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={job.logo_url} alt={job.legal_name}
-              className="w-full h-full object-contain p-1"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-          ) : (
-            <span className="text-lg font-bold text-gray-400">{job.legal_name[0]}</span>
-          )}
-        </div>
+        <CompanyLogo
+          logoUrl={job.logo_url}
+          domain={job.domain}
+          name={job.legal_name}
+          size="lg"
+        />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">

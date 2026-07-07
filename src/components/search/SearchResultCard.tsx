@@ -8,6 +8,7 @@ import { saveCompany, unsaveCompany } from '@/lib/api'
 import type { SearchResult } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
+import CompanyLogo, { linkedinCompanyUrl } from '@/components/ui/CompanyLogo'
 
 interface SearchResultCardProps {
   result: SearchResult
@@ -40,15 +41,12 @@ export default function SearchResultCard({ result }: SearchResultCardProps) {
       )}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            {result.logo_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={result.logo_url}
-                alt={result.legal_name}
-                className="w-9 h-9 rounded-lg object-contain border border-gray-100 bg-white p-0.5 shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
-            )}
+            <CompanyLogo
+              logoUrl={result.logo_url}
+              domain={result.domain}
+              name={result.legal_name}
+              size="sm"
+            />
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
                 {result.legal_name}
@@ -118,12 +116,25 @@ export default function SearchResultCard({ result }: SearchResultCardProps) {
         )}
 
         <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             {result.careers_url && (
               <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">
                 Careers page
               </span>
             )}
+            <a
+              href={linkedinCompanyUrl(result.domain, result.legal_name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              title="View on LinkedIn"
+              className="flex items-center gap-1 text-xs text-[#0a66c2] hover:underline"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+              LinkedIn
+            </a>
           </div>
           <span className="text-xs font-medium text-blue-600 group-hover:text-blue-700 flex items-center gap-0.5">
             View Details <ChevronRight className="w-3 h-3" />
