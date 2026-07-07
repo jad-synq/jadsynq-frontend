@@ -52,6 +52,7 @@ export default function CompaniesPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [slowLoad, setSlowLoad] = useState(false)
   const [query, setQuery] = useState('')
   const [inputValue, setInputValue] = useState('')
   const [sort, setSort] = useState('petitions')
@@ -61,8 +62,9 @@ export default function CompaniesPage() {
 
   const PER_PAGE = 20
 
-  const fetchCompanies = useCallback(async (p = 1) => {
+  const fetchCompanies = useCallback(async (p = 1, attempt = 1) => {
     setLoading(true)
+    const slowTimer = attempt === 1 ? setTimeout(() => setSlowLoad(true), 5000) : null
     try {
       const res = await getCompaniesCached({
         q: query || undefined,
@@ -76,8 +78,16 @@ export default function CompaniesPage() {
       setTotal(res.data.total)
       setPage(p)
     } catch {
+      if (attempt === 1) {
+        // Retry once — backend may have been cold-starting
+        await new Promise(r => setTimeout(r, 2000))
+        fetchCompanies(p, 2)
+        return
+      }
       setCompanies([])
     } finally {
+      if (slowTimer) clearTimeout(slowTimer)
+      setSlowLoad(false)
       setLoading(false)
     }
   }, [query, sort, everifyOnly, h1bOnly])
@@ -224,6 +234,12 @@ export default function CompaniesPage() {
         {/* Company list */}
         {loading ? (
           <div className="space-y-2">
+            {slowLoad && (
+              <div className="flex items-center gap-2 px-4 py-3 mb-2 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700">
+                <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                Backend is starting up — this takes about 30 seconds after inactivity. Hang tight…
+              </div>
+            )}
             {[...Array(8)].map((_, i) => (
               <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
             ))}

@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 45000,
 })
 
 // Attach Supabase JWT to every request if user is logged in
