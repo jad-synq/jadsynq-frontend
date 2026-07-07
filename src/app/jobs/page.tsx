@@ -185,7 +185,7 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
           </div>
 
           <div className="flex flex-wrap gap-2 mt-4">
-            <button onClick={() => { if (!user) { useRouter().push('/auth'); return }; onLogApp(job) }}
+            <button onClick={() => { if (!user) { router.push('/auth'); return }; onLogApp(job) }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors">
               <Plus className="w-3.5 h-3.5" /> Log Application
             </button>
