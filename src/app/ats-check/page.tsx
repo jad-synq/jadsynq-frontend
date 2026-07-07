@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { FileText, ChevronRight, CheckCircle, XCircle, AlertCircle, Zap, Upload, ArrowRight } from 'lucide-react'
+import { FileText, ChevronRight, CheckCircle, XCircle, AlertCircle, Zap, Upload, ArrowRight, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { buildResumeText } from '../resume-builder/templates'
 
 // ── Scoring Engine ────────────────────────────────────────────────────────────
 
@@ -180,12 +181,29 @@ export default function ATSCheckPage() {
   const [jd, setJd] = useState('')
   const [result, setResult] = useState<ATSResult | null>(null)
   const [analyzed, setAnalyzed] = useState(false)
+  const [imported, setImported] = useState(false)
 
   const handleAnalyze = useCallback(() => {
     if (!resume.trim() || !jd.trim()) return
     setResult(analyze(resume, jd))
     setAnalyzed(true)
   }, [resume, jd])
+
+  const handleImportFromBuilder = () => {
+    try {
+      const stored = localStorage.getItem('jadsynq_resume')
+      if (!stored) return
+      const parsed = JSON.parse(stored)
+      if (parsed.data) {
+        const text = buildResumeText(parsed.data)
+        if (text.trim()) {
+          setResume(text)
+          setImported(true)
+          setTimeout(() => setImported(false), 2500)
+        }
+      }
+    } catch {}
+  }
 
   const scoreLabel = (pts: number, max: number) =>
     `${pts}/${max} pts`
@@ -236,16 +254,32 @@ export default function ATSCheckPage() {
               <label className="block text-sm font-bold text-gray-700">
                 Your Resume <span className="text-red-500">*</span>
               </label>
-              <Link href="/resume-builder"
-                className="flex items-center gap-1 text-xs text-[#16a34a] font-semibold hover:underline">
-                <Upload className="w-3 h-3" /> Build with builder
-              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleImportFromBuilder}
+                  className={cn(
+                    'flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-colors',
+                    imported
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100'
+                  )}
+                >
+                  <Wand2 className="w-3 h-3" />
+                  {imported ? 'Imported!' : 'Import from Builder'}
+                </button>
+                <Link href="/resume-builder"
+                  className="flex items-center gap-1 text-xs text-[#16a34a] font-semibold hover:underline">
+                  <Upload className="w-3 h-3" /> Build
+                </Link>
+              </div>
             </div>
-            <p className="text-xs text-gray-400 mb-3">Paste your resume as plain text (copy from your Word/PDF document)</p>
+            <p className="text-xs text-gray-400 mb-3">
+              Import from Resume Builder or paste your resume as plain text
+            </p>
             <textarea
               value={resume}
-              onChange={e => setResume(e.target.value)}
-              placeholder="Paste your resume here…"
+              onChange={e => { setResume(e.target.value); setImported(false) }}
+              placeholder="Paste your resume here, or click 'Import from Builder' to use your saved resume…"
               className="w-full h-52 text-sm border border-gray-200 rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#16a34a] font-mono"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">{resume.split(/\s+/).filter(Boolean).length} words</p>

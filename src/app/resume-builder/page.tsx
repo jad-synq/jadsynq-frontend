@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import {
   FileText, Plus, Trash2, ChevronDown, ChevronUp,
   Printer, Download, Zap, Eye, EyeOff, Check,
-  User, Briefcase, GraduationCap, Wrench, FolderGit2, Award, Palette
+  User, Briefcase, GraduationCap, Wrench, FolderGit2, Award, Palette,
+  Wand2, Upload, AlertCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   BLANK, TEMPLATES, TEMPLATE_COMPONENTS, THUMBS,
+  buildResumeText, parseResumeText,
   ResumeData, Experience, Education, Project, Certification, TemplateId,
 } from './templates'
 
@@ -95,56 +97,204 @@ function TemplatePicker({ current, onSelect, onClose }: {
   )
 }
 
-// ── Resume text export ────────────────────────────────────────────────────────
+// ── Auto-fill Modal ───────────────────────────────────────────────────────────
 
-function buildResumeText(d: ResumeData): string {
-  const lines: string[] = []
-  const p = d.personal
-  if (p.name) lines.push(p.name.toUpperCase())
-  const contactLine = [p.email, p.phone, p.location, p.linkedin, p.website].filter(Boolean).join(' | ')
-  if (contactLine) lines.push(contactLine)
-  if (p.visa) lines.push(`Work Authorization: ${p.visa}`)
-  lines.push('')
-  if (d.summary) { lines.push('SUMMARY'); lines.push(d.summary); lines.push('') }
-  if (d.experience.length) {
-    lines.push('EXPERIENCE')
-    d.experience.forEach(e => {
-      lines.push(`${e.title} — ${e.company}${e.location ? `, ${e.location}` : ''}`)
-      lines.push(`${e.startDate}${(e.endDate || e.current) ? ` – ${e.current ? 'Present' : e.endDate}` : ''}`)
-      e.bullets.filter(Boolean).forEach(b => lines.push(`• ${b}`))
-      lines.push('')
-    })
+function AutoFillModal({ onApply, onClose }: {
+  onApply: (parsed: Partial<ResumeData>) => void
+  onClose: () => void
+}) {
+  const [text, setText] = useState('')
+  const [parsed, setParsed] = useState<Partial<ResumeData> | null>(null)
+  const [step, setStep] = useState<'input' | 'preview'>('input')
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => setText(ev.target?.result as string ?? '')
+    reader.readAsText(file)
   }
-  if (d.education.length) {
-    lines.push('EDUCATION')
-    d.education.forEach(e => {
-      lines.push(`${e.degree}${e.field ? ` in ${e.field}` : ''} — ${e.school}`)
-      lines.push(`${e.startDate}${e.endDate ? ` – ${e.endDate}` : ''}${e.gpa ? `  |  GPA: ${e.gpa}` : ''}`)
-      lines.push('')
-    })
+
+  const handleParse = () => {
+    const result = parseResumeText(text)
+    setParsed(result)
+    setStep('preview')
   }
-  const skillLines = [
-    d.skills.technical && `Technical: ${d.skills.technical}`,
-    d.skills.languages && `Languages: ${d.skills.languages}`,
-    d.skills.tools && `Tools: ${d.skills.tools}`,
-    d.skills.soft && `Soft Skills: ${d.skills.soft}`,
-  ].filter(Boolean)
-  if (skillLines.length) { lines.push('SKILLS'); skillLines.forEach(s => lines.push(s!)); lines.push('') }
-  if (d.projects.length) {
-    lines.push('PROJECTS')
-    d.projects.forEach(proj => {
-      lines.push(`${proj.name}${proj.tech ? ` | ${proj.tech}` : ''}${proj.url ? `  ${proj.url}` : ''}`)
-      proj.bullets.filter(Boolean).forEach(b => lines.push(`• ${b}`))
-      lines.push('')
-    })
+
+  const handleApply = () => {
+    if (parsed) { onApply(parsed); onClose() }
   }
-  if (d.certifications.length) {
-    lines.push('CERTIFICATIONS')
-    d.certifications.forEach(c => {
-      lines.push(`${c.name}${c.issuer ? ` — ${c.issuer}` : ''}${c.date ? ` (${c.date})` : ''}`)
-    })
-  }
-  return lines.join('\n')
+
+  const fieldCount = parsed ? [
+    parsed.personal?.name, parsed.personal?.email, parsed.personal?.phone,
+    parsed.summary,
+    ...(parsed.experience ?? []).map(e => e.title),
+    ...(parsed.education ?? []).map(e => e.school),
+    parsed.skills?.technical,
+  ].filter(Boolean).length : 0
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-[#16a34a] rounded-xl flex items-center justify-center">
+              <Wand2 className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900">Auto-fill from Existing Resume</h2>
+              <p className="text-xs text-gray-500">Paste your resume text and we&apos;ll fill in all the fields</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5">
+          {step === 'input' ? (
+            <div className="space-y-4">
+              {/* Upload */}
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 hover:border-[#16a34a] rounded-xl p-4 text-center cursor-pointer transition-colors group"
+              >
+                <Upload className="w-6 h-6 mx-auto mb-2 text-gray-300 group-hover:text-[#16a34a] transition-colors" />
+                <p className="text-sm font-semibold text-gray-600 group-hover:text-[#16a34a]">Upload .txt file</p>
+                <p className="text-xs text-gray-400 mt-1">Or paste resume text below</p>
+                <input ref={fileRef} type="file" accept=".txt,.text,text/plain" className="hidden" onChange={handleFile} />
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center px-4">
+                  <div className="flex-1 border-t border-gray-100" />
+                  <span className="mx-3 text-xs text-gray-400 bg-white px-1">OR</span>
+                  <div className="flex-1 border-t border-gray-100" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">Paste Resume Text</label>
+                <textarea
+                  value={text}
+                  onChange={e => setText(e.target.value)}
+                  placeholder={"Jane Smith\njane@email.com  |  (555) 123-4567  |  New York, NY\nlinkedin.com/in/janesmith\n\nSUMMARY\nResults-driven software engineer...\n\nEXPERIENCE\nSoftware Engineer\nGoogle · Mountain View, CA\nJan 2022 – Present\n• Built scalable APIs serving 1M+ requests/day\n\nEDUCATION\nMaster of Science in Computer Science — MIT\nSep 2019 – May 2021\n\nSKILLS\nPython, TypeScript, React, PostgreSQL, AWS"}
+                  className="w-full h-64 text-sm border border-gray-200 rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#16a34a] font-mono text-xs leading-relaxed"
+                />
+                <p className="text-xs text-gray-400 mt-1 text-right">{text.split(/\s+/).filter(Boolean).length} words</p>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2.5">
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-700 space-y-1">
+                  <p className="font-semibold">Best results tips:</p>
+                  <ul className="space-y-0.5 list-disc list-inside text-amber-600">
+                    <li>Copy-paste from your Word doc or PDF (select all text, then paste)</li>
+                    <li>Make sure section headers like EXPERIENCE, EDUCATION, SKILLS are on their own lines</li>
+                    <li>Review parsed fields after — auto-fill catches ~80% correctly</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Preview of parsed data */}
+              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl">
+                <Check className="w-4 h-4 text-[#16a34a] shrink-0" />
+                <p className="text-sm font-semibold text-green-800">
+                  Detected {fieldCount} fields — review before applying
+                </p>
+              </div>
+
+              {parsed?.personal?.name && (
+                <PreviewRow label="Name" value={parsed.personal.name} />
+              )}
+              {parsed?.personal?.email && (
+                <PreviewRow label="Email" value={parsed.personal.email} />
+              )}
+              {parsed?.personal?.phone && (
+                <PreviewRow label="Phone" value={parsed.personal.phone} />
+              )}
+              {parsed?.personal?.location && (
+                <PreviewRow label="Location" value={parsed.personal.location} />
+              )}
+              {parsed?.personal?.linkedin && (
+                <PreviewRow label="LinkedIn" value={parsed.personal.linkedin} />
+              )}
+              {parsed?.personal?.website && (
+                <PreviewRow label="Website" value={parsed.personal.website} />
+              )}
+              {parsed?.summary && (
+                <PreviewRow label="Summary" value={parsed.summary.slice(0, 120) + (parsed.summary.length > 120 ? '…' : '')} />
+              )}
+              {(parsed?.experience ?? []).length > 0 && (
+                <PreviewRow label={`Experience`} value={
+                  (parsed!.experience ?? []).map(e => `${e.title} @ ${e.company} (${e.startDate}–${e.current ? 'Present' : e.endDate})`).join('\n')
+                } multiline />
+              )}
+              {(parsed?.education ?? []).length > 0 && (
+                <PreviewRow label="Education" value={
+                  (parsed!.education ?? []).map(e => `${e.degree}${e.field ? ` in ${e.field}` : ''} — ${e.school}`).join('\n')
+                } multiline />
+              )}
+              {parsed?.skills?.technical && (
+                <PreviewRow label="Skills" value={parsed.skills.technical.slice(0, 150) + (parsed.skills.technical.length > 150 ? '…' : '')} />
+              )}
+              {(parsed?.projects ?? []).length > 0 && (
+                <PreviewRow label="Projects" value={(parsed!.projects ?? []).map(p => p.name).join(', ')} />
+              )}
+              {(parsed?.certifications ?? []).length > 0 && (
+                <PreviewRow label="Certifications" value={(parsed!.certifications ?? []).map(c => c.name).join(', ')} />
+              )}
+
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700">
+                This will fill your form. You can manually adjust any field after applying.
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-100 p-4 flex gap-3">
+          {step === 'input' ? (
+            <>
+              <button onClick={onClose} className="px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleParse}
+                disabled={text.trim().length < 50}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#16a34a] hover:bg-[#15803d] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-xl text-sm transition-colors"
+              >
+                <Wand2 className="w-4 h-4" /> Parse Resume
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setStep('input')} className="px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                ← Back
+              </button>
+              <button
+                onClick={handleApply}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold rounded-xl text-sm transition-colors"
+              >
+                <Check className="w-4 h-4" /> Apply to Form
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PreviewRow({ label, value, multiline = false }: { label: string; value: string; multiline?: boolean }) {
+  return (
+    <div className="flex gap-3 text-sm border-b border-gray-50 pb-2">
+      <span className="w-28 shrink-0 text-xs font-bold text-gray-400 uppercase tracking-wide pt-0.5">{label}</span>
+      <span className={cn('text-gray-700 flex-1', multiline && 'whitespace-pre-line')}>{value}</span>
+    </div>
+  )
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -153,6 +303,7 @@ export default function ResumeBuilderPage() {
   const [data, setData] = useState<ResumeData>(BLANK)
   const [templateId, setTemplateId] = useState<TemplateId>('classic')
   const [showPicker, setShowPicker] = useState(false)
+  const [showAutoFill, setShowAutoFill] = useState(false)
   const [open, setOpen] = useState({
     personal: true, summary: false, experience: false,
     education: false, skills: false, projects: false, certifications: false,
@@ -182,6 +333,21 @@ export default function ResumeBuilderPage() {
   const handleTemplateSelect = (id: TemplateId) => {
     setTemplateId(id)
     localStorage.setItem('jadsynq_resume', JSON.stringify({ data, templateId: id }))
+  }
+
+  const handleAutoFill = (parsed: Partial<ResumeData>) => {
+    const merged: ResumeData = {
+      personal: { ...BLANK.personal, ...parsed.personal },
+      summary: parsed.summary ?? data.summary,
+      experience: parsed.experience?.length ? parsed.experience : data.experience,
+      education: parsed.education?.length ? parsed.education : data.education,
+      skills: { ...BLANK.skills, ...(parsed.skills ?? {}), },
+      projects: parsed.projects?.length ? parsed.projects : data.projects,
+      certifications: parsed.certifications?.length ? parsed.certifications : data.certifications,
+    }
+    save(merged)
+    // open all sections that have data
+    setOpen({ personal: true, summary: !!merged.summary, experience: merged.experience.length > 0, education: merged.education.length > 0, skills: !!(merged.skills.technical || merged.skills.languages), projects: merged.projects.length > 0, certifications: merged.certifications.length > 0 })
   }
 
   const upd = (path: string, value: unknown) => {
@@ -233,6 +399,15 @@ export default function ResumeBuilderPage() {
               >
                 <Palette className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Template:</span> {currentTemplate.name}
+              </button>
+
+              {/* Auto-fill pill */}
+              <button
+                onClick={() => setShowAutoFill(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-xl text-xs font-semibold text-violet-700 transition-colors"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Auto-fill</span>
               </button>
 
               <div className="ml-auto flex items-center gap-2">
@@ -490,6 +665,14 @@ export default function ResumeBuilderPage() {
           current={templateId}
           onSelect={handleTemplateSelect}
           onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      {/* Auto-fill modal */}
+      {showAutoFill && (
+        <AutoFillModal
+          onApply={handleAutoFill}
+          onClose={() => setShowAutoFill(false)}
         />
       )}
     </>
