@@ -59,7 +59,7 @@ export default function Sidebar() {
       <div className="px-4 py-5 border-b border-white/10">
         <Link href="/" onClick={onNavClick}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-full.svg" alt="JAD Synq" className="h-9 w-auto brightness-0 invert" />
+          <img src="/logo-white.svg" alt="JAD Synq" className="h-9 w-auto" />
         </Link>
       </div>
 
@@ -137,7 +137,7 @@ export default function Sidebar() {
         </button>
         <Link href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-full.svg" alt="JAD Synq" className="h-8 w-auto brightness-0 invert" />
+          <img src="/logo-white.svg" alt="JAD Synq" className="h-8 w-auto" />
         </Link>
         {!loading && !user && (
           <Link
@@ -167,7 +167,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
               <Link href="/" onClick={() => setMobileOpen(false)}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-full.svg" alt="JAD Synq" className="h-8 w-auto brightness-0 invert" />
+                <img src="/logo-white.svg" alt="JAD Synq" className="h-8 w-auto" />
               </Link>
               <button
                 onClick={() => setMobileOpen(false)}
