@@ -214,6 +214,29 @@ export interface JobTitleSuggestion {
   total_petitions: number
 }
 
+export interface JobListingResult {
+  id: string
+  company_id: string
+  legal_name: string
+  logo_url: string | null
+  domain: string | null
+  ats_source: string
+  title: string
+  department: string | null
+  location: string | null
+  employment_type: string | null
+  url: string
+  posted_at: string | null
+  scraped_at: string
+}
+
+export interface JobListingsResponse {
+  listings: JobListingResult[]
+  total: number
+  limit: number
+  offset: number
+}
+
 export interface JobSearchResponse {
   jobs: JobRoleResult[]
   total: number
@@ -252,6 +275,15 @@ export async function getCompanyJobRoles(companyId: string): Promise<{ data: Job
   cacheSet(key, res.data, TTL_1HR)
   return res
 }
+
+export const getJobListings = (params: {
+  company_id?: string
+  title?: string
+  location?: string
+  ats_source?: string
+  limit?: number
+  offset?: number
+}) => api.get<JobListingsResponse>('/api/jobs/listings', { params })
 
 // Cached: company profile is stable within a session
 export async function getCompanyCached(id: string): Promise<{ data: CompanyProfile }> {
