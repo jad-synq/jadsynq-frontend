@@ -10,13 +10,15 @@ import {
 } from 'lucide-react'
 import {
   searchJobs, getJobTitleSuggestions, getJobListings,
+  getJobMatches, getResume,
   createApplication, saveCompany, unsaveCompany,
-  JobRoleResult, JobTitleSuggestion, JobListingResult,
+  JobRoleResult, JobTitleSuggestion, JobListingResult, JobMatchResult,
 } from '@/lib/api'
 import CompanyLogo from '@/components/ui/CompanyLogo'
 import { isAxiosError } from 'axios'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
+import { analyze, ATSResult } from '@/lib/ats'
 
 const POPULAR_ROLES = [
   'Software Engineer', 'Data Engineer', 'Data Scientist',
@@ -49,6 +51,122 @@ function timeAgo(dateStr: string | null): string {
   if (days < 7) return `${days}d ago`
   if (days < 30) return `${Math.floor(days / 7)}w ago`
   return `${Math.floor(days / 30)}mo ago`
+}
+
+// ── Match Card (For You tab) ──────────────────────────────────────────────────
+
+interface ScoredJob {
+  job: JobMatchResult
+  ats: ATSResult
+}
+
+function MatchCard({ item }: { item: ScoredJob }) {
+  const router = useRouter()
+  const { job, ats } = item
+  const score = ats.score
+  const scoreColor = score >= 75 ? 'text-emerald-600' : score >= 50 ? 'text-amber-500' : 'text-red-500'
+  const scoreBg   = score >= 75 ? 'bg-emerald-50 border-emerald-200' : score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'
+  const atsLabel  = ATS_LABEL[job.ats_source] || job.ats_source
+  const atsColor  = ATS_COLOR[job.ats_source]  || 'bg-gray-50 text-gray-600 border-gray-100'
+  const posted    = timeAgo(job.posted_at)
+
+  const techTags    = ats.matchedBuckets.tech.slice(0, 5)
+  const toolsTags   = ats.matchedBuckets.tools.slice(0, 5)
+  const missingTags = [
+    ...ats.missingBuckets.tech,
+    ...ats.missingBuckets.tools,
+    ...ats.missingBuckets.soft,
+  ].slice(0, 4)
+
+  const handleCheckMatch = () => {
+    try {
+      const jd = `${job.title} ${job.department ?? ''} ${job.description_snippet ?? ''}`
+      localStorage.setItem('jadsynq_prefill_jd', jd.trim())
+    } catch { /* ignore */ }
+    router.push('/ats-check')
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all p-5">
+      {/* Top row: logo + info + score */}
+      <div className="flex items-start gap-4">
+        <CompanyLogo logoUrl={job.logo_url} domain={job.domain} name={job.legal_name} size="lg" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-bold text-gray-900 text-base leading-tight">{job.title}</h3>
+              <Link href={`/companies/${job.company_id}`}
+                className="text-sm text-[#16a34a] hover:underline font-semibold mt-0.5 inline-block">
+                {job.legal_name}
+              </Link>
+            </div>
+            {/* Score badge */}
+            <div className={cn('shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border', scoreBg)}>
+              <span className={cn('text-2xl font-black leading-none', scoreColor)}>{score}</span>
+              <span className="text-[10px] text-gray-400 font-semibold">/100</span>
+              <span className={cn('text-[10px] font-bold mt-0.5', scoreColor)}>Match</span>
+            </div>
+          </div>
+
+          {/* Meta row */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {job.location && (
+              <span className="flex items-center gap-1 text-xs text-gray-500">
+                <MapPin className="w-3 h-3" /> {job.location}
+              </span>
+            )}
+            {job.department && (
+              <span className="flex items-center gap-1 text-xs text-gray-500">
+                <Layers className="w-3 h-3" /> {job.department}
+              </span>
+            )}
+            <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full border', atsColor)}>
+              {atsLabel}
+            </span>
+            {posted && <span className="text-xs text-gray-400 ml-auto">{posted}</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Keyword rows */}
+      {(techTags.length > 0 || toolsTags.length > 0) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {techTags.map(k => (
+            <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
+              {k}
+            </span>
+          ))}
+          {toolsTags.map(k => (
+            <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-medium">
+              {k}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {missingTags.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {missingTags.map(k => (
+            <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100 font-medium">
+              missing: {k}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2 mt-3">
+        <a href={job.url} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors">
+          Apply Now <ExternalLink className="w-3 h-3" />
+        </a>
+        <button onClick={handleCheckMatch}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold rounded-lg border border-violet-200 transition-colors">
+          <Zap className="w-3 h-3" /> Check Match
+        </button>
+      </div>
+    </div>
+  )
 }
 
 // ── Live Listing Card ─────────────────────────────────────────────────────────
@@ -263,7 +381,16 @@ function LogAppModal({ job, onClose, onDone }: { job: JobRoleResult; onClose: ()
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function JobsPage() {
-  const [tab, setTab] = useState<'live' | 'h1b'>('live')
+  const [tab, setTab] = useState<'foryou' | 'live' | 'h1b'>('foryou')
+
+  const { user } = useAuth()
+
+  // For You state
+  const [forYouLoading, setForYouLoading] = useState(false)
+  const [forYouFetched, setForYouFetched] = useState(false)
+  const [forYouNoResume, setForYouNoResume] = useState(false)
+  const [scoredJobs, setScoredJobs] = useState<ScoredJob[]>([])
+  const [resumeWordCount, setResumeWordCount] = useState(0)
 
   // Live listings state
   const [liveQuery, setLiveQuery] = useState('')
@@ -290,6 +417,33 @@ export default function JobsPage() {
   const [offset, setOffset] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const LIMIT = 20
+
+  // Load For You matches when tab is active and user is logged in
+  useEffect(() => {
+    if (tab !== 'foryou' || !user || forYouFetched) return
+    setForYouLoading(true)
+    setForYouNoResume(false)
+    Promise.all([
+      getJobMatches({ limit: 30 }),
+      getResume().catch(() => null),
+    ]).then(([matchRes, resumeRes]) => {
+      const resumeText = resumeRes?.data?.resume_text ?? ''
+      setResumeWordCount(matchRes.data.resume_word_count)
+      const scored: ScoredJob[] = matchRes.data.jobs.map(job => {
+        const jdText = `${job.title} ${job.department ?? ''} ${job.description_snippet ?? ''}`
+        const ats = analyze(resumeText, jdText)
+        return { job, ats }
+      })
+      scored.sort((a, b) => b.ats.score - a.ats.score)
+      setScoredJobs(scored)
+      setForYouFetched(true)
+    }).catch(err => {
+      if (isAxiosError(err) && err.response?.status === 404) {
+        setForYouNoResume(true)
+      }
+      setForYouFetched(true)
+    }).finally(() => setForYouLoading(false))
+  }, [tab, user, forYouFetched])
 
   // Load live listings on mount
   useEffect(() => {
@@ -363,6 +517,18 @@ export default function JobsPage() {
           {/* Tabs */}
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
             <button
+              onClick={() => setTab('foryou')}
+              className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
+                tab === 'foryou' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
+              <Sparkles className="w-4 h-4 text-violet-500" />
+              For You
+              {scoredJobs.length > 0 && (
+                <span className="bg-violet-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {scoredJobs.length}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => setTab('live')}
               className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
                 tab === 'live' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
@@ -386,6 +552,80 @@ export default function JobsPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-6">
+
+        {/* ── For You Tab ── */}
+        {tab === 'foryou' && (
+          <>
+            {/* Not signed in */}
+            {!user && (
+              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+                <Sparkles className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                <p className="font-semibold text-gray-700 mb-1">Sign in to see jobs matched to your resume</p>
+                <p className="text-sm text-gray-400 mb-5">We&apos;ll score every open position against your skills automatically</p>
+                <Link href="/auth"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] text-white text-sm font-bold rounded-xl hover:bg-[#15803d] transition-colors">
+                  Sign in / Sign up
+                </Link>
+              </div>
+            )}
+
+            {/* Loading skeleton */}
+            {user && forYouLoading && (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse h-36" />
+                ))}
+              </div>
+            )}
+
+            {/* No resume saved */}
+            {user && !forYouLoading && forYouNoResume && (
+              <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
+                <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                <p className="font-semibold text-gray-700 mb-1">Upload your resume to see matched jobs</p>
+                <p className="text-sm text-gray-400 mb-5">We&apos;ll rank every open role by how well it matches your skills</p>
+                <Link href="/resume-builder"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] text-white text-sm font-bold rounded-xl hover:bg-[#15803d] transition-colors">
+                  Build your resume →
+                </Link>
+              </div>
+            )}
+
+            {/* Results */}
+            {user && !forYouLoading && !forYouNoResume && scoredJobs.length > 0 && (
+              <>
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-4 h-4 text-violet-500" />
+                  <p className="text-sm font-bold text-gray-700">
+                    {scoredJobs.length} jobs ranked by match to your resume
+                  </p>
+                  {resumeWordCount > 0 && (
+                    <span className="text-xs text-gray-400">({resumeWordCount} word resume)</span>
+                  )}
+                  <button
+                    onClick={() => { setForYouFetched(false); setScoredJobs([]) }}
+                    className="ml-auto text-xs text-[#16a34a] hover:underline font-medium">
+                    Refresh
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {scoredJobs.map(item => (
+                    <MatchCard key={item.job.id} item={item} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Fetched but no jobs */}
+            {user && !forYouLoading && !forYouNoResume && forYouFetched && scoredJobs.length === 0 && (
+              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+                <Building2 className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                <p className="font-semibold text-gray-700 mb-1">No matched jobs found right now</p>
+                <p className="text-sm text-gray-400">Check back after more jobs are scraped</p>
+              </div>
+            )}
+          </>
+        )}
 
         {/* ── Live Openings Tab ── */}
         {tab === 'live' && (

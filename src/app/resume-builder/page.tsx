@@ -15,6 +15,8 @@ import {
   ResumeData, Experience, Education, Project, Certification, TemplateId,
 } from './templates'
 import { analyze } from '@/lib/ats'
+import { saveResume } from '@/lib/api'
+import { useAuth } from '@/hooks/useAuth'
 
 const VISA_OPTIONS = ['', 'U.S. Citizen / Permanent Resident', 'H-1B Visa', 'OPT (F-1)', 'STEM OPT Extension', 'CPT', 'TN Visa', 'Other']
 
@@ -301,6 +303,7 @@ function PreviewRow({ label, value, multiline = false }: { label: string; value:
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ResumeBuilderPage() {
+  const { user } = useAuth()
   const [data, setData] = useState<ResumeData>(BLANK)
   const [templateId, setTemplateId] = useState<TemplateId>('classic')
   const [showPicker, setShowPicker] = useState(false)
@@ -311,6 +314,8 @@ export default function ResumeBuilderPage() {
   })
   const [preview, setPreview] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
   const [atsScore, setAtsScore] = useState<number | null>(null)
   const atsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -353,6 +358,17 @@ export default function ResumeBuilderPage() {
   const handleTemplateSelect = (id: TemplateId) => {
     setTemplateId(id)
     localStorage.setItem('jadsynq_resume', JSON.stringify({ data, templateId: id }))
+  }
+
+  const handleSaveToProfile = async () => {
+    if (!user) return
+    setProfileSaving(true)
+    try {
+      const resumeText = buildResumeText(data)
+      await saveResume({ resume_text: resumeText, resume_data: data as unknown as object })
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 2000)
+    } catch { /* ignore */ } finally { setProfileSaving(false) }
   }
 
   const handleAutoFill = (parsed: Partial<ResumeData>) => {
@@ -444,6 +460,22 @@ export default function ResumeBuilderPage() {
                   className="hidden sm:block px-3 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   Copy Text
                 </button>
+                {user && (
+                  <button
+                    onClick={handleSaveToProfile}
+                    disabled={profileSaving}
+                    title="Save resume to your profile for job matching"
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-lg border transition-colors disabled:opacity-50',
+                      profileSaved
+                        ? 'bg-green-50 text-[#16a34a] border-green-300'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#16a34a] hover:text-[#16a34a]'
+                    )}
+                  >
+                    <Check className={cn('w-3.5 h-3.5', profileSaved ? 'text-[#16a34a]' : 'hidden')} />
+                    {profileSaved ? 'Saved!' : (profileSaving ? 'Saving…' : 'Save to Profile')}
+                  </button>
+                )}
                 <button onClick={() => window.print()}
                   className="flex items-center gap-1.5 px-3 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-lg transition-colors">
                   <Printer className="w-3.5 h-3.5" />

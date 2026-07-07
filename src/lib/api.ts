@@ -304,3 +304,41 @@ export async function getCompaniesCached(params: Parameters<typeof getCompanies>
   cacheSet(key, res.data, TTL_30S)
   return res
 }
+
+// ── Resume ────────────────────────────────────────────────────────────────────
+
+export interface UserResume {
+  resume_text: string
+  resume_data: object | null
+  updated_at: string
+}
+
+export interface JobMatchResult {
+  id: string
+  company_id: string
+  legal_name: string
+  logo_url: string | null
+  domain: string | null
+  ats_source: string
+  title: string
+  department: string | null
+  location: string | null
+  employment_type: string | null
+  url: string
+  description_snippet: string | null
+  posted_at: string | null
+}
+
+export interface JobMatchesResponse {
+  jobs: JobMatchResult[]
+  total: number
+  resume_word_count: number
+}
+
+export const getResume = () => api.get<UserResume>('/api/resume')
+
+export const saveResume = (data: { resume_text: string; resume_data?: object | null }) =>
+  api.put<UserResume>('/api/resume', data)
+
+export const getJobMatches = (params?: { limit?: number }) =>
+  api.get<JobMatchesResponse>('/api/resume/matches', { params })

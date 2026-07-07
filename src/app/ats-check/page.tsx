@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import {
   FileText, ChevronRight, CheckCircle, XCircle, AlertCircle, Zap,
@@ -106,6 +106,17 @@ export default function ATSCheckPage() {
   const [imported, setImported] = useState(false)
   const [copied, setCopied] = useState(false)
   const [coverGenerated, setCoverGenerated] = useState(false)
+
+  // Pre-fill JD from localStorage when navigating from the "For You" tab
+  useEffect(() => {
+    try {
+      const prefill = localStorage.getItem('jadsynq_prefill_jd')
+      if (prefill) {
+        setJd(prefill)
+        localStorage.removeItem('jadsynq_prefill_jd')
+      }
+    } catch { /* ignore */ }
+  }, [])
 
   const handleAnalyze = useCallback(() => {
     if (!resume.trim() || !jd.trim()) return
