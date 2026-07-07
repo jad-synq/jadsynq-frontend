@@ -5,19 +5,21 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Search, Building2, Briefcase, Bookmark, User,
-  LogOut, Menu, X, BriefcaseBusiness
+  LogOut, Menu, X, BriefcaseBusiness, FileText, Zap
 } from 'lucide-react'
 
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
 const NAV = [
-  { href: '/',               icon: Search,            label: 'Search'       },
-  { href: '/companies-list', icon: Building2,         label: 'Companies'    },
-  { href: '/jobs',           icon: BriefcaseBusiness, label: 'Jobs'         },
-  { href: '/applications',   icon: Briefcase,         label: 'Applications' },
-  { href: '/saved',          icon: Bookmark,          label: 'Saved'        },
-  { href: '/profile',        icon: User,              label: 'Profile'      },
+  { href: '/',               icon: Search,            label: 'Search',         group: 'main' },
+  { href: '/companies-list', icon: Building2,         label: 'Companies',      group: 'main' },
+  { href: '/jobs',           icon: BriefcaseBusiness, label: 'Jobs',           group: 'main' },
+  { href: '/applications',   icon: Briefcase,         label: 'Applications',   group: 'main' },
+  { href: '/saved',          icon: Bookmark,          label: 'Saved',          group: 'main' },
+  { href: '/resume-builder', icon: FileText,          label: 'Resume Builder', group: 'tools' },
+  { href: '/ats-check',      icon: Zap,               label: 'ATS Checker',    group: 'tools' },
+  { href: '/profile',        icon: User,              label: 'Profile',        group: 'user'  },
 ]
 
 function NavItem({ href, icon: Icon, label, active, onClick }: {
@@ -66,13 +68,16 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto">
         <p className="px-6 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Navigation</p>
-        {NAV.map(item => (
-          <NavItem
-            key={item.href}
-            {...item}
-            active={isActive(item.href)}
-            onClick={onNavClick}
-          />
+        {NAV.filter(i => i.group === 'main').map(item => (
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />
+        ))}
+        <p className="px-6 pt-4 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Career Tools</p>
+        {NAV.filter(i => i.group === 'tools').map(item => (
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />
+        ))}
+        <p className="px-6 pt-4 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Account</p>
+        {NAV.filter(i => i.group === 'user').map(item => (
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />
         ))}
       </nav>
 
