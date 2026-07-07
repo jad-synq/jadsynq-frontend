@@ -1,7 +1,10 @@
 import axios from 'axios'
 import { cacheGet, cacheSet } from './cache'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://jadsynq-backend.onrender.com'
+    : 'http://localhost:8000')
 
 export const api = axios.create({
   baseURL: API_URL,
