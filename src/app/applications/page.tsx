@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -363,7 +363,7 @@ function UnauthenticatedView() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function ApplicationsPage() {
+function ApplicationsInner() {
   const { user, loading: authLoading } = useAuth()
   const searchParams = useSearchParams()
   const prefill = searchParams.get('prefill') ?? ''
@@ -592,5 +592,21 @@ export default function ApplicationsPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function ApplicationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f0fdf4]">
+        <div className="max-w-2xl mx-auto px-6 py-8 space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    }>
+      <ApplicationsInner />
+    </Suspense>
   )
 }
