@@ -14,6 +14,7 @@ import {
   buildResumeText, parseResumeText,
   ResumeData, Experience, Education, Project, Certification, TemplateId,
 } from './templates'
+import { analyze } from '@/lib/ats'
 
 const VISA_OPTIONS = ['', 'U.S. Citizen / Permanent Resident', 'H-1B Visa', 'OPT (F-1)', 'STEM OPT Extension', 'CPT', 'TN Visa', 'Other']
 
@@ -310,6 +311,8 @@ export default function ResumeBuilderPage() {
   })
   const [preview, setPreview] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [atsScore, setAtsScore] = useState<number | null>(null)
+  const atsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     try {
@@ -321,6 +324,23 @@ export default function ResumeBuilderPage() {
       }
     } catch {}
   }, [])
+
+  // Recompute ATS score debounced on every data change against saved JD
+  useEffect(() => {
+    if (atsTimerRef.current) clearTimeout(atsTimerRef.current)
+    atsTimerRef.current = setTimeout(() => {
+      try {
+        const jd = localStorage.getItem('jadsynq_last_jd') ?? ''
+        const resumeText = buildResumeText(data)
+        if (jd.trim() && resumeText.trim().split(/\s+/).length > 20) {
+          setAtsScore(analyze(resumeText, jd).score)
+        } else {
+          setAtsScore(null)
+        }
+      } catch { setAtsScore(null) }
+    }, 800)
+    return () => { if (atsTimerRef.current) clearTimeout(atsTimerRef.current) }
+  }, [data])
 
   const save = useCallback((nextData: ResumeData, nextTemplate?: TemplateId) => {
     setData(nextData)
@@ -623,7 +643,24 @@ export default function ResumeBuilderPage() {
                   <span className="text-sm font-bold text-gray-700">Preview</span>
                   <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{currentTemplate.name}</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  {/* Live ATS badge */}
+                  {atsScore !== null ? (
+                    <Link href="/ats-check"
+                      className={cn(
+                        'flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors',
+                        atsScore >= 75 ? 'bg-green-50 text-green-700 border-green-200' :
+                        atsScore >= 50 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-red-50 text-red-600 border-red-200'
+                      )}>
+                      <Zap className="w-3 h-3" /> ATS {atsScore}
+                    </Link>
+                  ) : (
+                    <Link href="/ats-check"
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#16a34a] px-2 py-1 transition-colors">
+                      <Zap className="w-3 h-3" /> Check ATS
+                    </Link>
+                  )}
                   <button onClick={() => setShowPicker(true)}
                     className="flex items-center gap-1 text-xs text-[#16a34a] font-semibold hover:bg-green-50 px-2 py-1 rounded-lg transition-colors">
                     <Palette className="w-3 h-3" /> Change
