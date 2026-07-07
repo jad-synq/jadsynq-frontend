@@ -449,6 +449,14 @@ export default function CompanyPage() {
         </div>
 
       </div>
+
+      {/* Data disclaimer */}
+      <div className="mt-6 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
+        <strong>Data disclaimer:</strong> H-1B and E-Verify data is sourced from public U.S. government filings.
+        Past sponsorship history does not guarantee future sponsorship.{' '}
+        <Link href="/disclaimer" className="underline hover:text-amber-900">Learn more</Link>
+      </div>
+
     </main>
   )
 }
