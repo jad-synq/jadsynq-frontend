@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import {
   FileText, Plus, Trash2, ChevronDown, ChevronUp,
-  Printer, Download, Zap, Eye, EyeOff, GripVertical,
+  Printer, Download, Zap, Eye, EyeOff,
   Check, User, Briefcase, GraduationCap, Wrench, FolderGit2, Award
 } from 'lucide-react'
 import { cn } from '@/lib/utils'

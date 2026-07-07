@@ -99,7 +99,6 @@ function analyze(resume: string, jd: string): ATSResult {
     .slice(0, 30)
 
   const sections = detectSections(resume)
-  const sectionCount = Object.values(sections).filter(Boolean).length
 
   const wordCount = resume.split(/\s+/).filter(Boolean).length
   const verbCount = countActionVerbs(resume)
