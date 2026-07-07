@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import Sidebar from "@/components/ui/Sidebar";
 import BackendWarmup from "@/components/ui/BackendWarmup";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -17,8 +18,29 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "JAD Synq — H-1B & E-Verify Company Search",
-  description: "Search US companies by H-1B sponsorship history and E-Verify enrollment status.",
+  title: {
+    default: "JAD Synq — H-1B & E-Verify Company Search",
+    template: "%s — JAD Synq",
+  },
+  description: "Search US companies by H-1B sponsorship history and E-Verify enrollment status. Built for international students on OPT, STEM OPT, and H-1B visas.",
+  metadataBase: new URL("https://jadsynq.com"),
+  openGraph: {
+    title: "JAD Synq — H-1B & E-Verify Company Search",
+    description: "Find companies that sponsor H-1B visas. Built for OPT & STEM OPT students.",
+    url: "https://jadsynq.com",
+    siteName: "JAD Synq",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "JAD Synq — H-1B & E-Verify Company Search",
+    description: "Find companies that sponsor H-1B visas. Built for OPT & STEM OPT students.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -37,6 +59,7 @@ export default function RootLayout({
             {children}
           </main>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );

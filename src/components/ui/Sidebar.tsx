@@ -81,6 +81,20 @@ export default function Sidebar() {
         ))}
       </nav>
 
+      {/* Legal links */}
+      <div className="px-4 pb-2 flex flex-wrap gap-x-3 gap-y-1">
+        {[
+          { href: '/disclaimer', label: 'Disclaimer' },
+          { href: '/privacy',    label: 'Privacy' },
+          { href: '/terms',      label: 'Terms' },
+        ].map(l => (
+          <Link key={l.href} href={l.href} onClick={onNavClick}
+            className="text-[10px] text-green-300/40 hover:text-green-300/80 transition-colors">
+            {l.label}
+          </Link>
+        ))}
+      </div>
+
       {/* User section */}
       <div className="border-t border-white/10 p-3">
         {loading ? (

@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 import {
   Search, CheckCircle, TrendingUp, DollarSign, Building2,
   Briefcase, ExternalLink, Plus, ChevronRight, Bookmark,
-  BookmarkCheck, Sparkles, X, MapPin, Layers, Zap
+  BookmarkCheck, Sparkles, X, MapPin, Layers, Zap, Upload, FileText
 } from 'lucide-react'
 import {
   searchJobs, getJobTitleSuggestions, getJobListings,
-  getJobMatches, getResume,
+  getJobMatches, getResume, saveResume,
   createApplication, saveCompany, unsaveCompany,
   JobRoleResult, JobTitleSuggestion, JobListingResult, JobMatchResult,
 } from '@/lib/api'
@@ -391,6 +391,10 @@ export default function JobsPage() {
   const [forYouNoResume, setForYouNoResume] = useState(false)
   const [scoredJobs, setScoredJobs] = useState<ScoredJob[]>([])
   const [resumeWordCount, setResumeWordCount] = useState(0)
+  const [inlineResumePaste, setInlineResumePaste] = useState('')
+  const [inlineResumeSaving, setInlineResumeSaving] = useState(false)
+  const [inlineResumeError, setInlineResumeError] = useState('')
+  const inlineFileRef = useRef<HTMLInputElement>(null)
 
   // Live listings state
   const [liveQuery, setLiveQuery] = useState('')
@@ -499,6 +503,31 @@ export default function JobsPage() {
     setInputValue(title); setQuery(title); doSearch(title)
   }
 
+  const handleInlineFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => setInlineResumePaste((ev.target?.result as string) ?? '')
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  const handleInlineResumeSave = async () => {
+    const text = inlineResumePaste.trim()
+    if (!text) { setInlineResumeError('Please paste your resume text or upload a .txt file'); return }
+    if (text.split(/\s+/).length < 30) { setInlineResumeError('Resume seems too short — paste the full text'); return }
+    setInlineResumeError('')
+    setInlineResumeSaving(true)
+    try {
+      await saveResume({ resume_text: text, resume_data: null })
+      setInlineResumePaste('')
+      setForYouNoResume(false)
+      setForYouFetched(false)
+      setScoredJobs([])
+    } catch { setInlineResumeError('Failed to save — please try again') }
+    finally { setInlineResumeSaving(false) }
+  }
+
   return (
     <div className="min-h-screen bg-[#f0fdf4]">
       {/* Header */}
@@ -578,16 +607,61 @@ export default function JobsPage() {
               </div>
             )}
 
-            {/* No resume saved */}
+            {/* No resume saved — inline upload */}
             {user && !forYouLoading && forYouNoResume && (
-              <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
-                <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                <p className="font-semibold text-gray-700 mb-1">Upload your resume to see matched jobs</p>
-                <p className="text-sm text-gray-400 mb-5">We&apos;ll rank every open role by how well it matches your skills</p>
-                <Link href="/resume-builder"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] text-white text-sm font-bold rounded-xl hover:bg-[#15803d] transition-colors">
-                  Build your resume →
-                </Link>
+              <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-violet-500" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">Add your resume to see matched jobs</p>
+                    <p className="text-sm text-gray-400">We&apos;ll rank every open role by how well it matches your skills</p>
+                  </div>
+                </div>
+
+                {/* Paste area */}
+                <textarea
+                  value={inlineResumePaste}
+                  onChange={e => { setInlineResumePaste(e.target.value); setInlineResumeError('') }}
+                  placeholder="Paste your resume text here…"
+                  rows={7}
+                  className="w-full px-3 py-2.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none font-mono mb-3"
+                />
+
+                {inlineResumeError && (
+                  <p className="text-xs text-red-500 mb-2">{inlineResumeError}</p>
+                )}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Hidden file input */}
+                  <input
+                    ref={inlineFileRef}
+                    type="file"
+                    accept=".txt"
+                    className="hidden"
+                    onChange={handleInlineFilePick}
+                  />
+                  <button
+                    onClick={() => inlineFileRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:border-gray-300 text-gray-600 text-xs font-semibold rounded-lg transition-colors">
+                    <Upload className="w-3.5 h-3.5" /> Upload .txt
+                  </button>
+                  <button
+                    onClick={handleInlineResumeSave}
+                    disabled={inlineResumeSaving || !inlineResumePaste.trim()}
+                    className="flex items-center gap-1.5 px-4 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg disabled:opacity-40 transition-colors">
+                    {inlineResumeSaving ? 'Saving…' : <><Sparkles className="w-3.5 h-3.5" /> Save &amp; See Matches</>}
+                  </button>
+                  <Link href="/resume-builder"
+                    className="text-xs text-gray-400 hover:text-[#16a34a] hover:underline ml-auto">
+                    Build from scratch →
+                  </Link>
+                </div>
+
+                <p className="text-xs text-gray-400 mt-3">
+                  Copy text from your PDF resume and paste above, or upload a plain .txt export.
+                </p>
               </div>
             )}
 
