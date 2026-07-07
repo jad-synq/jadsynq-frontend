@@ -9,7 +9,7 @@ import {
   ThumbsUp, Globe, ExternalLink, Plus
 } from 'lucide-react'
 import { isAxiosError } from 'axios'
-import { getCompany, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, CompanyProfile, H1BYearSummary } from '@/lib/api'
+import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, CompanyProfile, H1BYearSummary } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -47,7 +47,7 @@ export default function CompanyPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [companyRes, h1bRes] = await Promise.all([getCompany(id), getCompanyH1B(id)])
+        const [companyRes, h1bRes] = await Promise.all([getCompanyCached(id), getCompanyH1B(id)])
         setCompany(companyRes.data)
         setH1bHistory(h1bRes.data)
       } catch (err) {

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { cacheGet, cacheSet } from './cache'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -219,8 +220,46 @@ export const searchJobs = (params: {
   offset?: number
 }) => api.get<JobSearchResponse>('/api/jobs/search', { params })
 
-export const getJobTitleSuggestions = (q: string) =>
-  api.get<JobTitleSuggestion[]>('/api/jobs/titles', { params: { q, limit: 8 } })
+const TTL_30S  = 30_000
+const TTL_5MIN = 5 * 60_000
+const TTL_1HR  = 60 * 60_000
 
-export const getCompanyJobRoles = (companyId: string) =>
-  api.get<JobRoleResult[]>(`/api/jobs/company/${companyId}`)
+// Cached: popular titles change rarely; cache 5 min per query string
+export async function getJobTitleSuggestions(q: string): Promise<{ data: JobTitleSuggestion[] }> {
+  const key = `/api/jobs/titles?q=${q}`
+  const cached = cacheGet<JobTitleSuggestion[]>(key)
+  if (cached) return { data: cached }
+  const res = await api.get<JobTitleSuggestion[]>('/api/jobs/titles', { params: { q, limit: 8 } })
+  cacheSet(key, res.data, q ? TTL_5MIN : TTL_1HR)
+  return res
+}
+
+// Cached: company job roles are stable within a session
+export async function getCompanyJobRoles(companyId: string): Promise<{ data: JobRoleResult[] }> {
+  const key = `/api/jobs/company/${companyId}`
+  const cached = cacheGet<JobRoleResult[]>(key)
+  if (cached) return { data: cached }
+  const res = await api.get<JobRoleResult[]>(key)
+  cacheSet(key, res.data, TTL_1HR)
+  return res
+}
+
+// Cached: company profile is stable within a session
+export async function getCompanyCached(id: string): Promise<{ data: CompanyProfile }> {
+  const key = `/api/companies/${id}`
+  const cached = cacheGet<CompanyProfile>(key)
+  if (cached) return { data: cached }
+  const res = await api.get<CompanyProfile>(key)
+  cacheSet(key, res.data, TTL_1HR)
+  return res
+}
+
+// Cached: companies list with params, 30s TTL (user may filter)
+export async function getCompaniesCached(params: Parameters<typeof getCompanies>[0]): Promise<{ data: CompaniesListResponse }> {
+  const key = `/api/companies?${new URLSearchParams(Object.entries(params).filter(([,v]) => v !== undefined).map(([k,v]) => [k, String(v)])).toString()}`
+  const cached = cacheGet<CompaniesListResponse>(key)
+  if (cached) return { data: cached }
+  const res = await getCompanies(params)
+  cacheSet(key, res.data, TTL_30S)
+  return res
+}

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck } from 'lucide-react'
-import { getCompanies, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
+import { getCompaniesCached, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
@@ -64,7 +64,7 @@ export default function CompaniesPage() {
   const fetchCompanies = useCallback(async (p = 1) => {
     setLoading(true)
     try {
-      const res = await getCompanies({
+      const res = await getCompaniesCached({
         q: query || undefined,
         page: p,
         per_page: PER_PAGE,
