@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck } from 'lucide-react'
 import { getCompaniesCached, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
+import BrandedLoader from '@/components/ui/BrandedLoader'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
@@ -234,15 +235,13 @@ export default function CompaniesPage() {
         {/* Company list */}
         {loading ? (
           <div className="space-y-2">
-            {slowLoad && (
-              <div className="flex items-center gap-2 px-4 py-3 mb-2 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700">
-                <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                Backend is starting up — this takes about 30 seconds after inactivity. Hang tight…
-              </div>
+            {slowLoad ? (
+              <BrandedLoader />
+            ) : (
+              [...Array(8)].map((_, i) => (
+                <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+              ))
             )}
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
-            ))}
           </div>
         ) : companies.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">

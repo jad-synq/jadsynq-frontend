@@ -15,6 +15,7 @@ import {
   VisaType, AppStatus, JobApplication
 } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import BrandedLoader from '@/components/ui/BrandedLoader'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -150,6 +151,7 @@ export default function ProfilePage() {
   const [visaType, setVisaType]     = useState<VisaType | null>(null)
   const [selected, setSelected]     = useState<VisaType | null>(null)
   const [loading, setLoading]       = useState(true)
+  const [slowLoad, setSlowLoad]     = useState(false)
   const [saving, setSaving]         = useState(false)
   const [saveOk, setSaveOk]         = useState(false)
   const [applications, setApps]     = useState<JobApplication[]>([])
@@ -159,6 +161,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (authLoading) return
     if (!user) { setLoading(false); return }
+    const slowTimer = setTimeout(() => setSlowLoad(true), 5000)
     Promise.all([
       getMe(),
       getApplications().catch(() => ({ data: [] as JobApplication[] })),
@@ -168,10 +171,14 @@ export default function ProfilePage() {
       setSelected(me.data.visa_type as VisaType | null)
       setApps(apps.data)
       setSavedCount(saved.data.length)
-    }).finally(() => setLoading(false))
+    }).finally(() => {
+      clearTimeout(slowTimer)
+      setSlowLoad(false)
+      setLoading(false)
+    })
   }, [user, authLoading])
 
-  if (authLoading || (loading && user)) return <LoadingSkeleton />
+  if (authLoading || (loading && user)) return slowLoad ? <BrandedLoader /> : <LoadingSkeleton />
   if (!user) return <UnauthenticatedView />
 
   // Derived stats
