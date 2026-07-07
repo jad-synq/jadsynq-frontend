@@ -17,6 +17,7 @@ import {
 import { analyze } from '@/lib/ats'
 import { saveResume } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
+import { extractResumeText } from '@/lib/pdf'
 
 const VISA_OPTIONS = ['', 'U.S. Citizen / Permanent Resident', 'H-1B Visa', 'OPT (F-1)', 'STEM OPT Extension', 'CPT', 'TN Visa', 'Other']
 
@@ -111,12 +112,12 @@ function AutoFillModal({ onApply, onClose }: {
   const [step, setStep] = useState<'input' | 'preview'>('input')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => setText(ev.target?.result as string ?? '')
-    reader.readAsText(file)
+    e.target.value = ''
+    const extracted = await extractResumeText(file)
+    setText(extracted)
   }
 
   const handleParse = () => {
@@ -163,9 +164,9 @@ function AutoFillModal({ onApply, onClose }: {
                 className="border-2 border-dashed border-gray-200 hover:border-[#16a34a] rounded-xl p-4 text-center cursor-pointer transition-colors group"
               >
                 <Upload className="w-6 h-6 mx-auto mb-2 text-gray-300 group-hover:text-[#16a34a] transition-colors" />
-                <p className="text-sm font-semibold text-gray-600 group-hover:text-[#16a34a]">Upload .txt file</p>
+                <p className="text-sm font-semibold text-gray-600 group-hover:text-[#16a34a]">Upload PDF or .txt file</p>
                 <p className="text-xs text-gray-400 mt-1">Or paste resume text below</p>
-                <input ref={fileRef} type="file" accept=".txt,.text,text/plain" className="hidden" onChange={handleFile} />
+                <input ref={fileRef} type="file" accept=".pdf,.txt,.text,application/pdf,text/plain" className="hidden" onChange={handleFile} />
               </div>
 
               <div className="relative">

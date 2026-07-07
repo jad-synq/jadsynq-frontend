@@ -17,6 +17,7 @@ import {
 } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import BrandedLoader from '@/components/ui/BrandedLoader'
+import { extractResumeText } from '@/lib/pdf'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -216,13 +217,12 @@ export default function ProfilePage() {
     } catch { /* ignore */ } finally { setResumeSaving(false) }
   }
 
-  const handleResumeFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleResumeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => setResumePaste((ev.target?.result as string) ?? '')
-    reader.readAsText(file)
     e.target.value = ''
+    const text = await extractResumeText(file)
+    setResumePaste(text)
   }
 
   const handleSave = async () => {
@@ -433,7 +433,7 @@ export default function ProfilePage() {
               <input
                 ref={resumeFileRef}
                 type="file"
-                accept=".txt"
+                accept=".pdf,.txt,.text,application/pdf,text/plain"
                 className="hidden"
                 onChange={handleResumeFileUpload}
               />
@@ -486,7 +486,7 @@ export default function ProfilePage() {
                     <button
                       onClick={() => resumeFileRef.current?.click()}
                       className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:border-violet-300 hover:text-violet-600 text-gray-600 text-xs font-semibold rounded-lg transition-colors">
-                      <Upload className="w-3.5 h-3.5" /> Upload .txt file
+                      <Upload className="w-3.5 h-3.5" /> Upload PDF or .txt
                     </button>
                     {resumePaste && (
                       <span className="text-xs text-emerald-600 font-semibold">
