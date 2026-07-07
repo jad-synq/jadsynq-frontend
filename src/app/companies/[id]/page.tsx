@@ -194,6 +194,60 @@ export default function CompanyPage() {
           </div>
         </div>
 
+        {/* Enrichment badges */}
+        {(company.is_public !== null || company.employee_count || company.funding_stage ||
+          company.founded_year || company.incorporation_state || company.sic_description) && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {company.is_public && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                <TrendingUp className="w-3 h-3" /> Publicly Traded
+              </span>
+            )}
+            {company.funding_stage && !company.is_public && (
+              <span className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border',
+                company.funding_stage.toLowerCase().includes('seed') ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                company.funding_stage.toLowerCase().includes('series') ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                'bg-slate-50 text-slate-600 border-slate-100'
+              )}>
+                {company.funding_stage}
+              </span>
+            )}
+            {company.employee_count && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
+                {company.employee_count >= 10000
+                  ? `${Math.round(company.employee_count / 1000)}k+ employees`
+                  : company.employee_count >= 1000
+                  ? `${(company.employee_count / 1000).toFixed(1)}k employees`
+                  : `${company.employee_count.toLocaleString()} employees`}
+              </span>
+            )}
+            {company.total_funding_usd && !company.is_public && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-100">
+                <DollarSign className="w-3 h-3" />
+                {company.total_funding_usd >= 1_000_000_000
+                  ? `$${(company.total_funding_usd / 1e9).toFixed(1)}B raised`
+                  : `$${Math.round(company.total_funding_usd / 1e6)}M raised`}
+              </span>
+            )}
+            {company.founded_year && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-200">
+                Est. {company.founded_year}
+              </span>
+            )}
+            {company.incorporation_state && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-200">
+                <MapPin className="w-3 h-3" /> Inc. in {company.incorporation_state}
+              </span>
+            )}
+            {company.sic_description && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                {company.sic_description}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Stats grid */}
         {company.h1b_summary && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

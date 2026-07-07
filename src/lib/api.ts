@@ -60,6 +60,15 @@ export interface CompanyProfile {
   } | null
   opt_support: null
   open_jobs_count: number
+  // Enrichment fields
+  is_public: boolean | null
+  employee_count: number | null
+  sic_code: string | null
+  sic_description: string | null
+  founded_year: number | null
+  funding_stage: string | null
+  total_funding_usd: number | null
+  incorporation_state: string | null
 }
 
 export interface H1BYearSummary {
