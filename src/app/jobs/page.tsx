@@ -14,6 +14,7 @@ import {
   createApplication, saveCompany, unsaveCompany,
   JobRoleResult, JobTitleSuggestion, JobListingResult, JobMatchResult,
 } from '@/lib/api'
+import { extractResumeText } from '@/lib/pdf'
 import CompanyLogo from '@/components/ui/CompanyLogo'
 import { isAxiosError } from 'axios'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
@@ -503,13 +504,13 @@ export default function JobsPage() {
     setInputValue(title); setQuery(title); doSearch(title)
   }
 
-  const handleInlineFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInlineFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => setInlineResumePaste((ev.target?.result as string) ?? '')
-    reader.readAsText(file)
     e.target.value = ''
+    const text = await extractResumeText(file)
+    setInlineResumePaste(text)
+    setInlineResumeError('')
   }
 
   const handleInlineResumeSave = async () => {
@@ -638,14 +639,14 @@ export default function JobsPage() {
                   <input
                     ref={inlineFileRef}
                     type="file"
-                    accept=".txt"
+                    accept=".pdf,.txt,.text,application/pdf,text/plain"
                     className="hidden"
                     onChange={handleInlineFilePick}
                   />
                   <button
                     onClick={() => inlineFileRef.current?.click()}
                     className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:border-gray-300 text-gray-600 text-xs font-semibold rounded-lg transition-colors">
-                    <Upload className="w-3.5 h-3.5" /> Upload .txt
+                    <Upload className="w-3.5 h-3.5" /> Upload PDF or .txt
                   </button>
                   <button
                     onClick={handleInlineResumeSave}
@@ -660,7 +661,7 @@ export default function JobsPage() {
                 </div>
 
                 <p className="text-xs text-gray-400 mt-3">
-                  Copy text from your PDF resume and paste above, or upload a plain .txt export.
+                  Upload your PDF resume directly, or paste the text above.
                 </p>
               </div>
             )}
