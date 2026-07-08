@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  Search, CheckCircle, TrendingUp, DollarSign, Building2,
+  Search, CheckCircle, CheckCircle2, TrendingUp, DollarSign, Building2,
   Briefcase, ExternalLink, Plus, ChevronRight, Bookmark,
   BookmarkCheck, Sparkles, X, MapPin, Layers, Zap, Upload, FileText
 } from 'lucide-react'
@@ -62,7 +62,10 @@ interface ScoredJob {
 }
 
 function MatchCard({ item }: { item: ScoredJob }) {
+  const { user } = useAuth()
   const router = useRouter()
+  const [logged, setLogged] = useState(false)
+  const [logging, setLogging] = useState(false)
   const { job, ats } = item
   const score = ats.score
   const scoreColor = score >= 75 ? 'text-emerald-600' : score >= 50 ? 'text-amber-500' : 'text-red-500'
@@ -85,6 +88,19 @@ function MatchCard({ item }: { item: ScoredJob }) {
       localStorage.setItem('jadsynq_prefill_jd', jd.trim())
     } catch { /* ignore */ }
     router.push('/ats-check')
+  }
+
+  const handleLog = async () => {
+    if (!user) { router.push('/auth'); return }
+    setLogging(true)
+    try {
+      await createApplication({
+        company_name: job.legal_name, company_id: job.company_id,
+        job_title: job.title, job_url: job.url,
+        status: 'applied', applied_date: new Date().toISOString().split('T')[0],
+      })
+      setLogged(true)
+    } catch { /* ignore */ } finally { setLogging(false) }
   }
 
   return (
@@ -161,6 +177,11 @@ function MatchCard({ item }: { item: ScoredJob }) {
           className="flex items-center gap-1.5 px-4 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors">
           Apply Now <ExternalLink className="w-3 h-3" />
         </a>
+        <button onClick={handleLog} disabled={logging || logged}
+          className={cn('flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
+            logged ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200')}>
+          {logged ? <><CheckCircle2 className="w-3.5 h-3.5" /> Logged</> : <><Plus className="w-3.5 h-3.5" /> Log App</>}
+        </button>
         <button onClick={handleCheckMatch}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold rounded-lg border border-violet-200 transition-colors">
           <Zap className="w-3 h-3" /> Check Match
@@ -173,9 +194,26 @@ function MatchCard({ item }: { item: ScoredJob }) {
 // ── Live Listing Card ─────────────────────────────────────────────────────────
 
 function ListingCard({ listing }: { listing: JobListingResult }) {
+  const { user } = useAuth()
+  const router = useRouter()
+  const [logged, setLogged] = useState(false)
+  const [logging, setLogging] = useState(false)
   const atsLabel = ATS_LABEL[listing.ats_source] || listing.ats_source
   const atsColor = ATS_COLOR[listing.ats_source] || 'bg-gray-50 text-gray-600 border-gray-100'
   const posted = timeAgo(listing.posted_at || listing.scraped_at)
+
+  const handleLog = async () => {
+    if (!user) { router.push('/auth'); return }
+    setLogging(true)
+    try {
+      await createApplication({
+        company_name: listing.legal_name, company_id: listing.company_id,
+        job_title: listing.title, job_url: listing.url,
+        status: 'applied', applied_date: new Date().toISOString().split('T')[0],
+      })
+      setLogged(true)
+    } catch { /* ignore */ } finally { setLogging(false) }
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all p-5">
@@ -214,6 +252,11 @@ function ListingCard({ listing }: { listing: JobListingResult }) {
             {listing.employment_type && (
               <span className="text-xs text-gray-500">{listing.employment_type}</span>
             )}
+            {listing.avg_wage && (
+              <span className="flex items-center gap-1 text-xs text-gray-500">
+                <DollarSign className="w-3 h-3" /> {formatWage(listing.avg_wage)} avg H-1B
+              </span>
+            )}
             {posted && (
               <span className="text-xs text-gray-400 ml-auto">{posted}</span>
             )}
@@ -224,9 +267,14 @@ function ListingCard({ listing }: { listing: JobListingResult }) {
               className="flex items-center gap-1.5 px-4 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors">
               Apply Now <ExternalLink className="w-3 h-3" />
             </a>
+            <button onClick={handleLog} disabled={logging || logged}
+              className={cn('flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
+                logged ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200')}>
+              {logged ? <><CheckCircle2 className="w-3.5 h-3.5" /> Logged</> : <><Plus className="w-3.5 h-3.5" /> Log App</>}
+            </button>
             <Link href={`/companies/${listing.company_id}`}
               className="flex items-center gap-1 px-3 py-1.5 text-gray-400 hover:text-gray-600 text-xs transition-colors">
-              Company H-1B data <ChevronRight className="w-3.5 h-3.5" />
+              H-1B data <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

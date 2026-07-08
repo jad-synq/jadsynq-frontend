@@ -4,15 +4,104 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeft, CheckCircle, XCircle, TrendingUp,
+  ArrowLeft, CheckCircle, CheckCircle2, XCircle, TrendingUp,
   DollarSign, Building2, MapPin, Briefcase, Bookmark, BookmarkCheck,
   ThumbsUp, Globe, ExternalLink, Plus
 } from 'lucide-react'
 import { isAxiosError } from 'axios'
-import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, CompanyProfile, H1BYearSummary } from '@/lib/api'
+import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, getJobListings, createApplication, CompanyProfile, H1BYearSummary, JobListingResult } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import CompanyLogo, { linkedinCompanyUrl } from '@/components/ui/CompanyLogo'
+
+function OpenPositions({ listings, companyName, user, onAuth }: {
+  listings: JobListingResult[]
+  companyName: string
+  user: import('@supabase/supabase-js').User | null
+  onAuth: () => void
+}) {
+  const [loggedIds, setLoggedIds] = useState<Set<string>>(new Set())
+  const [loggingId, setLoggingId] = useState<string | null>(null)
+
+  const handleLog = async (job: JobListingResult) => {
+    if (!user) { onAuth(); return }
+    setLoggingId(job.id)
+    try {
+      await createApplication({
+        company_name: companyName, company_id: job.company_id,
+        job_title: job.title, job_url: job.url,
+        status: 'applied', applied_date: new Date().toISOString().split('T')[0],
+      })
+      setLoggedIds(prev => new Set([...prev, job.id]))
+    } catch { /* ignore */ } finally { setLoggingId(null) }
+  }
+
+  const timeAgo = (iso: string | null) => {
+    if (!iso) return null
+    const diff = Date.now() - new Date(iso).getTime()
+    const d = Math.floor(diff / 86400000)
+    if (d === 0) return 'today'
+    if (d === 1) return 'yesterday'
+    if (d < 30) return `${d}d ago`
+    if (d < 365) return `${Math.floor(d / 30)}mo ago`
+    return `${Math.floor(d / 365)}y ago`
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
+      <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="w-7 h-7 bg-green-50 rounded-lg flex items-center justify-center">
+          <Briefcase className="w-3.5 h-3.5 text-green-600" />
+        </div>
+        Open Positions
+        <span className="text-sm font-normal text-gray-400 ml-1">({listings.length})</span>
+      </h2>
+      <div className="divide-y divide-gray-50">
+        {listings.map(job => {
+          const posted = timeAgo(job.posted_at)
+          const isLogged = loggedIds.has(job.id)
+          const isLogging = loggingId === job.id
+          return (
+            <div key={job.id} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm leading-tight">{job.title}</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {job.location && (
+                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                        <MapPin className="w-3 h-3" /> {job.location}
+                      </span>
+                    )}
+                    {job.department && (
+                      <span className="text-xs text-gray-500">{job.department}</span>
+                    )}
+                    {job.avg_wage && (
+                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                        <DollarSign className="w-3 h-3" /> {job.avg_wage >= 1000 ? `$${Math.round(job.avg_wage / 1000)}k` : `$${Math.round(job.avg_wage)}`} avg
+                      </span>
+                    )}
+                    {posted && <span className="text-xs text-gray-400">{posted}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => handleLog(job)} disabled={isLogging || isLogged}
+                    className={cn('flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
+                      isLogged ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200')}>
+                    {isLogged ? <><CheckCircle2 className="w-3 h-3" /> Logged</> : <><Plus className="w-3 h-3" /> Log</>}
+                  </button>
+                  <a href={job.url} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg transition-colors">
+                    Apply <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 export default function CompanyPage() {
   const params = useParams()
@@ -28,6 +117,8 @@ export default function CompanyPage() {
   const [saveLoading, setSaveLoading] = useState(false)
   const [optSubmitted, setOptSubmitted] = useState(false)
   const [optLoading, setOptLoading] = useState(false)
+  const [listings, setListings] = useState<JobListingResult[]>([])
+  const [listingsLoaded, setListingsLoaded] = useState(false)
 
   useEffect(() => {
     if (!user) { setIsSaved(false); return }
@@ -56,6 +147,13 @@ export default function CompanyPage() {
       } finally { setLoading(false) }
     }
     fetchData()
+  }, [id])
+
+  useEffect(() => {
+    getJobListings({ company_id: id, limit: 20 })
+      .then(res => setListings(res.data.listings))
+      .catch(() => {})
+      .finally(() => setListingsLoaded(true))
   }, [id])
 
   if (loading) {
@@ -410,6 +508,11 @@ export default function CompanyPage() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* Open Positions */}
+        {listingsLoaded && listings.length > 0 && (
+          <OpenPositions listings={listings} companyName={company.legal_name} user={user} onAuth={() => router.push('/auth')} />
         )}
 
         {/* OPT report */}

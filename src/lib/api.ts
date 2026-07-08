@@ -231,6 +231,7 @@ export interface JobListingResult {
   url: string
   posted_at: string | null
   scraped_at: string
+  avg_wage: number | null
 }
 
 export interface JobListingsResponse {
