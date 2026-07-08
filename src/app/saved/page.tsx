@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Bookmark, Trash2, Building2, CheckCircle, TrendingUp, Lock } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { getSavedCompanies, unsaveCompany, SavedCompany } from '@/lib/api'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 
 const MOCK_SAVED = [
   { name: 'Google LLC', everify: true, h1b: 5241 },
@@ -108,9 +109,7 @@ export default function SavedCompaniesPage() {
     return (
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 bg-white rounded-2xl border border-gray-100 animate-pulse" />
-          ))}
+          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       </main>
     )

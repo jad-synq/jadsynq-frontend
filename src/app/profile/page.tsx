@@ -17,6 +17,7 @@ import {
 } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import BrandedLoader from '@/components/ui/BrandedLoader'
+import { Skeleton, SkeletonText } from '@/components/ui/Skeleton'
 import { extractResumeText } from '@/lib/pdf'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -136,10 +137,13 @@ function UnauthenticatedView() {
 function LoadingSkeleton() {
   return (
     <div className="min-h-screen bg-[#f0fdf4]">
-      <div className="bg-gradient-to-br from-[#0f2d1a] to-[#16a34a] h-44 animate-pulse" />
+      <div className="bg-gradient-to-br from-[#0f2d1a] to-[#16a34a] h-44" />
       <div className="max-w-2xl mx-auto px-6 -mt-6 space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-24 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <Skeleton className="h-4 w-32" />
+            <SkeletonText lines={2} />
+          </div>
         ))}
       </div>
     </div>

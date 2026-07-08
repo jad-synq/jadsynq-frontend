@@ -24,3 +24,33 @@ select {
     text-wrap: balance;
   }
 }
+
+/* ── Shimmer skeleton ──────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #e4e4e4 40%,
+    #ececec 60%,
+    #f0f0f0 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── Page loader progress bar ─────────────────────────────────────────────── */
+@keyframes loader-progress {
+  0%   { width: 0%; margin-left: 0%; }
+  40%  { width: 60%; margin-left: 20%; }
+  70%  { width: 40%; margin-left: 55%; }
+  100% { width: 0%;  margin-left: 100%; }
+}
+
+.loader-bar {
+  animation: loader-progress 1.6s ease-in-out infinite;
+}
