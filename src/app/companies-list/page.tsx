@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck } from 'lucide-react'
 import { getCompaniesCached, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
 import BrandedLoader from '@/components/ui/BrandedLoader'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 import CompanyLogo, { linkedinCompanyUrl } from '@/components/ui/CompanyLogo'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -235,13 +236,11 @@ export default function CompaniesPage() {
 
         {/* Company list */}
         {loading ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {slowLoad ? (
               <BrandedLoader />
             ) : (
-              [...Array(8)].map((_, i) => (
-                <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
-              ))
+              Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             )}
           </div>
         ) : companies.length === 0 ? (

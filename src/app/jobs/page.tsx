@@ -15,6 +15,7 @@ import {
   JobRoleResult, JobTitleSuggestion, JobListingResult, JobMatchResult,
 } from '@/lib/api'
 import { extractResumeText } from '@/lib/pdf'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 import CompanyLogo from '@/components/ui/CompanyLogo'
 import { isAxiosError } from 'axios'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
@@ -662,9 +663,7 @@ export default function JobsPage() {
             {/* Loading skeleton */}
             {user && forYouLoading && (
               <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse h-36" />
-                ))}
+                {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             )}
 
@@ -802,9 +801,7 @@ export default function JobsPage() {
 
             {liveLoading && (
               <div className="space-y-3">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse h-28" />
-                ))}
+                {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             )}
 
@@ -903,9 +900,7 @@ export default function JobsPage() {
 
             {loading && (
               <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse h-36" />
-                ))}
+                {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             )}
 

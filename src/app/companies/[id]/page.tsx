@@ -13,6 +13,7 @@ import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCo
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import CompanyLogo, { linkedinCompanyUrl, careersUrl } from '@/components/ui/CompanyLogo'
+import { SkeletonHero, SkeletonStat, SkeletonCard, Skeleton } from '@/components/ui/Skeleton'
 
 function OpenPositions({ listings, companyName, user, onAuth }: {
   listings: JobListingResult[]
@@ -159,12 +160,14 @@ export default function CompanyPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-4 py-8 animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-24" />
-          <div className="h-36 bg-gray-200 rounded-2xl" />
-          <div className="grid grid-cols-2 gap-4">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-28 bg-gray-200 rounded-2xl" />)}
+        <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
+          <Skeleton className="h-5 w-16" />
+          <SkeletonHero />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonStat key={i} />)}
           </div>
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       </main>
     )
