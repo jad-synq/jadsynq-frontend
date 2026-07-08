@@ -92,15 +92,13 @@ export default function CompanyLogo({ logoUrl, domain, name, size = 'md', classN
   )
 }
 
-// Derive a LinkedIn company page URL from domain or name
-export function linkedinCompanyUrl(domain: string | null, name: string): string {
-  if (domain) {
-    const slug = domain
-      .replace(/\.(com|org|net|io|co|ai|us|uk|in|de|fr|gov|edu|biz|tech|app)$/i, '')
-      .replace(/\./g, '-')
-      .toLowerCase()
-    return `https://www.linkedin.com/company/${slug}/`
-  }
-  // Fall back to LinkedIn company search
+// LinkedIn company search URL — always reliable regardless of slug
+export function linkedinCompanyUrl(_domain: string | null, name: string): string {
   return `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(name)}`
+}
+
+// Careers fallback: company careers page or Google search
+export function careersUrl(careers: string | null, name: string): string {
+  if (careers) return careers
+  return `https://www.google.com/search?q=${encodeURIComponent(name + ' careers jobs')}`
 }

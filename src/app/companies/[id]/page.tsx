@@ -12,7 +12,7 @@ import { isAxiosError } from 'axios'
 import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, getJobListings, createApplication, CompanyProfile, H1BYearSummary, JobListingResult } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import CompanyLogo, { linkedinCompanyUrl } from '@/components/ui/CompanyLogo'
+import CompanyLogo, { linkedinCompanyUrl, careersUrl } from '@/components/ui/CompanyLogo'
 
 function OpenPositions({ listings, companyName, user, onAuth }: {
   listings: JobListingResult[]
@@ -268,12 +268,10 @@ export default function CompanyPage() {
                 <Globe className="w-4 h-4" /> Website <ExternalLink className="w-3 h-3 opacity-60" />
               </a>
             )}
-            {company.careers_url && (
-              <a href={company.careers_url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 px-3 py-1 rounded-lg border border-emerald-500/30 transition-colors">
-                <Briefcase className="w-4 h-4" /> Careers Page <ExternalLink className="w-3 h-3 opacity-60" />
-              </a>
-            )}
+            <a href={careersUrl(company.careers_url, company.legal_name)} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 px-3 py-1 rounded-lg border border-emerald-500/30 transition-colors">
+              <Briefcase className="w-4 h-4" /> Careers <ExternalLink className="w-3 h-3 opacity-60" />
+            </a>
             <a
               href={linkedinCompanyUrl(company.domain, company.legal_name)}
               target="_blank"
