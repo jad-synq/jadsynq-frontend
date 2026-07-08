@@ -62,7 +62,7 @@ export default function CompaniesPage() {
   const [h1bOnly, setH1bOnly] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
-  const PER_PAGE = 20
+  const PER_PAGE = 50
 
   const fetchCompanies = useCallback(async (p = 1, attempt = 1) => {
     setLoading(true)
