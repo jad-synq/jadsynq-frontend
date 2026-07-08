@@ -525,7 +525,19 @@ export default function JobsPage() {
       setForYouNoResume(false)
       setForYouFetched(false)
       setScoredJobs([])
-    } catch { setInlineResumeError('Failed to save — please try again') }
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number; data?: { detail?: string } } }
+      const status = axiosErr?.response?.status
+      const detail = axiosErr?.response?.data?.detail
+      if (status === 401) {
+        setInlineResumeError('Session expired — please sign out and sign back in')
+      } else if (detail) {
+        setInlineResumeError(`Failed to save: ${detail}`)
+      } else {
+        setInlineResumeError('Failed to save — please try again')
+      }
+      console.error('[resume save]', err)
+    }
     finally { setInlineResumeSaving(false) }
   }
 
