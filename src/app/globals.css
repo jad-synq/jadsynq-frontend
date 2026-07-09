@@ -25,6 +25,11 @@ select {
   }
 }
 
+/* ── Mobile safe area (iPhone home indicator) ─────────────────────────────── */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ── Shimmer skeleton ──────────────────────────────────────────────────────── */
 @keyframes shimmer {
   0%   { background-position: -400px 0; }

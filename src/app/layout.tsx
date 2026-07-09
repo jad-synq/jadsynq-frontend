@@ -54,8 +54,8 @@ export default function RootLayout({
         <AuthProvider>
           <BackendWarmup />
           <Sidebar />
-          {/* Main content: offset by sidebar width on desktop, top bar height on mobile */}
-          <main className="md:ml-60 min-h-screen pt-14 md:pt-0">
+          {/* Main content: sidebar offset on desktop, top+bottom bar on mobile */}
+          <main className="md:ml-60 min-h-screen pt-14 md:pt-0 pb-16 md:pb-0">
             {children}
           </main>
         </AuthProvider>
