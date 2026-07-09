@@ -2,6 +2,64 @@
 
 import { cn } from '@/lib/utils'
 
+// ── Sparkline ─────────────────────────────────────────────────────────────────
+
+export function Sparkline({
+  data,
+  width = 64,
+  height = 24,
+  color = '#16a34a',
+  className,
+}: {
+  data: number[]
+  width?: number
+  height?: number
+  color?: string
+  className?: string
+}) {
+  if (!data || data.length < 2) return null
+
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const pad = 2
+
+  const points = data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * (width - pad * 2)
+    const y = pad + ((1 - (v - min) / range) * (height - pad * 2))
+    return `${x},${y}`
+  })
+
+  const lastIdx = data.length - 1
+  const lastX = pad + (width - pad * 2)
+  const lastY = pad + ((1 - (data[lastIdx] - min) / range) * (height - pad * 2))
+
+  // Trend: up = green, down = red, flat = gray
+  const trend = data[lastIdx] > data[0] ? '#16a34a' : data[lastIdx] < data[0] ? '#ef4444' : '#9ca3af'
+  const lineColor = color === '#16a34a' ? trend : color
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className={cn('shrink-0', className)}
+    >
+      <polyline
+        points={points.join(' ')}
+        fill="none"
+        stroke={lineColor}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.7"
+      />
+      <circle cx={lastX} cy={lastY} r="2" fill={lineColor} />
+    </svg>
+  )
+}
+
+
 // Base shimmer block
 export function Skeleton({ className }: { className?: string }) {
   return (

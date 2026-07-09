@@ -13,7 +13,7 @@ import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCo
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import CompanyLogo, { linkedinCompanyUrl, careersUrl } from '@/components/ui/CompanyLogo'
-import { SkeletonHero, SkeletonStat, SkeletonCard, Skeleton } from '@/components/ui/Skeleton'
+import { SkeletonHero, SkeletonStat, SkeletonCard, Skeleton, Sparkline } from '@/components/ui/Skeleton'
 
 function OpenPositions({ listings, companyName, user, onAuth }: {
   listings: JobListingResult[]
@@ -351,11 +351,16 @@ export default function CompanyPage() {
         {company.h1b_summary && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <div className="flex items-center gap-1.5 mb-2">
-                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+                  </div>
+                  <span className="text-xs text-gray-500 font-medium">H-1B last year</span>
                 </div>
-                <span className="text-xs text-gray-500 font-medium">H-1B last year</span>
+                {h1bHistory.length >= 2 && (
+                  <Sparkline data={h1bHistory.slice().reverse().map(y => y.petitions)} width={48} height={20} />
+                )}
               </div>
               <p className="text-2xl font-bold text-gray-900">
                 {company.h1b_summary.total_petitions_last_year.toLocaleString()}

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck } from 'lucide-react'
 import { getCompaniesCached, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
 import BrandedLoader from '@/components/ui/BrandedLoader'
-import { SkeletonCard } from '@/components/ui/Skeleton'
+import { SkeletonCard, Sparkline } from '@/components/ui/Skeleton'
 import CompanyLogo, { linkedinCompanyUrl } from '@/components/ui/CompanyLogo'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -292,6 +292,14 @@ export default function CompaniesPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Sparkline trend */}
+                {company.petition_trend?.length >= 2 && (
+                  <div className="shrink-0 hidden sm:flex flex-col items-end gap-0.5">
+                    <Sparkline data={company.petition_trend} width={56} height={22} />
+                    <span className="text-[9px] text-gray-300 font-medium">trend</span>
+                  </div>
+                )}
 
                 {/* Approval badge */}
                 {company.approval_rate !== null && (
