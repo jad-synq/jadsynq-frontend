@@ -123,6 +123,7 @@ export interface CompanyListItem {
   logo_url: string | null
   domain: string | null
   match_confidence: number
+  petition_trend: number[]
 }
 
 export interface CompaniesListResponse {
