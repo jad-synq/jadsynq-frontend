@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import {
   Search, CheckCircle, CheckCircle2, TrendingUp, DollarSign, Building2,
   Briefcase, ExternalLink, Plus, ChevronRight, Bookmark,
-  BookmarkCheck, Sparkles, X, MapPin, Layers, Zap, Upload, FileText
+  BookmarkCheck, Sparkles, X, MapPin, Layers, Zap, Upload, FileText,
+  AlertTriangle, ChevronDown, ChevronUp
 } from 'lucide-react'
 import {
   searchJobs, getJobTitleSuggestions, getJobListings,
@@ -53,6 +54,97 @@ function timeAgo(dateStr: string | null): string {
   if (days < 7) return `${days}d ago`
   if (days < 30) return `${Math.floor(days / 7)}w ago`
   return `${Math.floor(days / 30)}mo ago`
+}
+
+// ── Gap Analysis ─────────────────────────────────────────────────────────────
+
+type GapCategory = 'tech' | 'tool' | 'soft' | 'other'
+interface GapItem { keyword: string; count: number; category: GapCategory }
+
+function computeGaps(items: ScoredJob[]): GapItem[] {
+  const counts = new Map<string, { count: number; category: GapCategory }>()
+  const add = (kws: string[], cat: GapCategory) => {
+    for (const kw of kws) {
+      const e = counts.get(kw)
+      if (e) e.count++
+      else counts.set(kw, { count: 1, category: cat })
+    }
+  }
+  for (const { ats } of items) {
+    add(ats.missingBuckets.tech, 'tech')
+    add(ats.missingBuckets.tools, 'tool')
+    add(ats.missingBuckets.soft, 'soft')
+  }
+  return Array.from(counts.entries())
+    .map(([keyword, { count, category }]) => ({ keyword, count, category }))
+    .filter(g => g.count >= 2)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 20)
+}
+
+const GAP_STYLE: Record<GapCategory, string> = {
+  tech:  'bg-violet-50 text-violet-700 border-violet-100',
+  tool:  'bg-sky-50 text-sky-700 border-sky-100',
+  soft:  'bg-amber-50 text-amber-700 border-amber-100',
+  other: 'bg-gray-50 text-gray-600 border-gray-100',
+}
+const GAP_LABEL: Record<GapCategory, string> = {
+  tech: 'Tech', tool: 'Tool', soft: 'Soft skill', other: 'Keyword',
+}
+
+function GapAnalysisPanel({ gaps, totalJobs }: { gaps: GapItem[]; totalJobs: number }) {
+  const [expanded, setExpanded] = useState(false)
+  if (gaps.length === 0) return null
+  const shown = expanded ? gaps : gaps.slice(0, 8)
+
+  return (
+    <div className="mb-4 bg-white rounded-2xl border border-amber-100 p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center shrink-0">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-gray-900">Skill Gap Analysis</p>
+          <p className="text-xs text-gray-400">
+            Skills missing from your resume that appear in your top {totalJobs} matches
+          </p>
+        </div>
+        <a
+          href="/ats-check"
+          className="shrink-0 text-xs text-[#16a34a] hover:underline font-semibold"
+        >
+          Fix resume →
+        </a>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {shown.map(g => (
+          <span
+            key={g.keyword}
+            title={`${GAP_LABEL[g.category]} — missing in ${g.count} of ${totalJobs} matched jobs`}
+            className={cn('flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border', GAP_STYLE[g.category])}
+          >
+            {g.keyword}
+            <span className="bg-white/70 text-[10px] font-bold px-1 rounded-full leading-none py-0.5">
+              {g.count}
+            </span>
+          </span>
+        ))}
+      </div>
+
+      {gaps.length > 8 && (
+        <button
+          onClick={() => setExpanded(x => !x)}
+          className="mt-3 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors"
+        >
+          {expanded
+            ? <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
+            : <><ChevronDown className="w-3.5 h-3.5" /> Show {gaps.length - 8} more gaps</>
+          }
+        </button>
+      )}
+    </div>
+  )
 }
 
 // ── Match Card (For You tab) ──────────────────────────────────────────────────
@@ -440,6 +532,7 @@ export default function JobsPage() {
   const [forYouFetched, setForYouFetched] = useState(false)
   const [forYouNoResume, setForYouNoResume] = useState(false)
   const [scoredJobs, setScoredJobs] = useState<ScoredJob[]>([])
+  const [gaps, setGaps] = useState<GapItem[]>([])
   const [resumeWordCount, setResumeWordCount] = useState(0)
   const [inlineResumePaste, setInlineResumePaste] = useState('')
   const [inlineResumeSaving, setInlineResumeSaving] = useState(false)
@@ -490,6 +583,7 @@ export default function JobsPage() {
       })
       scored.sort((a, b) => b.ats.score - a.ats.score)
       setScoredJobs(scored)
+      setGaps(computeGaps(scored))
       setForYouFetched(true)
     }).catch(err => {
       if (isAxiosError(err) && err.response?.status === 404) {
@@ -737,11 +831,12 @@ export default function JobsPage() {
                     <span className="text-xs text-gray-400">({resumeWordCount} word resume)</span>
                   )}
                   <button
-                    onClick={() => { setForYouFetched(false); setScoredJobs([]) }}
+                    onClick={() => { setForYouFetched(false); setScoredJobs([]); setGaps([]) }}
                     className="ml-auto text-xs text-[#16a34a] hover:underline font-medium">
                     Refresh
                   </button>
                 </div>
+                <GapAnalysisPanel gaps={gaps} totalJobs={scoredJobs.length} />
                 <div className="space-y-3">
                   {scoredJobs.map(item => (
                     <MatchCard key={item.job.id} item={item} />
