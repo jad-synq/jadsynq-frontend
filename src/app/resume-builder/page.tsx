@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
   FileText, Plus, Trash2, ChevronDown, ChevronUp,
@@ -305,6 +306,8 @@ function PreviewRow({ label, value, multiline = false }: { label: string; value:
 
 export default function ResumeBuilderPage() {
   const { user } = useAuth()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const [data, setData] = useState<ResumeData>(BLANK)
   const [templateId, setTemplateId] = useState<TemplateId>('classic')
   const [showPicker, setShowPicker] = useState(false)
@@ -412,9 +415,12 @@ export default function ResumeBuilderPage() {
         #resume-print-area { display: none; }
       `}</style>
 
-      <div id="resume-print-area">
-        <TemplateComponent data={data} />
-      </div>
+      {mounted && createPortal(
+        <div id="resume-print-area">
+          <TemplateComponent data={data} />
+        </div>,
+        document.body
+      )}
 
       <div className="min-h-screen bg-[#f0fdf4]">
         {/* Header */}
