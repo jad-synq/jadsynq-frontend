@@ -71,6 +71,57 @@ export const SOFT_SKILLS_WORDS = new Set([
   'strategic','time management','organizational','interpersonal',
 ])
 
+// ── Word-boundary matching + light stemming ──────────────────────────────────
+//
+// Two correctness problems this section exists to fix:
+//   1. Naive `str.includes(keyword)` lets short keywords match inside unrelated
+//      words -- "ios" inside "scenarios", "api" inside "rapid". wordBoundaryIncludes
+//      checks that the characters immediately before/after a match aren't
+//      alphanumeric, so a match can't be embedded inside a longer word.
+//   2. A resume saying "managed" / "managing" / "manages" should count as a
+//      match for a JD keyword "manage" -- stem() is a lightweight suffix-based
+//      normalizer (not a full Porter stemmer) that collapses common plural and
+//      verb-inflection patterns to the same root, e.g. manage/managed/managing/
+//      manages -> "manag", test/tested/testing/tests -> "test". It won't unify
+//      unrelated-suffix noun/verb pairs (e.g. "communication" vs "communicate")
+//      or irregular forms ("led" vs "lead") -- that needs real morphological
+//      analysis, which is out of scope for a lightweight scoring heuristic.
+
+export function stem(word: string): string {
+  let w = word.toLowerCase()
+  if (w.length > 5 && w.endsWith('ies')) w = w.slice(0, -3) + 'y'
+  else if (w.length > 4 && w.endsWith('ing')) w = w.slice(0, -3)
+  else if (w.length > 4 && w.endsWith('ed')) w = w.slice(0, -2)
+  else if (w.length > 4 && w.endsWith('es')) w = w.slice(0, -2)
+  else if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1)
+  if (w.length > 3 && w.endsWith('e') && !w.endsWith('ee')) w = w.slice(0, -1)
+  return w
+}
+
+function isWordChar(c: string): boolean {
+  return /[a-z0-9]/i.test(c)
+}
+
+export function wordBoundaryIncludes(haystackLower: string, needleLower: string): boolean {
+  let idx = 0
+  for (;;) {
+    const pos = haystackLower.indexOf(needleLower, idx)
+    if (pos === -1) return false
+    const before = pos > 0 ? haystackLower[pos - 1] : ''
+    const after = pos + needleLower.length < haystackLower.length ? haystackLower[pos + needleLower.length] : ''
+    if (!isWordChar(before) && !isWordChar(after)) return true
+    idx = pos + 1
+  }
+}
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9+#.\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
 // ── Extraction helpers ────────────────────────────────────────────────────────
 
 export function extractKeywords(text: string): string[] {
@@ -92,24 +143,13 @@ export function extractKeywords(text: string): string[] {
   return [...new Set([...words, ...bigrams])]
 }
 
-export function detectSections(resume: string) {
-  const r = resume.toLowerCase()
-  return {
-    contact:    /(\b[\w.+-]+@[\w-]+\.[a-z]{2,}\b|linkedin\.com\/in\/|\(\d{3}\)|\d{3}[-.\s]\d{3})/.test(r),
-    summary:    /\b(summary|objective|profile|about me|professional summary|career summary)\b/.test(r),
-    experience: /\b(experience|employment|work history|professional experience|positions held)\b/.test(r),
-    education:  /\b(education|degree|bachelor|master|phd|mba|university|college|b\.s\.|m\.s\.|b\.e\.|m\.e\.)\b/.test(r),
-    skills:     /\b(skills|technologies|tools|technical skills|competencies|proficiencies|languages)\b/.test(r),
-    projects:   /\b(projects?|portfolio|contributions?|github)\b/.test(r),
-  }
-}
-
-export function countActionVerbs(resume: string): number {
-  const words = new Set(resume.toLowerCase().split(/\W+/))
-  return [...words].filter(w => ACTION_VERBS.has(w)).length
-}
-
-// ── Keyword bucketing ─────────────────────────────────────────────────────────
+// Curated-list keyword extraction for scoring (distinct from extractKeywords()
+// above, which is kept only for generateCoverLetter()'s looser needs). Rather
+// than treating every JD word/bigram as a "keyword" -- which floods the result
+// with generic noise phrases like "fast paced" or "least three" -- this only
+// pulls terms that are actually in our curated skill/tool/soft-skill lists,
+// plus a small, capped set of other JD words that look meaningful (repeated,
+// or capitalized like a proper noun/technology name we don't have listed).
 
 export interface BucketedKeywords {
   tech: string[]
@@ -117,6 +157,105 @@ export interface BucketedKeywords {
   soft: string[]
   other: string[]
 }
+
+function extractOtherKeywords(text: string, exclude: Set<string>): string[] {
+  const rawWords = text.split(/\s+/).filter(Boolean)
+  const freq = new Map<string, number>()
+  const properNoun = new Set<string>()
+  for (const raw of rawWords) {
+    // Trailing punctuation (sentence-ending periods/commas) isn't part of the
+    // word -- strip it before dedup/exclusion, or "PostgreSQL." (end of a
+    // sentence) shows up as a separate "keyword" from the "postgresql" a
+    // curated-list match already found for the same JD term.
+    const clean = raw.replace(/[^A-Za-z0-9+#.-]/g, '').replace(/^[.-]+|[.-]+$/g, '')
+    if (clean.length < 3) continue
+    const lower = clean.toLowerCase()
+    if (STOP_WORDS.has(lower) || exclude.has(lower)) continue
+    freq.set(lower, (freq.get(lower) ?? 0) + 1)
+    if (/^[A-Z][a-zA-Z0-9.+#-]*$/.test(clean)) properNoun.add(lower)
+  }
+  const candidates: string[] = []
+  for (const [word, count] of freq) {
+    if (count >= 2 || properNoun.has(word)) candidates.push(word)
+  }
+  return candidates.slice(0, 10)
+}
+
+export function extractJDKeywordSet(jd: string): BucketedKeywords {
+  const lower = jd.toLowerCase()
+  const tech = [...TECH_SKILLS].filter(k => wordBoundaryIncludes(lower, k))
+  const tools = [...TOOLS_PLATFORMS].filter(k => wordBoundaryIncludes(lower, k))
+  const soft = [...SOFT_SKILLS_WORDS].filter(k => wordBoundaryIncludes(lower, k))
+  const excluded = new Set([...tech, ...tools, ...soft])
+  const other = extractOtherKeywords(jd, excluded)
+  return { tech, tools, soft, other }
+}
+
+function keywordPresentInResume(keyword: string, resumeLower: string, resumeStems: Set<string>): boolean {
+  if (!keyword.includes(' ')) return resumeStems.has(stem(keyword))
+  return wordBoundaryIncludes(resumeLower, keyword)
+}
+
+// ── Section detection ─────────────────────────────────────────────────────────
+//
+// A section is only counted as "present" if a short, dedicated line in the
+// resume looks like its header (e.g. a line that IS "EXPERIENCE" or "Work
+// Experience", not any sentence that happens to contain the word). Checking
+// for the word anywhere in the document (the previous approach) meant
+// "experience" — as in "5 years of experience" — matched almost every resume
+// regardless of whether it had a real Experience section, making the check
+// nearly always pass and giving false assurance.
+
+export function isHeaderLine(line: string, re: RegExp): boolean {
+  const trimmed = line.trim()
+  if (!trimmed || trimmed.length > 40) return false
+  return re.test(trimmed.toLowerCase())
+}
+
+const SUMMARY_HEADER_RE = /^(summary|objective|profile|about me|professional summary|career summary)s?\s*:?$/
+const EXPERIENCE_HEADER_RE = /^(experience|employment|work history|professional experience|positions held)\s*:?$/
+const EDUCATION_HEADER_RE = /^(education|academic background)\s*:?$/
+const SKILLS_HEADER_RE = /^(skills|technologies|tools|technical skills|competencies|proficiencies)\s*:?$/
+const PROJECTS_HEADER_RE = /^(projects?|portfolio|contributions?)\s*:?$/
+
+export function detectSections(resume: string) {
+  const lines = resume.split('\n')
+  const r = resume.toLowerCase()
+  const hasHeader = (re: RegExp) => lines.some(l => isHeaderLine(l, re))
+  return {
+    contact: /(\b[\w.+-]+@[\w-]+\.[a-z]{2,}\b|linkedin\.com\/in\/|\(\d{3}\)|\d{3}[-.\s]\d{3})/.test(r),
+    summary: hasHeader(SUMMARY_HEADER_RE),
+    experience: hasHeader(EXPERIENCE_HEADER_RE),
+    education: hasHeader(EDUCATION_HEADER_RE) || /\b(bachelor|master|phd|mba|b\.s\.|m\.s\.|b\.e\.|m\.e\.)\b/.test(r),
+    skills: hasHeader(SKILLS_HEADER_RE),
+    projects: hasHeader(PROJECTS_HEADER_RE) || /github\.com\//.test(r),
+  }
+}
+
+// Bullet-anchored action-verb count: only counts verbs at the start of a line
+// (optionally after a bullet glyph or numbered-list marker), not any
+// occurrence of an action verb anywhere in the document. The previous
+// whole-document unique-word check gave equal credit to a resume with a
+// single incidental "our team led the initiative" sentence and a resume with
+// a dozen bullets each properly opening with a strong verb.
+const BULLET_PREFIX_RE = /^[•\-–*▪●○◦‣∙]\s*/
+const NUMBERED_PREFIX_RE = /^\d+[.)]\s*/
+
+export function countActionVerbs(resume: string): number {
+  const lines = resume.split('\n').map(l => l.trim()).filter(Boolean)
+  let count = 0
+  for (const line of lines) {
+    const stripped = line.replace(BULLET_PREFIX_RE, '').replace(NUMBERED_PREFIX_RE, '')
+    const first = stripped.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '') ?? ''
+    if (first && ACTION_VERBS.has(first)) count++
+  }
+  return count
+}
+
+// ── Keyword bucketing ─────────────────────────────────────────────────────────
+// Kept for any caller that has a flat keyword list and wants it categorized
+// after the fact (analyze() below builds its buckets directly from the
+// curated lists instead, which is more accurate than this heuristic).
 
 export function bucketKeywords(keywords: string[]): BucketedKeywords {
   const tech: string[] = [], tools: string[] = [], soft: string[] = [], other: string[] = []
@@ -146,29 +285,49 @@ export interface ATSResult {
   wordCount: number
   verbCount: number
   tips: string[]
+  /** True when the JD text was too short/thin to produce a meaningful keyword
+   *  comparison (e.g. only a job title, no real description) -- consumers
+   *  that rank/aggregate across many JDs should treat these specially rather
+   *  than silently averaging in a near-meaningless keyword score. */
+  jdTooThin: boolean
 }
 
-export function analyze(resume: string, jd: string): ATSResult {
-  const jdKeywords = extractKeywords(jd)
-  const resumeLower = resume.toLowerCase()
+const MIN_MEANINGFUL_JD_WORDS = 12
 
-  const matched = jdKeywords.filter(k => resumeLower.includes(k))
-  const missing = jdKeywords
-    .filter(k => !resumeLower.includes(k))
-    .filter(k => k.length > 3 && !k.includes(' ') ? true : k.split(' ').length > 1)
-    .slice(0, 40)
+export function analyze(resume: string, jd: string): ATSResult {
+  const { tech, tools, soft, other } = extractJDKeywordSet(jd)
+  const resumeLower = resume.toLowerCase()
+  const resumeStems = new Set(tokenize(resume).map(stem))
+  const present = (k: string) => keywordPresentInResume(k, resumeLower, resumeStems)
+
+  const matchedBuckets: BucketedKeywords = {
+    tech: tech.filter(present), tools: tools.filter(present),
+    soft: soft.filter(present), other: other.filter(present),
+  }
+  const missingBuckets: BucketedKeywords = {
+    tech: tech.filter(k => !present(k)), tools: tools.filter(k => !present(k)),
+    soft: soft.filter(k => !present(k)), other: other.filter(k => !present(k)),
+  }
+  const matched = [...matchedBuckets.tech, ...matchedBuckets.tools, ...matchedBuckets.soft, ...matchedBuckets.other]
+  const missing = [...missingBuckets.tech, ...missingBuckets.tools, ...missingBuckets.soft, ...missingBuckets.other]
+  const jdKeywords = [...tech, ...tools, ...soft, ...other]
 
   const sections = detectSections(resume)
   const wordCount = resume.split(/\s+/).filter(Boolean).length
   const verbCount = countActionVerbs(resume)
+  const jdWordCount = jd.split(/\s+/).filter(Boolean).length
+  const jdTooThin = jdWordCount < MIN_MEANINGFUL_JD_WORDS
 
   const keywordScore = jdKeywords.length > 0
-    ? Math.round((matched.length / Math.min(jdKeywords.length, 50)) * 40)
+    ? Math.round((matched.length / jdKeywords.length) * 40)
     : 0
 
+  // Weights sum to exactly 30 (previously summed to 35 and were silently
+  // capped, which meant the "projects" check never actually mattered once
+  // four-plus other sections were detected).
   const sectionScore = Math.min(
-    (sections.contact ? 6 : 0) + (sections.summary ? 6 : 0) + (sections.experience ? 8 : 0) +
-    (sections.education ? 6 : 0) + (sections.skills ? 6 : 0) + (sections.projects ? 3 : 0),
+    (sections.contact ? 5 : 0) + (sections.summary ? 5 : 0) + (sections.experience ? 7 : 0) +
+    (sections.education ? 5 : 0) + (sections.skills ? 5 : 0) + (sections.projects ? 3 : 0),
     30
   )
 
@@ -182,21 +341,20 @@ export function analyze(resume: string, jd: string): ATSResult {
   const score = Math.min(keywordScore + sectionScore + lengthScore + verbScore, 100)
 
   const tips: string[] = []
-  if (keywordScore < 20) tips.push('Add more keywords from the job description to your resume.')
+  if (jdTooThin) tips.push('Paste the full job description for an accurate keyword match — a title alone isn\'t enough.')
+  if (!jdTooThin && keywordScore < 20) tips.push('Add more keywords from the job description to your resume.')
   if (!sections.summary) tips.push('Add a Professional Summary section at the top.')
   if (!sections.skills) tips.push('Add a dedicated Skills or Technologies section.')
   if (!sections.contact) tips.push('Include your email, phone, and LinkedIn URL.')
   if (wordCount < 300) tips.push(`Resume is too short (${wordCount} words). Aim for 350–700 words.`)
   if (wordCount > 900) tips.push(`Resume may be too long (${wordCount} words). Trim to 1–2 pages.`)
   if (verbCount < 5) tips.push('Use more action verbs (e.g. developed, optimized, led, delivered).')
-  if (missing.length > 10) tips.push(`Add missing keywords: ${missing.slice(0, 5).join(', ')}…`)
+  if (!jdTooThin && missing.length > 5) tips.push(`Add missing keywords: ${missing.slice(0, 5).join(', ')}…`)
 
   return {
     score, keywordScore, sectionScore, lengthScore, verbScore,
-    matched, missing,
-    matchedBuckets: bucketKeywords(matched),
-    missingBuckets: bucketKeywords(missing),
-    sections, wordCount, verbCount, tips,
+    matched, missing, matchedBuckets, missingBuckets,
+    sections, wordCount, verbCount, tips, jdTooThin,
   }
 }
 
@@ -212,8 +370,18 @@ export interface ReadabilityResult {
   passes: string[]
 }
 
+function headerCharPos(rawLines: string[], re: RegExp): number {
+  let offset = 0
+  for (const line of rawLines) {
+    if (isHeaderLine(line, re)) return offset
+    offset += line.length + 1
+  }
+  return Infinity
+}
+
 export function scoreReadability(resume: string): ReadabilityResult {
-  const lines = resume.split('\n').map(l => l.trim()).filter(Boolean)
+  const rawLines = resume.split('\n')
+  const lines = rawLines.map(l => l.trim()).filter(Boolean)
   const lower = resume.toLowerCase()
   const issues: string[] = []
   const passes: string[] = []
@@ -221,10 +389,10 @@ export function scoreReadability(resume: string): ReadabilityResult {
   // 1. Section order (30 pts)
   const pos = (re: RegExp) => { const m = lower.search(re); return m === -1 ? Infinity : m }
   const contactPos    = pos(/(\b[\w.+-]+@[\w-]+\.[a-z]{2,}\b|\(\d{3}\)|\d{3}[-.\s]\d{3})/)
-  const summaryPos    = pos(/\b(summary|objective|profile)\b/)
-  const experiencePos = pos(/\b(experience|employment|work history)\b/)
+  const summaryPos    = headerCharPos(rawLines, SUMMARY_HEADER_RE)
+  const experiencePos = headerCharPos(rawLines, EXPERIENCE_HEADER_RE)
   const educationPos  = pos(/\b(education|degree|bachelor|master|phd)\b/)
-  const skillsPos     = pos(/\b(skills|technologies|tools)\b/)
+  const skillsPos     = headerCharPos(rawLines, SKILLS_HEADER_RE)
 
   let sectionOrderScore = 30
   if (contactPos > 300) { sectionOrderScore -= 8; issues.push('Contact info not found near the top of the resume') }
@@ -243,14 +411,14 @@ export function scoreReadability(resume: string): ReadabilityResult {
   }
 
   // 2. Bullet quality (25 pts)
-  const bulletLines = lines.filter(l => /^[•\-–*]\s*\w/.test(l))
+  const bulletLines = lines.filter(l => BULLET_PREFIX_RE.test(l) || NUMBERED_PREFIX_RE.test(l))
   let bulletQualityScore = 25
   if (bulletLines.length === 0) {
     bulletQualityScore = 0
     issues.push('No bullet points found — use bullets in Experience to describe accomplishments')
   } else {
     const actionBullets = bulletLines.filter(b => {
-      const first = b.replace(/^[•\-–*\s]+/, '').split(/\s/)[0]?.toLowerCase() ?? ''
+      const first = b.replace(BULLET_PREFIX_RE, '').replace(NUMBERED_PREFIX_RE, '').split(/\s/)[0]?.toLowerCase() ?? ''
       return ACTION_VERBS.has(first) || ACTION_VERBS.has(first + 'd') || ACTION_VERBS.has(first + 'ed')
     })
     const ratio = actionBullets.length / bulletLines.length
@@ -301,8 +469,13 @@ export function scoreReadability(resume: string): ReadabilityResult {
   // 4. Format cleanliness (25 pts)
   let formatScore = 25
 
-  const tableChars = (resume.match(/\|/g) ?? []).length
-  if (tableChars > 6) {
+  // Real tabular layouts show up as several separate lines that each look
+  // like a table row (2+ pipes per line) -- a resume's contact line joining
+  // fields with " | " (e.g. email | phone | location | linkedin) is one or
+  // two isolated lines, not a repeated tabular pattern, and shouldn't be
+  // penalized the same way a genuine multi-column table would be.
+  const pipeRowLines = lines.filter(l => (l.match(/\|/g) ?? []).length >= 2).length
+  if (pipeRowLines >= 3) {
     formatScore -= 10
     issues.push('Table/column formatting detected — ATS parsers often fail on tables, use plain text')
   } else {
@@ -325,7 +498,11 @@ export function scoreReadability(resume: string): ReadabilityResult {
     passes.push('Resume length and density looks appropriate')
   }
 
-  const specialChars = (resume.match(/[★✓✗●◆■▪☑☐→]/g) ?? []).length
+  // ●/▪/○/◦/‣/∙ are now recognized as legitimate bullet glyphs (see
+  // BULLET_PREFIX_RE above), so they're excluded here to avoid penalizing the
+  // same stylistic choice twice -- once for "no bullets found" under a glyph
+  // this check used to consider a bullet, and again as a "special symbol."
+  const specialChars = (resume.match(/[★✓✗☑☐→]/g) ?? []).length
   if (specialChars > 8) {
     formatScore -= 5
     issues.push('Special symbols may not render correctly in ATS parsers')
