@@ -19,6 +19,7 @@ import { analyze } from '@/lib/ats'
 import { saveResume } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { extractResumeText } from '@/lib/pdf'
+import { downloadDocxResume, downloadTextResume } from './export'
 
 const VISA_OPTIONS = ['', 'U.S. Citizen / Permanent Resident', 'H-1B Visa', 'OPT (F-1)', 'STEM OPT Extension', 'CPT', 'TN Visa', 'Other']
 
@@ -392,6 +393,16 @@ export default function ResumeBuilderPage() {
     } catch { /* ignore */ } finally { setProfileSaving(false) }
   }
 
+  const [docxDownloading, setDocxDownloading] = useState(false)
+  const handleDownloadDocx = async () => {
+    setDocxDownloading(true)
+    try {
+      await downloadDocxResume(data)
+    } finally {
+      setDocxDownloading(false)
+    }
+  }
+
   const handleAutoFill = (parsed: Partial<ResumeData>) => {
     const merged: ResumeData = {
       personal: { ...BLANK.personal, ...parsed.personal },
@@ -517,6 +528,18 @@ export default function ResumeBuilderPage() {
                   className="flex items-center gap-1.5 px-3 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-lg transition-colors">
                   <Printer className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Print / </span>PDF
+                </button>
+                <button onClick={handleDownloadDocx} disabled={docxDownloading}
+                  title="Download as Word (.docx)"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
+                  <FileText className="w-3.5 h-3.5" />
+                  {docxDownloading ? 'Preparing…' : 'Word'}
+                </button>
+                <button onClick={() => downloadTextResume(data)}
+                  title="Download as plain text (.txt)"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Download className="w-3.5 h-3.5" />
+                  TXT
                 </button>
                 <button onClick={() => setPreview(p => !p)}
                   className="p-2 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors lg:hidden">
@@ -738,6 +761,14 @@ export default function ResumeBuilderPage() {
                     className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 border border-gray-200 rounded-lg transition-colors">
                     <Download className="w-3 h-3" /> Save PDF
                   </button>
+                  <button onClick={handleDownloadDocx} disabled={docxDownloading} title="Download as Word (.docx)"
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 border border-gray-200 rounded-lg transition-colors disabled:opacity-50">
+                    <FileText className="w-3 h-3" /> Word
+                  </button>
+                  <button onClick={() => downloadTextResume(data)} title="Download as plain text (.txt)"
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 border border-gray-200 rounded-lg transition-colors">
+                    <Download className="w-3 h-3" /> TXT
+                  </button>
                 </div>
               </div>
               <div className="overflow-y-auto max-h-[calc(100vh-140px)]">
@@ -752,13 +783,23 @@ export default function ResumeBuilderPage() {
               <div className="bg-white flex-1 overflow-y-auto mt-14">
                 <TemplateComponent data={data} />
               </div>
-              <div className="bg-white border-t border-gray-100 p-4 flex gap-3">
-                <button onClick={() => window.print()}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#16a34a] text-white font-bold rounded-xl">
-                  <Printer className="w-4 h-4" /> Print / Save PDF
-                </button>
+              <div className="bg-white border-t border-gray-100 p-4 flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <button onClick={() => window.print()}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#16a34a] text-white font-bold rounded-xl text-sm">
+                    <Printer className="w-4 h-4" /> PDF
+                  </button>
+                  <button onClick={handleDownloadDocx} disabled={docxDownloading}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl text-sm disabled:opacity-50">
+                    <FileText className="w-4 h-4" /> Word
+                  </button>
+                  <button onClick={() => downloadTextResume(data)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl text-sm">
+                    <Download className="w-4 h-4" /> TXT
+                  </button>
+                </div>
                 <button onClick={() => setPreview(false)}
-                  className="px-5 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl">Close</button>
+                  className="w-full py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl">Close</button>
               </div>
             </div>
           )}
