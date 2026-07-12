@@ -5,11 +5,12 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Search, Building2, Briefcase, Bookmark, User,
-  LogOut, X, BriefcaseBusiness, FileText, Zap, Menu
+  LogOut, X, BriefcaseBusiness, FileText, Zap, Menu, Sparkles
 } from 'lucide-react'
 
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
+import { useCopilotStore } from '@/lib/copilotStore'
 
 const NAV = [
   { href: '/',               icon: Search,            label: 'Search',      group: 'main',  bottomTab: true  },
@@ -46,8 +47,10 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { user, loading, signOut } = useAuth()
   const pathname = usePathname()
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
+  const openCopilot = useCopilotStore(s => s.open)
 
   const handleSignOut = () => { signOut(); onNavClick?.() }
+  const handleAskCopilot = () => { openCopilot(); onNavClick?.() }
 
   return (
     <div className="flex flex-col h-full">
@@ -71,6 +74,13 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         {NAV.filter(i => i.group === 'tools').map(item => (
           <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />
         ))}
+        <button
+          onClick={handleAskCopilot}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl mx-2 text-sm font-medium transition-all text-green-100/70 hover:bg-white/10 hover:text-white w-[calc(100%-1rem)]"
+        >
+          <Sparkles className="shrink-0" style={{ width: 18, height: 18 }} />
+          Ask Copilot
+        </button>
         <p className="px-6 pt-4 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Account</p>
         {NAV.filter(i => i.group === 'user').map(item => (
           <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />

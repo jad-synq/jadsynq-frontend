@@ -22,6 +22,7 @@ import { isAxiosError } from 'axios'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { analyze, ATSResult } from '@/lib/ats'
+import { useCopilotStore } from '@/lib/copilotStore'
 
 const POPULAR_ROLES = [
   'Software Engineer', 'Data Engineer', 'Data Scientist',
@@ -162,6 +163,7 @@ interface ScoredJob {
 function MatchCard({ item }: { item: ScoredJob }) {
   const { user } = useAuth()
   const router = useRouter()
+  const openCopilot = useCopilotStore(s => s.open)
   const [logged, setLogged] = useState(false)
   const [logging, setLogging] = useState(false)
   const { job, ats } = item
@@ -186,6 +188,16 @@ function MatchCard({ item }: { item: ScoredJob }) {
       localStorage.setItem('jadsynq_prefill_jd', jd.trim())
     } catch { /* ignore */ }
     router.push('/ats-check')
+  }
+
+  const handleExplainMatch = () => {
+    if (!user) { router.push('/auth'); return }
+    openCopilot({
+      title: job.title,
+      company: job.legal_name,
+      matched_keywords: [...ats.matchedBuckets.tech, ...ats.matchedBuckets.tools],
+      missing_keywords: [...ats.missingBuckets.tech, ...ats.missingBuckets.tools],
+    })
   }
 
   const handleLog = async () => {
@@ -291,6 +303,10 @@ function MatchCard({ item }: { item: ScoredJob }) {
         <button onClick={handleCheckMatch}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold rounded-lg border border-violet-200 transition-colors">
           <Zap className="w-3 h-3" /> Check Match
+        </button>
+        <button onClick={handleExplainMatch}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 transition-colors">
+          <Sparkles className="w-3 h-3" /> Explain Match
         </button>
         <Link href={`/interview-prep?role=${encodeURIComponent(job.title)}`}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg border border-blue-200 transition-colors">
