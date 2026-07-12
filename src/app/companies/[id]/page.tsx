@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, CheckCircle, CheckCircle2, XCircle, TrendingUp,
   DollarSign, Building2, MapPin, Briefcase, Bookmark, BookmarkCheck,
-  ThumbsUp, Globe, ExternalLink, Plus
+  ThumbsUp, Globe, ExternalLink, Plus, BookOpen
 } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, getJobListings, createApplication, CompanyProfile, H1BYearSummary, JobListingResult } from '@/lib/api'
@@ -260,6 +260,12 @@ export default function CompanyPage() {
               >
                 <Plus className="w-4 h-4" /> Log App
               </button>
+              <Link
+                href={`/interview-prep?role=${encodeURIComponent(company.legal_name)}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white/10 text-white hover:bg-white/20 border border-white/20 transition-all whitespace-nowrap"
+              >
+                <BookOpen className="w-4 h-4" /> Prep for Interview
+              </Link>
             </div>
           </div>
 

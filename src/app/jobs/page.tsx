@@ -7,7 +7,7 @@ import {
   Search, CheckCircle, CheckCircle2, TrendingUp, DollarSign, Building2,
   Briefcase, ExternalLink, Plus, ChevronRight, Bookmark,
   BookmarkCheck, Sparkles, X, MapPin, Layers, Zap, Upload, FileText,
-  AlertTriangle, ChevronDown, ChevronUp
+  AlertTriangle, ChevronDown, ChevronUp, BookOpen
 } from 'lucide-react'
 import {
   searchJobs, getJobTitleSuggestions, getJobListings,
@@ -292,6 +292,10 @@ function MatchCard({ item }: { item: ScoredJob }) {
           className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold rounded-lg border border-violet-200 transition-colors">
           <Zap className="w-3 h-3" /> Check Match
         </button>
+        <Link href={`/interview-prep?role=${encodeURIComponent(job.title)}`}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg border border-blue-200 transition-colors">
+          <BookOpen className="w-3 h-3" /> Prep for Interview
+        </Link>
       </div>
     </div>
   )
