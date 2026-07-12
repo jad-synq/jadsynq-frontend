@@ -109,13 +109,17 @@ export function buildResumeText(d: ResumeData): string {
 
 function uid() { return Math.random().toString(36).slice(2) }
 
+// Header lines may end with a colon ("EXPERIENCE:") -- the trailing \s*:?\s*$
+// tolerates that instead of requiring an exact bare-word line match, which
+// previously meant a colon-suffixed header never matched and that whole
+// section's content silently fell into the (unused) `header` bucket.
 const SECTION_RE: Array<[keyof SectionMap, RegExp]> = [
-  ['summary',        /^(SUMMARY|OBJECTIVE|PROFILE|ABOUT ME|PROFESSIONAL SUMMARY|CAREER SUMMARY|OVERVIEW)\s*$/i],
-  ['experience',     /^(EXPERIENCE|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|WORK HISTORY|CAREER HISTORY|EMPLOYMENT HISTORY)\s*$/i],
-  ['education',      /^(EDUCATION|ACADEMIC|DEGREES?|ACADEMIC BACKGROUND|QUALIFICATIONS?)\s*$/i],
-  ['skills',         /^(SKILLS?|TECHNICAL SKILLS?|CORE COMPETENCIES|TECHNOLOGIES|TOOLS|PROFICIENCIES|KEY SKILLS|TECHNICAL EXPERTISE)\s*$/i],
-  ['projects',       /^(PROJECTS?|PERSONAL PROJECTS?|SIDE PROJECTS?|PORTFOLIO|OPEN SOURCE)\s*$/i],
-  ['certifications', /^(CERTIFICATIONS?|CERTIFICATES?|LICENSES?|CREDENTIALS?|AWARDS?|HONORS?|ACHIEVEMENTS?)\s*$/i],
+  ['summary',        /^(SUMMARY|OBJECTIVE|PROFILE|ABOUT ME|PROFESSIONAL SUMMARY|CAREER SUMMARY|OVERVIEW)\s*:?\s*$/i],
+  ['experience',     /^(EXPERIENCE|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|WORK HISTORY|CAREER HISTORY|EMPLOYMENT HISTORY)\s*:?\s*$/i],
+  ['education',      /^(EDUCATION|ACADEMIC|DEGREES?|ACADEMIC BACKGROUND|QUALIFICATIONS?)\s*:?\s*$/i],
+  ['skills',         /^(SKILLS?|TECHNICAL SKILLS?|CORE COMPETENCIES|TECHNOLOGIES|TOOLS|PROFICIENCIES|KEY SKILLS|TECHNICAL EXPERTISE)\s*:?\s*$/i],
+  ['projects',       /^(PROJECTS?|PERSONAL PROJECTS?|SIDE PROJECTS?|PORTFOLIO|OPEN SOURCE)\s*:?\s*$/i],
+  ['certifications', /^(CERTIFICATIONS?|CERTIFICATES?|LICENSES?|CREDENTIALS?|AWARDS?|HONORS?|ACHIEVEMENTS?)\s*:?\s*$/i],
 ]
 
 interface SectionMap {
@@ -202,12 +206,39 @@ export function parseResumeText(raw: string): Partial<ResumeData> {
   }
 
   // ── Summary ──
-  const summary = sections.summary.filter(Boolean).join(' ').trim()
+  // A resume that opens with a summary paragraph before any recognized
+  // section header used to lose that paragraph entirely -- everything before
+  // the first header lands in `sections.header`, which nothing else reads.
+  // Fold it in as the summary (minus the name line and any contact-info
+  // lines already extracted above) when there's no explicitly-headed summary.
+  const headerlessSummary = sections.header
+    .filter(Boolean)
+    .filter(l => l.trim() !== name)
+    .filter(l => !contactChars.test(l))
+    .join(' ')
+    .trim()
+  const summary = sections.summary.filter(Boolean).join(' ').trim() || headerlessSummary
 
   // ── Skills ──
-  const skillText = sections.skills.filter(Boolean)
-    .map(l => l.replace(/^(technical|languages?|tools?|soft skills?|frameworks?|platforms?|proficiencies?)\s*:?\s*/i, ''))
-    .join(', ')
+  // Route each line to the skills sub-field its own label indicates
+  // ("Languages: Spanish, French" -> skills.languages) instead of collapsing
+  // every skills line into `technical` regardless of how the source resume
+  // organized them.
+  const SKILL_LABEL_RE: Array<[keyof ResumeData['skills'], RegExp]> = [
+    ['languages', /^languages?\s*:?\s*/i],
+    ['tools',     /^(tools?|platforms?)\s*:?\s*/i],
+    ['soft',      /^soft skills?\s*:?\s*/i],
+    ['technical', /^(technical(?:\s+skills?)?|frameworks?|proficiencies?)\s*:?\s*/i],
+  ]
+  const skillBuckets: ResumeData['skills'] = { technical: '', languages: '', tools: '', soft: '' }
+  for (const line of sections.skills.filter(Boolean)) {
+    let bucket: keyof ResumeData['skills'] = 'technical'
+    let rest = line
+    for (const [key, re] of SKILL_LABEL_RE) {
+      if (re.test(line)) { bucket = key; rest = line.replace(re, ''); break }
+    }
+    skillBuckets[bucket] = skillBuckets[bucket] ? `${skillBuckets[bucket]}, ${rest}` : rest
+  }
 
   // ── Experience ──
   const experience: Experience[] = []
@@ -327,7 +358,7 @@ export function parseResumeText(raw: string): Partial<ResumeData> {
     summary,
     experience,
     education,
-    skills: { technical: skillText, languages: '', tools: '', soft: '' },
+    skills: skillBuckets,
     projects,
     certifications,
   }
@@ -661,6 +692,15 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
               {proj.url && <p className="text-xs text-gray-400">{proj.url}</p>}
               <BulletList items={proj.bullets} />
             </div>
+          ))}
+        </MinSection>
+      )}
+      {data.certifications.length > 0 && (
+        <MinSection title="Certifications">
+          {data.certifications.map(c => (
+            <p key={c.id} className="mb-1">
+              <span className="font-semibold">{c.name}</span>{c.issuer && ` — ${c.issuer}`}{c.date && <span className="text-gray-400"> ({c.date})</span>}
+            </p>
           ))}
         </MinSection>
       )}

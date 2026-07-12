@@ -112,14 +112,24 @@ function AutoFillModal({ onApply, onClose }: {
   const [text, setText] = useState('')
   const [parsed, setParsed] = useState<Partial<ResumeData> | null>(null)
   const [step, setStep] = useState<'input' | 'preview'>('input')
+  const [fileError, setFileError] = useState('')
+  const [fileLoading, setFileLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
-    const extracted = await extractResumeText(file)
-    setText(extracted)
+    setFileError('')
+    setFileLoading(true)
+    try {
+      const extracted = await extractResumeText(file)
+      setText(extracted)
+    } catch {
+      setFileError("Couldn't read that file — try pasting the text instead.")
+    } finally {
+      setFileLoading(false)
+    }
   }
 
   const handleParse = () => {
@@ -166,10 +176,18 @@ function AutoFillModal({ onApply, onClose }: {
                 className="border-2 border-dashed border-gray-200 hover:border-[#16a34a] rounded-xl p-4 text-center cursor-pointer transition-colors group"
               >
                 <Upload className="w-6 h-6 mx-auto mb-2 text-gray-300 group-hover:text-[#16a34a] transition-colors" />
-                <p className="text-sm font-semibold text-gray-600 group-hover:text-[#16a34a]">Upload PDF or .txt file</p>
+                <p className="text-sm font-semibold text-gray-600 group-hover:text-[#16a34a]">
+                  {fileLoading ? 'Reading file…' : 'Upload PDF or .txt file'}
+                </p>
                 <p className="text-xs text-gray-400 mt-1">Or paste resume text below</p>
                 <input ref={fileRef} type="file" accept=".pdf,.txt,.text,application/pdf,text/plain" className="hidden" onChange={handleFile} />
               </div>
+              {fileError && (
+                <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{fileError}</span>
+                </div>
+              )}
 
               <div className="relative">
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center px-4">
@@ -338,6 +356,7 @@ export default function ResumeBuilderPage() {
   const [saved, setSaved] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [profileError, setProfileError] = useState(false)
   const [atsScore, setAtsScore] = useState<number | null>(null)
   const atsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -346,7 +365,22 @@ export default function ResumeBuilderPage() {
       const stored = localStorage.getItem('jadsynq_resume')
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (parsed.data) setData(parsed.data)
+        // Shallow-merge onto BLANK per top-level key rather than trusting the
+        // cached shape wholesale -- stale data from before a ResumeData
+        // schema change (a missing key, or a key with the wrong type) would
+        // otherwise flow straight into state and could crash rendering with
+        // no recovery path.
+        if (parsed.data && typeof parsed.data === 'object') {
+          setData({
+            personal: { ...BLANK.personal, ...parsed.data.personal },
+            summary: typeof parsed.data.summary === 'string' ? parsed.data.summary : BLANK.summary,
+            experience: Array.isArray(parsed.data.experience) ? parsed.data.experience : BLANK.experience,
+            education: Array.isArray(parsed.data.education) ? parsed.data.education : BLANK.education,
+            skills: { ...BLANK.skills, ...parsed.data.skills },
+            projects: Array.isArray(parsed.data.projects) ? parsed.data.projects : BLANK.projects,
+            certifications: Array.isArray(parsed.data.certifications) ? parsed.data.certifications : BLANK.certifications,
+          })
+        }
         if (parsed.templateId) setTemplateId(parsed.templateId)
       }
     } catch {}
@@ -385,12 +419,16 @@ export default function ResumeBuilderPage() {
   const handleSaveToProfile = async () => {
     if (!user) return
     setProfileSaving(true)
+    setProfileError(false)
     try {
       const resumeText = buildResumeText(data)
       await saveResume({ resume_text: resumeText, resume_data: data as unknown as object })
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 2000)
-    } catch { /* ignore */ } finally { setProfileSaving(false) }
+    } catch {
+      setProfileError(true)
+      setTimeout(() => setProfileError(false), 4000)
+    } finally { setProfileSaving(false) }
   }
 
   const [docxDownloading, setDocxDownloading] = useState(false)
@@ -403,13 +441,26 @@ export default function ResumeBuilderPage() {
     }
   }
 
+  // Only overwrite a field with what auto-fill found when it actually found
+  // something -- parseResumeText() always returns empty strings (never
+  // undefined) for fields it couldn't detect, so spreading its result over
+  // BLANK (or using ?? against an empty string, which never falls back)
+  // silently erased previously-entered data every time auto-fill ran again.
+  const mergeNonEmpty = <T extends Record<string, string>>(existing: T, parsed: Partial<T> | undefined): T => {
+    const next = { ...existing }
+    for (const [key, value] of Object.entries(parsed ?? {})) {
+      if (value) next[key as keyof T] = value as T[keyof T]
+    }
+    return next
+  }
+
   const handleAutoFill = (parsed: Partial<ResumeData>) => {
     const merged: ResumeData = {
-      personal: { ...BLANK.personal, ...parsed.personal },
-      summary: parsed.summary ?? data.summary,
+      personal: mergeNonEmpty(data.personal, parsed.personal),
+      summary: parsed.summary || data.summary,
       experience: parsed.experience?.length ? parsed.experience : data.experience,
       education: parsed.education?.length ? parsed.education : data.education,
-      skills: { ...BLANK.skills, ...(parsed.skills ?? {}), },
+      skills: mergeNonEmpty(data.skills, parsed.skills),
       projects: parsed.projects?.length ? parsed.projects : data.projects,
       certifications: parsed.certifications?.length ? parsed.certifications : data.certifications,
     }
@@ -512,16 +563,19 @@ export default function ResumeBuilderPage() {
                   <button
                     onClick={handleSaveToProfile}
                     disabled={profileSaving}
-                    title="Save resume to your profile for job matching"
+                    title={profileError ? 'Save failed — check your connection and try again' : 'Save resume to your profile for job matching'}
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-lg border transition-colors disabled:opacity-50',
-                      profileSaved
+                      profileError
+                        ? 'bg-red-50 text-red-600 border-red-300'
+                        : profileSaved
                         ? 'bg-green-50 text-[#16a34a] border-green-300'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-[#16a34a] hover:text-[#16a34a]'
                     )}
                   >
                     <Check className={cn('w-3.5 h-3.5', profileSaved ? 'text-[#16a34a]' : 'hidden')} />
-                    {profileSaved ? 'Saved!' : (profileSaving ? 'Saving…' : 'Save to Profile')}
+                    <AlertCircle className={cn('w-3.5 h-3.5', profileError ? 'text-red-600' : 'hidden')} />
+                    {profileError ? 'Save failed' : profileSaved ? 'Saved!' : (profileSaving ? 'Saving…' : 'Save to Profile')}
                   </button>
                 )}
                 <button onClick={() => window.print()}
