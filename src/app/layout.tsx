@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import Sidebar from "@/components/ui/Sidebar";
 import BackendWarmup from "@/components/ui/BackendWarmup";
+import CopilotPanel from "@/components/copilot/CopilotPanel";
 import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = localFont({
@@ -58,6 +59,7 @@ export default function RootLayout({
           <main className="md:ml-60 min-h-screen pt-14 md:pt-0 pb-16 md:pb-0">
             {children}
           </main>
+          <CopilotPanel />
         </AuthProvider>
         <Analytics />
       </body>
