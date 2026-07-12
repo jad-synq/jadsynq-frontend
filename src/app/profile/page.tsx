@@ -7,7 +7,7 @@ import {
   ChevronRight, TrendingUp, Award,
   Building2, LogOut, Settings, Mail,
   BarChart3, Sparkles, Target, Clock,
-  ArrowUpRight, FileText, Star, Upload
+  ArrowUpRight, FileText, Star, Upload, Puzzle, Copy, Check
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -168,7 +168,17 @@ export default function ProfilePage() {
   const [resumeSaving, setResumeSaving] = useState(false)
   const [resumeSaveOk, setResumeSaveOk] = useState(false)
   const [showReplaceResume, setShowReplaceResume] = useState(false)
+  const [tokenCopied, setTokenCopied] = useState(false)
   const resumeFileRef = useRef<HTMLInputElement>(null)
+
+  const handleCopyExtensionToken = async () => {
+    const { supabase } = await import('@/lib/supabase')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return
+    await navigator.clipboard.writeText(session.access_token)
+    setTokenCopied(true)
+    setTimeout(() => setTokenCopied(false), 2500)
+  }
 
   useEffect(() => {
     if (authLoading) return
@@ -709,6 +719,34 @@ export default function ProfilePage() {
                     Edit
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Browser extension */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <p className="px-5 pt-4 pb-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Extension</p>
+              <div className="px-5 py-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center shrink-0">
+                    <Puzzle className="w-4 h-4 text-[#16a34a]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">jadsynq Autofill extension</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Copy your account token and paste it into the extension popup to connect it.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCopyExtensionToken}
+                  className={cn(
+                    'flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold transition-colors',
+                    tokenCopied ? 'bg-green-50 text-[#16a34a] border border-green-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
+                  )}
+                >
+                  {tokenCopied ? <><Check className="w-4 h-4" /> Copied!</> : <><Copy className="w-4 h-4" /> Copy token for extension</>}
+                </button>
+                <p className="text-[11px] text-gray-400 mt-2">
+                  This token expires periodically -- if autofill stops working in the extension, come back here and copy a fresh one.
+                </p>
               </div>
             </div>
 
