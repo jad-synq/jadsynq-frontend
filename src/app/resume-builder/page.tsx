@@ -309,6 +309,23 @@ export default function ResumeBuilderPage() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   const [data, setData] = useState<ResumeData>(BLANK)
+  // Browsers print their own title/date/URL header+footer using the page's
+  // <title> and location -- swap the title to the person's name for the
+  // duration of printing so it reads "Jane Doe - Resume" instead of the
+  // app's title, and so "Save as PDF" defaults the filename sensibly too.
+  useEffect(() => {
+    const prevTitle = document.title
+    const setResumeTitle = () => {
+      document.title = data.personal.name ? `${data.personal.name} - Resume` : 'Resume'
+    }
+    const restoreTitle = () => { document.title = prevTitle }
+    window.addEventListener('beforeprint', setResumeTitle)
+    window.addEventListener('afterprint', restoreTitle)
+    return () => {
+      window.removeEventListener('beforeprint', setResumeTitle)
+      window.removeEventListener('afterprint', restoreTitle)
+    }
+  }, [data.personal.name])
   const [templateId, setTemplateId] = useState<TemplateId>('classic')
   const [showPicker, setShowPicker] = useState(false)
   const [showAutoFill, setShowAutoFill] = useState(false)
@@ -409,12 +426,19 @@ export default function ResumeBuilderPage() {
     <>
       <style>{`
         @media print {
+          /* Chrome/Edge draw their own title/date header and URL/page-number
+             footer inside the page's margin area. Zeroing the @page margin
+             leaves no room for them, which suppresses that text -- we add
+             our own padding below to keep the resume from printing edge to
+             edge. */
+          @page { margin: 0; }
           html, body { height: auto !important; overflow: visible !important; }
           body > * { display: none !important; }
           #resume-print-area {
             display: block !important;
             position: static !important;
             width: 100%;
+            padding: 0.5in;
             background: white;
           }
         }
