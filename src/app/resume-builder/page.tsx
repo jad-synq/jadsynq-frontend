@@ -409,8 +409,14 @@ export default function ResumeBuilderPage() {
     <>
       <style>{`
         @media print {
+          html, body { height: auto !important; overflow: visible !important; }
           body > * { display: none !important; }
-          #resume-print-area { display: block !important; position: fixed; inset: 0; z-index: 9999; background: white; }
+          #resume-print-area {
+            display: block !important;
+            position: static !important;
+            width: 100%;
+            background: white;
+          }
         }
         #resume-print-area { display: none; }
       `}</style>
