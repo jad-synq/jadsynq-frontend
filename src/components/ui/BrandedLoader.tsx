@@ -28,13 +28,13 @@ export default function BrandedLoader({ message }: { message?: string }) {
       {/* Logo mark */}
       <div className="flex items-center gap-2.5">
         <svg className="w-9 h-9 text-brand" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-          <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="5" />
-          <path d="M58,30 L58,62 Q58,75 45,75 Q37,75 32,70" stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M20,54 L37,71 L50,42 L63,54 L80,22" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="80" cy="22" r="7" fill="currentColor" />
         </svg>
         <span className="font-display text-2xl font-bold text-ink tracking-tight">JADsynq</span>
       </div>
 
-      {/* Spinner ring — the seal being stamped */}
+      {/* Spinner ring */}
       <div className="relative w-14 h-14">
         <svg className="w-14 h-14 animate-spin" viewBox="0 0 56 56" fill="none">
           <circle cx="28" cy="28" r="24" stroke="#D7E2D6" strokeWidth="4" />
