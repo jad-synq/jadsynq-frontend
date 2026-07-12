@@ -1,11 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { TrendingUp, Briefcase, ChevronRight, Database, Shield, RotateCcw, Sparkles } from 'lucide-react'
 import SearchBar, { SearchFilters } from '@/components/search/SearchBar'
 import SearchResultCard from '@/components/search/SearchResultCard'
 import { searchCompanies, SearchResult } from '@/lib/api'
+import { useMotionAllowed } from '@/hooks/useReducedMotion'
+
+// Three.js/WebGL needs `window`/`document`, which don't exist during
+// Next.js server-side rendering -- ssr:false defers this to the client only.
+const HeroScene = dynamic(() => import('@/components/three/HeroScene'), { ssr: false })
 
 export default function HomePage() {
   const [results, setResults] = useState<SearchResult[]>([])
@@ -13,6 +19,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
   const [lastQuery, setLastQuery] = useState('')
+  const motionAllowed = useMotionAllowed()
 
   const handleSearch = async (query: string, filters: SearchFilters) => {
     setLoading(true)
@@ -39,38 +46,45 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#f0fdf4]">
 
       {/* Hero / Search */}
-      <div className={`transition-all duration-300 ${hasSearched ? 'pt-6 pb-4 px-6' : 'pt-12 pb-6 px-6'}`}>
+      <div className={`relative overflow-hidden transition-all duration-300 ${hasSearched ? 'pt-6 pb-4 px-6' : 'pt-12 pb-6 px-6'}`}>
 
         {!hasSearched && (
-          <div className="max-w-2xl mx-auto text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 text-xs font-semibold rounded-full mb-5 border border-green-200">
-              <Sparkles className="w-3.5 h-3.5" />
-              Real data from government filings
-            </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 tracking-tight leading-tight">
-              Find your next<br />
-              <span className="text-[#16a34a]">H-1B sponsor</span>
-            </h1>
-            <p className="text-gray-500 text-lg mb-8 max-w-md mx-auto">
-              Search 80,000+ companies by sponsorship history and E-Verify status.
-            </p>
+          <>
+            {motionAllowed && (
+              <div className="hidden md:block absolute inset-0 z-0" aria-hidden="true">
+                <HeroScene />
+              </div>
+            )}
+            <div className="relative z-10 max-w-2xl mx-auto text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 text-xs font-semibold rounded-full mb-5 border border-green-200">
+                <Sparkles className="w-3.5 h-3.5" />
+                Real data from government filings
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 tracking-tight leading-tight">
+                Find your next<br />
+                <span className="text-[#16a34a]">H-1B sponsor</span>
+              </h1>
+              <p className="text-gray-500 text-lg mb-8 max-w-md mx-auto">
+                Search 80,000+ companies by sponsorship history and E-Verify status.
+              </p>
 
-            {/* Hero action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-              <Link href="/companies-list"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-green-200">
-                <Database className="w-4 h-4" /> Browse All Companies
-              </Link>
-              <Link href="/applications"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-sm border border-gray-200 shadow-sm transition-all">
-                <Briefcase className="w-4 h-4" /> Track Applications
-              </Link>
+              {/* Hero action buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                <Link href="/companies-list"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-green-200">
+                  <Database className="w-4 h-4" /> Browse All Companies
+                </Link>
+                <Link href="/applications"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-sm border border-gray-200 shadow-sm transition-all">
+                  <Briefcase className="w-4 h-4" /> Track Applications
+                </Link>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* Search bar */}
-        <div className="max-w-2xl mx-auto">
+        <div className="relative z-10 max-w-2xl mx-auto">
           {hasSearched && (
             <div className="flex items-center justify-between mb-3">
               <button onClick={() => { setHasSearched(false); setResults([]); setError(null) }}
@@ -89,7 +103,7 @@ export default function HomePage() {
 
         {/* Quick search + stats */}
         {!hasSearched && (
-          <div className="max-w-2xl mx-auto">
+          <div className="relative z-10 max-w-2xl mx-auto">
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               <span className="text-xs text-gray-400 w-full text-center mb-1">Popular searches</span>
               {['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'Deloitte', 'Infosys', 'Cognizant'].map(co => (
