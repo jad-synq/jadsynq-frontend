@@ -35,7 +35,7 @@ function SaveButton({ companyId }: { companyId: string }) {
       title={saved ? 'Unsave' : 'Save company'}
       className={cn(
         'p-2 rounded-lg transition-colors disabled:opacity-40 shrink-0',
-        saved ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50'
+        saved ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-muted hover:text-muted hover:bg-paper'
       )}
     >
       {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
@@ -104,20 +104,20 @@ export default function CompaniesPage() {
   const activeFilters = [everifyOnly && 'E-Verify', h1bOnly && 'H-1B sponsors'].filter(Boolean)
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-paper">
       {/* Page header */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="bg-paper-raised border-b border-line">
         <div className="max-w-5xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Company Database</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                {loading ? '…' : <><span className="font-semibold text-[#16a34a]">{total.toLocaleString()}</span> companies with H-1B or E-Verify data</>}
+              <h1 className="font-display text-2xl font-bold text-ink">Company Database</h1>
+              <p className="text-sm text-muted mt-1">
+                {loading ? '…' : <><span className="font-semibold text-brand">{total.toLocaleString()}</span> companies with H-1B or E-Verify data</>}
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 font-medium">
-                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> E-Verify enrolled
+            <div className="hidden sm:flex items-center gap-3 text-xs text-muted">
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-brand/10 text-brand-deep rounded-full border border-brand/20 font-medium">
+                <span className="w-2 h-2 rounded-full bg-brand inline-block" /> E-Verify enrolled
               </span>
               <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 font-medium">
                 <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> H-1B sponsor
@@ -131,21 +131,21 @@ export default function CompaniesPage() {
         {/* Search bar */}
         <form onSubmit={handleSearch} className="flex gap-2 mb-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Search company name..."
-              className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full pl-10 pr-10 py-3 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-paper-raised"
             />
             {inputValue && (
-              <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink-soft">
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
-          <button type="submit" className="px-5 py-3 bg-[#16a34a] text-white rounded-xl text-sm font-semibold hover:bg-[#15803d] transition-colors">
+          <button type="submit" className="px-5 py-3 bg-brand text-white rounded-xl text-sm font-semibold hover:bg-brand-deep transition-colors">
             Search
           </button>
           <button
@@ -153,7 +153,7 @@ export default function CompaniesPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
               'flex items-center gap-2 px-4 py-3 border rounded-xl text-sm font-medium transition-colors',
-              (showFilters || activeFilters.length > 0) ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+              (showFilters || activeFilters.length > 0) ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-line bg-paper-raised text-ink-soft hover:border-line'
             )}
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -168,9 +168,9 @@ export default function CompaniesPage() {
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-3 flex flex-wrap gap-6 items-center">
+          <div className="bg-paper-raised border border-line rounded-xl p-4 mb-3 flex flex-wrap gap-6 items-center">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sort by</label>
+              <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Sort by</label>
               <div className="flex flex-wrap gap-2">
                 {SORT_OPTIONS.map(o => (
                   <button
@@ -178,7 +178,7 @@ export default function CompaniesPage() {
                     onClick={() => setSort(o.value)}
                     className={cn(
                       'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                      sort === o.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      sort === o.value ? 'bg-blue-600 text-white' : 'bg-line text-ink-soft hover:bg-line'
                     )}
                   >
                     {o.label}
@@ -187,13 +187,13 @@ export default function CompaniesPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Filter</label>
+              <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Filter</label>
               <div className="flex gap-2">
                 <button
                   onClick={() => setEverifyOnly(!everifyOnly)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                    everifyOnly ? 'bg-[#16a34a] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    everifyOnly ? 'bg-brand text-white' : 'bg-line text-ink-soft hover:bg-line'
                   )}
                 >
                   <CheckCircle className="w-3.5 h-3.5" /> E-Verify only
@@ -202,7 +202,7 @@ export default function CompaniesPage() {
                   onClick={() => setH1bOnly(!h1bOnly)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                    h1bOnly ? 'bg-[#16a34a] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    h1bOnly ? 'bg-brand text-white' : 'bg-line text-ink-soft hover:bg-line'
                   )}
                 >
                   <TrendingUp className="w-3.5 h-3.5" /> H-1B sponsors only
@@ -216,13 +216,13 @@ export default function CompaniesPage() {
         {(query || activeFilters.length > 0) && !showFilters && (
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             {query && (
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-line text-ink-soft rounded-full text-sm">
                 &ldquo;{query}&rdquo;
-                <button onClick={clearSearch} className="text-gray-400 hover:text-gray-600"><X className="w-3 h-3" /></button>
+                <button onClick={clearSearch} className="text-muted hover:text-ink-soft"><X className="w-3 h-3" /></button>
               </span>
             )}
             {everifyOnly && (
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm border border-green-100">
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-brand/10 text-brand-deep rounded-full text-sm border border-brand/20">
                 E-Verify only <button onClick={() => setEverifyOnly(false)} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
               </span>
             )}
@@ -244,10 +244,10 @@ export default function CompaniesPage() {
             )}
           </div>
         ) : companies.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <Building2 className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">No companies found</p>
-            <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filters</p>
+          <div className="text-center py-16 bg-paper-raised rounded-2xl border border-line">
+            <Building2 className="w-10 h-10 text-line mx-auto mb-3" />
+            <p className="text-muted font-medium">No companies found</p>
+            <p className="text-sm text-muted mt-1">Try adjusting your search or filters</p>
             <button onClick={clearSearch} className="mt-3 text-sm text-blue-600 hover:underline">Clear search</button>
           </div>
         ) : (
@@ -256,10 +256,10 @@ export default function CompaniesPage() {
               <Link
                 key={company.id}
                 href={`/companies/${company.id}`}
-                className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 hover:border-blue-200 hover:shadow-sm transition-all group"
+                className="flex items-center gap-4 bg-paper-raised rounded-2xl border border-line p-4 hover:border-blue-200 hover:shadow-sm transition-all group"
               >
                 {/* Rank */}
-                <span className="text-xs text-gray-300 font-semibold w-5 shrink-0 text-right">
+                <span className="text-xs text-muted font-semibold w-5 shrink-0 text-right">
                   {(page - 1) * PER_PAGE + i + 1}
                 </span>
 
@@ -273,20 +273,20 @@ export default function CompaniesPage() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{company.legal_name}</p>
+                  <p className="font-semibold text-ink group-hover:text-blue-600 transition-colors truncate">{company.legal_name}</p>
                   <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                     {company.everify_status === 'enrolled' && (
-                      <span className="flex items-center gap-1 text-xs text-green-700 font-medium">
+                      <span className="flex items-center gap-1 text-xs text-brand-deep font-medium">
                         <CheckCircle className="w-3 h-3" /> E-Verify
                       </span>
                     )}
                     {company.h1b_petitions_last_year > 0 && (
-                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <span className="flex items-center gap-1 text-xs text-muted">
                         <TrendingUp className="w-3 h-3 text-blue-400" /> {company.h1b_petitions_last_year.toLocaleString()} H-1B
                       </span>
                     )}
                     {company.avg_wage && (
-                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                      <span className="flex items-center gap-1 text-xs text-muted">
                         <DollarSign className="w-3 h-3" /> {formatWage(company.avg_wage)} avg
                       </span>
                     )}
@@ -297,7 +297,7 @@ export default function CompaniesPage() {
                 {company.petition_trend?.length >= 2 && (
                   <div className="shrink-0 hidden sm:flex flex-col items-end gap-0.5">
                     <Sparkline data={company.petition_trend} width={56} height={22} />
-                    <span className="text-[9px] text-gray-300 font-medium">trend</span>
+                    <span className="text-[9px] text-muted font-medium">trend</span>
                   </div>
                 )}
 
@@ -305,7 +305,7 @@ export default function CompaniesPage() {
                 {company.approval_rate !== null && (
                   <div className={cn(
                     'shrink-0 px-3 py-1.5 rounded-xl text-sm font-bold',
-                    company.approval_rate >= 0.95 ? 'bg-green-50 text-green-700' :
+                    company.approval_rate >= 0.95 ? 'bg-brand/10 text-brand-deep' :
                     company.approval_rate >= 0.8 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-600'
                   )}>
                     {formatApprovalRate(company.approval_rate)}
@@ -338,17 +338,17 @@ export default function CompaniesPage() {
             <button
               onClick={() => fetchCompanies(page - 1)}
               disabled={page === 1 || loading}
-              className="flex items-center gap-1 px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl disabled:opacity-40 hover:bg-gray-50 transition-colors bg-white"
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium border border-line rounded-xl disabled:opacity-40 hover:bg-paper transition-colors bg-paper-raised"
             >
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
-            <span className="text-sm text-gray-500 font-medium">
+            <span className="text-sm text-muted font-medium">
               Page {page} of {totalPages.toLocaleString()}
             </span>
             <button
               onClick={() => fetchCompanies(page + 1)}
               disabled={page === totalPages || loading}
-              className="flex items-center gap-1 px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl disabled:opacity-40 hover:bg-gray-50 transition-colors bg-white"
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium border border-line rounded-xl disabled:opacity-40 hover:bg-paper transition-colors bg-paper-raised"
             >
               Next <ChevronRightIcon className="w-4 h-4" />
             </button>

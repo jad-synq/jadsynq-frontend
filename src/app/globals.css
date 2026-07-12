@@ -3,20 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F2F7F1;
+  --foreground: #142720;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 input,
 textarea,
 select {
-  color: #171717;
+  color: #142720;
 }
 
 @layer utilities {
@@ -39,13 +38,20 @@ select {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    #f0f0f0 0%,
-    #e4e4e4 40%,
-    #ececec 60%,
-    #f0f0f0 100%
+    #E3ECE1 0%,
+    #D2E0CF 40%,
+    #DCE8DA 60%,
+    #E3ECE1 100%
   );
   background-size: 800px 100%;
   animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    background: #DCE8DA;
+  }
 }
 
 /* ── Page loader progress bar ─────────────────────────────────────────────── */

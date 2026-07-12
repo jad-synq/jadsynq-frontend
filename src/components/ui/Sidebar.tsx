@@ -12,6 +12,15 @@ import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { useCopilotStore } from '@/lib/copilotStore'
 
+function SealMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} fill="none" aria-hidden="true">
+      <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="5" />
+      <path d="M58,30 L58,62 Q58,75 45,75 Q37,75 32,70" stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 const NAV = [
   { href: '/',               icon: Search,            label: 'Search',      group: 'main',  bottomTab: true  },
   { href: '/companies-list', icon: Building2,         label: 'Companies',   group: 'main',  bottomTab: true  },
@@ -33,7 +42,7 @@ function NavItem({ href, icon: Icon, label, active, onClick }: {
       className={cn(
         'flex items-center gap-3 px-4 py-2.5 rounded-xl mx-2 text-sm font-medium transition-all',
         active
-          ? 'bg-[#16a34a] text-white shadow-sm shadow-green-900/40'
+          ? 'bg-brand text-white shadow-sm shadow-black/30'
           : 'text-green-100/70 hover:bg-white/10 hover:text-white'
       )}
     >
@@ -57,10 +66,8 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       {/* Logo */}
       <div className="px-4 py-5 border-b border-white/10">
         <Link href="/" onClick={onNavClick} className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-[#16a34a] rounded-lg flex items-center justify-center shrink-0">
-            <BriefcaseBusiness className="w-4.5 h-4.5 text-white" style={{ width: 18, height: 18 }} />
-          </div>
-          <span className="text-xl font-black text-white tracking-tight">jadsynq</span>
+          <SealMark className="w-7 h-7 text-brand shrink-0" />
+          <span className="font-display text-xl font-bold text-white tracking-tight">JADsynq</span>
         </Link>
       </div>
 
@@ -108,7 +115,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         ) : user ? (
           <div className="space-y-1">
             <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-8 h-8 rounded-full bg-[#16a34a] flex items-center justify-center shrink-0 text-white text-sm font-bold">
+              <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center shrink-0 text-white text-sm font-bold">
                 {(user.email ?? '?')[0].toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -126,7 +133,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         ) : (
           <div className="space-y-2 px-2">
             <Link href="/auth" onClick={onNavClick}
-              className="flex items-center justify-center w-full py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl transition-colors">
+              className="flex items-center justify-center w-full py-2.5 bg-brand hover:bg-brand-deep text-white text-sm font-bold rounded-xl transition-colors">
               Get started →
             </Link>
             <Link href="/auth" onClick={onNavClick}
@@ -148,15 +155,13 @@ function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
   const current = NAV.find(n => n.href === '/' ? pathname === '/' : pathname.startsWith(n.href))
 
   return (
-    <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0f2d1a] z-40 flex items-center px-4 gap-3">
+    <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-ink z-40 flex items-center px-4 gap-3">
       <button onClick={onMenuOpen} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
         <Menu className="w-5 h-5" />
       </button>
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-[#16a34a] rounded-md flex items-center justify-center">
-          <BriefcaseBusiness className="w-3.5 h-3.5 text-white" />
-        </div>
-        <span className="font-black text-white text-base tracking-tight">jadsynq</span>
+        <SealMark className="w-5 h-5 text-brand shrink-0" />
+        <span className="font-display font-bold text-white text-base tracking-tight">JADsynq</span>
         {current && current.href !== '/' && (
           <>
             <span className="text-white/30 text-sm">·</span>
@@ -166,13 +171,13 @@ function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
       </div>
       <div className="ml-auto">
         {!loading && !user && (
-          <Link href="/auth" className="text-xs font-bold text-white bg-[#16a34a] px-3 py-1.5 rounded-lg">
+          <Link href="/auth" className="text-xs font-bold text-white bg-brand px-3 py-1.5 rounded-lg">
             Sign in
           </Link>
         )}
         {!loading && user && (
           <Link href="/profile">
-            <div className="w-8 h-8 rounded-full bg-[#16a34a] flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-sm font-bold">
               {(user.email ?? '?')[0].toUpperCase()}
             </div>
           </Link>
@@ -198,13 +203,13 @@ function BottomTabBar() {
             <Link key={href} href={href}
               className={cn(
                 'flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-colors pt-1',
-                active ? 'text-[#16a34a]' : 'text-gray-400 hover:text-gray-600'
+                active ? 'text-brand' : 'text-gray-400 hover:text-gray-600'
               )}>
               <div className={cn('relative flex items-center justify-center w-8 h-6 rounded-xl transition-all',
-                active && 'bg-green-50')}>
+                active && 'bg-paper')}>
                 <Icon style={{ width: 18, height: 18 }} />
                 {active && (
-                  <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#16a34a] rounded-full" />
+                  <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand rounded-full" />
                 )}
               </div>
               {label}
@@ -231,15 +236,13 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
       />
       {/* Drawer */}
       <aside className={cn(
-        'md:hidden fixed inset-y-0 left-0 w-72 bg-[#0f2d1a] z-50 flex flex-col transition-transform duration-300 ease-out',
+        'md:hidden fixed inset-y-0 left-0 w-72 bg-ink z-50 flex flex-col transition-transform duration-300 ease-out',
         open ? 'translate-x-0' : '-translate-x-full'
       )}>
         <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-[#16a34a] rounded-lg flex items-center justify-center">
-              <BriefcaseBusiness className="w-4.5 h-4.5 text-white" style={{ width: 18, height: 18 }} />
-            </div>
-            <span className="text-xl font-black text-white tracking-tight">jadsynq</span>
+            <SealMark className="w-7 h-7 text-brand shrink-0" />
+            <span className="font-display text-xl font-bold text-white tracking-tight">JADsynq</span>
           </div>
           <button onClick={onClose} className="p-2 text-white/60 hover:text-white rounded-lg hover:bg-white/10 transition-colors">
             <X className="w-5 h-5" />
@@ -261,7 +264,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 w-60 bg-[#0f2d1a] z-40">
+      <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 w-60 bg-ink z-40">
         <SidebarContent />
       </aside>
 

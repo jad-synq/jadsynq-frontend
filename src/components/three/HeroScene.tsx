@@ -30,10 +30,10 @@ const SHAPES: Array<{
   scale: number
   speed: number
 }> = [
-  { position: [-4, 2.2, -3], color: 0x16a34a, geometry: 'icosahedron', scale: 0.5, speed: 1.1 },
-  { position: [4.2, 1.8, -3], color: 0x4ade80, geometry: 'torus', scale: 0.45, speed: 0.9 },
-  { position: [-4.4, 0.4, -2.5], color: 0x86efac, geometry: 'octahedron', scale: 0.35, speed: 1.4 },
-  { position: [4.6, -0.4, -3.5], color: 0x15803d, geometry: 'icosahedron', scale: 0.3, speed: 1.2 },
+  { position: [-4, 2.2, -3], color: 0x0e7c4a, geometry: 'icosahedron', scale: 0.5, speed: 1.1 },
+  { position: [4.2, 1.8, -3], color: 0xe8a73b, geometry: 'torus', scale: 0.45, speed: 0.9 },
+  { position: [-4.4, 0.4, -2.5], color: 0x8fbfa3, geometry: 'octahedron', scale: 0.35, speed: 1.4 },
+  { position: [4.6, -0.4, -3.5], color: 0x0a5c37, geometry: 'icosahedron', scale: 0.3, speed: 1.2 },
 ]
 
 function makeGeometry(kind: (typeof SHAPES)[number]['geometry']): THREE.BufferGeometry {
