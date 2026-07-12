@@ -31,7 +31,7 @@ export const STAR_TIPS: string[] = [
 
 export const VISA_INTERVIEW_TIPS: string[] = [
   'If asked about work authorization, answer factually and confidently -- e.g. "I am authorized to work under OPT/STEM OPT and will need H-1B sponsorship in the future" -- do not over-explain or apologize for it.',
-  'Research the company\'s H-1B sponsorship history before the interview (this is exactly what jadsynq\'s company data is for) so you know whether the topic is likely to come up at all.',
+  'Research the company\'s H-1B sponsorship history before the interview (this is exactly what JADsynq\'s company data is for) so you know whether the topic is likely to come up at all.',
   'It is illegal in the US for an interviewer to ask about your national origin or immigration status directly -- questions should be limited to whether you are authorized to work and whether you will need sponsorship now or in the future.',
   'If a recruiter says a role does not sponsor, it rarely helps to negotiate that point in the interview -- better to confirm sponsorship policy before investing interview time, using saved-company alerts and E-Verify/H-1B history on the company profile.',
   'Have your visa timeline (OPT end date, STEM OPT eligibility, remaining cap-subject H-1B attempts) ready to state plainly if asked -- vague answers here read as disorganized, not more likable.',

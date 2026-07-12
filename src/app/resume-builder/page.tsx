@@ -32,10 +32,10 @@ function SectionHeader({ icon: Icon, label, open, onToggle }: {
 }) {
   return (
     <button onClick={onToggle}
-      className="flex items-center gap-2 w-full text-left p-4 hover:bg-gray-50 transition-colors rounded-xl">
-      <Icon className="w-4 h-4 text-[#16a34a]" />
-      <span className="font-bold text-gray-900 flex-1">{label}</span>
-      {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+      className="flex items-center gap-2 w-full text-left p-4 hover:bg-paper transition-colors rounded-xl">
+      <Icon className="w-4 h-4 text-brand" />
+      <span className="font-bold text-ink flex-1">{label}</span>
+      {open ? <ChevronUp className="w-4 h-4 text-muted" /> : <ChevronDown className="w-4 h-4 text-muted" />}
     </button>
   )
 }
@@ -43,13 +43,13 @@ function SectionHeader({ icon: Icon, label, open, onToggle }: {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
+      <label className="block text-xs font-semibold text-ink-soft mb-1">{label}</label>
       {children}
     </div>
   )
 }
 
-const inputCls = "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#16a34a]"
+const inputCls = "w-full px-3 py-2 text-sm border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 const textareaCls = `${inputCls} resize-none`
 
 // ── Template Picker Modal ─────────────────────────────────────────────────────
@@ -61,13 +61,13 @@ function TemplatePicker({ current, onSelect, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6" onClick={e => e.stopPropagation()}>
+      <div className="bg-paper-raised rounded-2xl shadow-2xl max-w-2xl w-full p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Choose a Template</h2>
-            <p className="text-sm text-gray-500">Your content stays the same — only the design changes</p>
+            <h2 className="text-lg font-bold text-ink">Choose a Template</h2>
+            <p className="text-sm text-muted">Your content stays the same — only the design changes</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-muted hover:text-ink-soft text-2xl leading-none">×</button>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
           {TEMPLATES.map(t => {
@@ -79,18 +79,18 @@ function TemplatePicker({ current, onSelect, onClose }: {
                 onClick={() => { onSelect(t.id); onClose() }}
                 className={cn(
                   'group flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all',
-                  active ? 'border-[#16a34a] bg-green-50' : 'border-gray-100 hover:border-gray-300'
+                  active ? 'border-brand bg-brand/10' : 'border-line hover:border-line'
                 )}
               >
-                <div className="w-full aspect-[4/5] rounded-lg overflow-hidden border border-gray-100 shadow-sm">
+                <div className="w-full aspect-[4/5] rounded-lg overflow-hidden border border-line shadow-sm">
                   <Thumb />
                 </div>
                 <div className="text-center w-full">
-                  <p className="text-xs font-bold text-gray-900 truncate">{t.name}</p>
-                  <p className="text-[10px] text-gray-400 leading-tight">{t.description}</p>
+                  <p className="text-xs font-bold text-ink truncate">{t.name}</p>
+                  <p className="text-[10px] text-muted leading-tight">{t.description}</p>
                 </div>
                 {active && (
-                  <span className="flex items-center gap-0.5 text-[10px] font-bold text-[#16a34a]">
+                  <span className="flex items-center gap-0.5 text-[10px] font-bold text-brand">
                     <Check className="w-3 h-3" /> Active
                   </span>
                 )}
@@ -152,19 +152,19 @@ function AutoFillModal({ onApply, onClose }: {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-paper-raised rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="flex items-center justify-between p-5 border-b border-line">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#16a34a] rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-brand rounded-xl flex items-center justify-center">
               <Wand2 className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900">Auto-fill from Existing Resume</h2>
-              <p className="text-xs text-gray-500">Paste your resume text and we&apos;ll fill in all the fields</p>
+              <h2 className="font-bold text-ink">Auto-fill from Existing Resume</h2>
+              <p className="text-xs text-muted">Paste your resume text and we&apos;ll fill in all the fields</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-muted hover:text-ink-soft text-2xl leading-none">×</button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
@@ -173,13 +173,13 @@ function AutoFillModal({ onApply, onClose }: {
               {/* Upload */}
               <div
                 onClick={() => fileRef.current?.click()}
-                className="border-2 border-dashed border-gray-200 hover:border-[#16a34a] rounded-xl p-4 text-center cursor-pointer transition-colors group"
+                className="border-2 border-dashed border-line hover:border-brand rounded-xl p-4 text-center cursor-pointer transition-colors group"
               >
-                <Upload className="w-6 h-6 mx-auto mb-2 text-gray-300 group-hover:text-[#16a34a] transition-colors" />
-                <p className="text-sm font-semibold text-gray-600 group-hover:text-[#16a34a]">
+                <Upload className="w-6 h-6 mx-auto mb-2 text-muted group-hover:text-brand transition-colors" />
+                <p className="text-sm font-semibold text-ink-soft group-hover:text-brand">
                   {fileLoading ? 'Reading file…' : 'Upload PDF or .txt file'}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">Or paste resume text below</p>
+                <p className="text-xs text-muted mt-1">Or paste resume text below</p>
                 <input ref={fileRef} type="file" accept=".pdf,.txt,.text,application/pdf,text/plain" className="hidden" onChange={handleFile} />
               </div>
               {fileError && (
@@ -191,21 +191,21 @@ function AutoFillModal({ onApply, onClose }: {
 
               <div className="relative">
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center px-4">
-                  <div className="flex-1 border-t border-gray-100" />
-                  <span className="mx-3 text-xs text-gray-400 bg-white px-1">OR</span>
-                  <div className="flex-1 border-t border-gray-100" />
+                  <div className="flex-1 border-t border-line" />
+                  <span className="mx-3 text-xs text-muted bg-paper-raised px-1">OR</span>
+                  <div className="flex-1 border-t border-line" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-2">Paste Resume Text</label>
+                <label className="block text-xs font-semibold text-ink-soft mb-2">Paste Resume Text</label>
                 <textarea
                   value={text}
                   onChange={e => setText(e.target.value)}
                   placeholder={"Jane Smith\njane@email.com  |  (555) 123-4567  |  New York, NY\nlinkedin.com/in/janesmith\n\nSUMMARY\nResults-driven software engineer...\n\nEXPERIENCE\nSoftware Engineer\nGoogle · Mountain View, CA\nJan 2022 – Present\n• Built scalable APIs serving 1M+ requests/day\n\nEDUCATION\nMaster of Science in Computer Science — MIT\nSep 2019 – May 2021\n\nSKILLS\nPython, TypeScript, React, PostgreSQL, AWS"}
-                  className="w-full h-64 text-sm border border-gray-200 rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#16a34a] font-mono text-xs leading-relaxed"
+                  className="w-full h-64 text-sm border border-line rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-brand font-mono text-xs leading-relaxed"
                 />
-                <p className="text-xs text-gray-400 mt-1 text-right">{text.split(/\s+/).filter(Boolean).length} words</p>
+                <p className="text-xs text-muted mt-1 text-right">{text.split(/\s+/).filter(Boolean).length} words</p>
               </div>
 
               <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2.5">
@@ -223,9 +223,9 @@ function AutoFillModal({ onApply, onClose }: {
           ) : (
             <div className="space-y-4">
               {/* Preview of parsed data */}
-              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl">
-                <Check className="w-4 h-4 text-[#16a34a] shrink-0" />
-                <p className="text-sm font-semibold text-green-800">
+              <div className="flex items-center gap-2 p-3 bg-brand/10 border border-brand/20 rounded-xl">
+                <Check className="w-4 h-4 text-brand shrink-0" />
+                <p className="text-sm font-semibold text-brand-deep">
                   Detected {fieldCount} fields — review before applying
                 </p>
               </div>
@@ -279,28 +279,28 @@ function AutoFillModal({ onApply, onClose }: {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-100 p-4 flex gap-3">
+        <div className="border-t border-line p-4 flex gap-3">
           {step === 'input' ? (
             <>
-              <button onClick={onClose} className="px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">
+              <button onClick={onClose} className="px-4 py-2.5 border border-line text-ink-soft font-semibold rounded-xl text-sm hover:bg-paper transition-colors">
                 Cancel
               </button>
               <button
                 onClick={handleParse}
                 disabled={text.trim().length < 50}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#16a34a] hover:bg-[#15803d] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-xl text-sm transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-brand hover:bg-brand-deep disabled:bg-line disabled:text-muted text-white font-bold rounded-xl text-sm transition-colors"
               >
                 <Wand2 className="w-4 h-4" /> Parse Resume
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => setStep('input')} className="px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">
+              <button onClick={() => setStep('input')} className="px-4 py-2.5 border border-line text-ink-soft font-semibold rounded-xl text-sm hover:bg-paper transition-colors">
                 ← Back
               </button>
               <button
                 onClick={handleApply}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold rounded-xl text-sm transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-brand hover:bg-brand-deep text-white font-bold rounded-xl text-sm transition-colors"
               >
                 <Check className="w-4 h-4" /> Apply to Form
               </button>
@@ -314,9 +314,9 @@ function AutoFillModal({ onApply, onClose }: {
 
 function PreviewRow({ label, value, multiline = false }: { label: string; value: string; multiline?: boolean }) {
   return (
-    <div className="flex gap-3 text-sm border-b border-gray-50 pb-2">
-      <span className="w-28 shrink-0 text-xs font-bold text-gray-400 uppercase tracking-wide pt-0.5">{label}</span>
-      <span className={cn('text-gray-700 flex-1', multiline && 'whitespace-pre-line')}>{value}</span>
+    <div className="flex gap-3 text-sm border-b border-line pb-2">
+      <span className="w-28 shrink-0 text-xs font-bold text-muted uppercase tracking-wide pt-0.5">{label}</span>
+      <span className={cn('text-ink-soft flex-1', multiline && 'whitespace-pre-line')}>{value}</span>
     </div>
   )
 }
@@ -514,23 +514,23 @@ export default function ResumeBuilderPage() {
         document.body
       )}
 
-      <div className="min-h-screen bg-[#f0fdf4]">
+      <div className="min-h-screen bg-paper">
         {/* Header */}
-        <div className="bg-white border-b border-gray-100 sticky top-0 z-20">
+        <div className="bg-paper-raised border-b border-line sticky top-0 z-20">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="w-9 h-9 bg-[#16a34a] rounded-xl flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 bg-brand rounded-xl flex items-center justify-center shrink-0">
                 <FileText className="w-4 h-4 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 leading-tight">Resume Builder</h1>
-                <p className="text-xs text-gray-400">{wordCount} words · auto-saved</p>
+                <h1 className="font-display text-lg font-bold text-ink leading-tight">Resume Builder</h1>
+                <p className="text-xs text-muted">{wordCount} words · auto-saved</p>
               </div>
 
               {/* Template pill */}
               <button
                 onClick={() => setShowPicker(true)}
-                className="flex items-center gap-2 px-3 py-1.5 border-2 border-dashed border-gray-200 hover:border-[#16a34a] rounded-xl text-xs font-semibold text-gray-600 hover:text-[#16a34a] transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 border-2 border-dashed border-line hover:border-brand rounded-xl text-xs font-semibold text-ink-soft hover:text-brand transition-colors"
               >
                 <Palette className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Template:</span> {currentTemplate.name}
@@ -547,16 +547,16 @@ export default function ResumeBuilderPage() {
 
               <div className="ml-auto flex items-center gap-2">
                 {saved && (
-                  <span className="flex items-center gap-1 text-xs text-[#16a34a] font-semibold">
+                  <span className="flex items-center gap-1 text-xs text-brand font-semibold">
                     <Check className="w-3.5 h-3.5" /> Saved
                   </span>
                 )}
                 <Link href="/ats-check"
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#16a34a] border border-[#16a34a] rounded-lg hover:bg-green-50 transition-colors">
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-brand border border-brand rounded-lg hover:bg-brand/10 transition-colors">
                   <Zap className="w-3.5 h-3.5" /> Check ATS
                 </Link>
                 <button onClick={() => navigator.clipboard.writeText(buildResumeText(data))}
-                  className="hidden sm:block px-3 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  className="hidden sm:block px-3 py-2 text-sm font-semibold text-ink-soft border border-line rounded-lg hover:bg-paper transition-colors">
                   Copy Text
                 </button>
                 {user && (
@@ -569,34 +569,34 @@ export default function ResumeBuilderPage() {
                       profileError
                         ? 'bg-red-50 text-red-600 border-red-300'
                         : profileSaved
-                        ? 'bg-green-50 text-[#16a34a] border-green-300'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#16a34a] hover:text-[#16a34a]'
+                        ? 'bg-brand/10 text-brand border-brand/40'
+                        : 'bg-paper-raised text-ink-soft border-line hover:border-brand hover:text-brand'
                     )}
                   >
-                    <Check className={cn('w-3.5 h-3.5', profileSaved ? 'text-[#16a34a]' : 'hidden')} />
+                    <Check className={cn('w-3.5 h-3.5', profileSaved ? 'text-brand' : 'hidden')} />
                     <AlertCircle className={cn('w-3.5 h-3.5', profileError ? 'text-red-600' : 'hidden')} />
                     {profileError ? 'Save failed' : profileSaved ? 'Saved!' : (profileSaving ? 'Saving…' : 'Save to Profile')}
                   </button>
                 )}
                 <button onClick={() => window.print()}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-lg transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 bg-brand hover:bg-brand-deep text-white text-sm font-bold rounded-lg transition-colors">
                   <Printer className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Print / </span>PDF
                 </button>
                 <button onClick={handleDownloadDocx} disabled={docxDownloading}
                   title="Download as Word (.docx)"
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-ink-soft border border-line rounded-lg hover:bg-paper transition-colors disabled:opacity-50">
                   <FileText className="w-3.5 h-3.5" />
                   {docxDownloading ? 'Preparing…' : 'Word'}
                 </button>
                 <button onClick={() => downloadTextResume(data)}
                   title="Download as plain text (.txt)"
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-ink-soft border border-line rounded-lg hover:bg-paper transition-colors">
                   <Download className="w-3.5 h-3.5" />
                   TXT
                 </button>
                 <button onClick={() => setPreview(p => !p)}
-                  className="p-2 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors lg:hidden">
+                  className="p-2 text-muted hover:text-ink-soft border border-line rounded-lg transition-colors lg:hidden">
                   {preview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -609,7 +609,7 @@ export default function ResumeBuilderPage() {
           <div className="flex-1 space-y-3 min-w-0">
 
             {/* Personal Info */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden">
               <SectionHeader icon={User} label="Personal Info" open={open.personal} onToggle={() => toggle('personal')} />
               {open.personal && (
                 <div className="px-4 pb-4 grid grid-cols-2 gap-3">
@@ -631,27 +631,27 @@ export default function ResumeBuilderPage() {
             </div>
 
             {/* Summary */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden">
               <SectionHeader icon={FileText} label="Professional Summary" open={open.summary} onToggle={() => toggle('summary')} />
               {open.summary && (
                 <div className="px-4 pb-4">
                   <textarea className={`${textareaCls} h-28`} value={data.summary}
                     onChange={e => upd('summary', e.target.value)}
                     placeholder="Results-driven software engineer with 3+ years of experience building scalable web applications…" />
-                  <p className="text-xs text-gray-400 mt-1 text-right">{data.summary.split(/\s+/).filter(Boolean).length} words</p>
+                  <p className="text-xs text-muted mt-1 text-right">{data.summary.split(/\s+/).filter(Boolean).length} words</p>
                 </div>
               )}
             </div>
 
             {/* Experience */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden">
               <SectionHeader icon={Briefcase} label={`Experience (${data.experience.length})`} open={open.experience} onToggle={() => toggle('experience')} />
               {open.experience && (
                 <div className="px-4 pb-4 space-y-4">
                   {data.experience.map((exp, idx) => (
-                    <div key={exp.id} className="border border-gray-100 rounded-xl p-4 space-y-3">
+                    <div key={exp.id} className="border border-line rounded-xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Position {idx + 1}</span>
+                        <span className="text-xs font-bold text-muted uppercase tracking-wide">Position {idx + 1}</span>
                         <button onClick={() => upd('experience', data.experience.filter(e => e.id !== exp.id))} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -663,7 +663,7 @@ export default function ResumeBuilderPage() {
                           <Field label="End"><input className={inputCls} value={exp.endDate} disabled={exp.current} onChange={e => { const n = [...data.experience]; n[idx] = { ...exp, endDate: e.target.value }; upd('experience', n) }} placeholder="Dec 2024" /></Field>
                         </div>
                       </div>
-                      <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs text-ink-soft cursor-pointer">
                         <input type="checkbox" checked={exp.current} onChange={e => { const n = [...data.experience]; n[idx] = { ...exp, current: e.target.checked, endDate: e.target.checked ? '' : exp.endDate }; upd('experience', n) }} className="rounded" />
                         Currently working here
                       </label>
@@ -676,7 +676,7 @@ export default function ResumeBuilderPage() {
                     </div>
                   ))}
                   <button onClick={() => upd('experience', [...data.experience, { id: uid(), company: '', title: '', location: '', startDate: '', endDate: '', current: false, bullets: [''] } as Experience])}
-                    className="flex items-center gap-2 text-sm text-[#16a34a] font-semibold hover:bg-green-50 px-3 py-2 rounded-lg transition-colors">
+                    className="flex items-center gap-2 text-sm text-brand font-semibold hover:bg-brand/10 px-3 py-2 rounded-lg transition-colors">
                     <Plus className="w-4 h-4" /> Add Experience
                   </button>
                 </div>
@@ -684,14 +684,14 @@ export default function ResumeBuilderPage() {
             </div>
 
             {/* Education */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden">
               <SectionHeader icon={GraduationCap} label={`Education (${data.education.length})`} open={open.education} onToggle={() => toggle('education')} />
               {open.education && (
                 <div className="px-4 pb-4 space-y-4">
                   {data.education.map((edu, idx) => (
-                    <div key={edu.id} className="border border-gray-100 rounded-xl p-4 space-y-2">
+                    <div key={edu.id} className="border border-line rounded-xl p-4 space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Degree {idx + 1}</span>
+                        <span className="text-xs font-bold text-muted uppercase tracking-wide">Degree {idx + 1}</span>
                         <button onClick={() => upd('education', data.education.filter(e => e.id !== edu.id))} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -705,7 +705,7 @@ export default function ResumeBuilderPage() {
                     </div>
                   ))}
                   <button onClick={() => upd('education', [...data.education, { id: uid(), school: '', degree: '', field: '', startDate: '', endDate: '', gpa: '' } as Education])}
-                    className="flex items-center gap-2 text-sm text-[#16a34a] font-semibold hover:bg-green-50 px-3 py-2 rounded-lg transition-colors">
+                    className="flex items-center gap-2 text-sm text-brand font-semibold hover:bg-brand/10 px-3 py-2 rounded-lg transition-colors">
                     <Plus className="w-4 h-4" /> Add Education
                   </button>
                 </div>
@@ -713,7 +713,7 @@ export default function ResumeBuilderPage() {
             </div>
 
             {/* Skills */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden">
               <SectionHeader icon={Wrench} label="Skills" open={open.skills} onToggle={() => toggle('skills')} />
               {open.skills && (
                 <div className="px-4 pb-4 grid grid-cols-2 gap-3">
@@ -726,14 +726,14 @@ export default function ResumeBuilderPage() {
             </div>
 
             {/* Projects */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden">
               <SectionHeader icon={FolderGit2} label={`Projects (${data.projects.length})`} open={open.projects} onToggle={() => toggle('projects')} />
               {open.projects && (
                 <div className="px-4 pb-4 space-y-4">
                   {data.projects.map((proj, idx) => (
-                    <div key={proj.id} className="border border-gray-100 rounded-xl p-4 space-y-2">
+                    <div key={proj.id} className="border border-line rounded-xl p-4 space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Project {idx + 1}</span>
+                        <span className="text-xs font-bold text-muted uppercase tracking-wide">Project {idx + 1}</span>
                         <button onClick={() => upd('projects', data.projects.filter(p => p.id !== proj.id))} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -750,7 +750,7 @@ export default function ResumeBuilderPage() {
                     </div>
                   ))}
                   <button onClick={() => upd('projects', [...data.projects, { id: uid(), name: '', tech: '', url: '', bullets: [''] } as Project])}
-                    className="flex items-center gap-2 text-sm text-[#16a34a] font-semibold hover:bg-green-50 px-3 py-2 rounded-lg transition-colors">
+                    className="flex items-center gap-2 text-sm text-brand font-semibold hover:bg-brand/10 px-3 py-2 rounded-lg transition-colors">
                     <Plus className="w-4 h-4" /> Add Project
                   </button>
                 </div>
@@ -758,7 +758,7 @@ export default function ResumeBuilderPage() {
             </div>
 
             {/* Certifications */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden">
               <SectionHeader icon={Award} label={`Certifications (${data.certifications.length})`} open={open.certifications} onToggle={() => toggle('certifications')} />
               {open.certifications && (
                 <div className="px-4 pb-4 space-y-3">
@@ -773,7 +773,7 @@ export default function ResumeBuilderPage() {
                     </div>
                   ))}
                   <button onClick={() => upd('certifications', [...data.certifications, { id: uid(), name: '', issuer: '', date: '' } as Certification])}
-                    className="flex items-center gap-2 text-sm text-[#16a34a] font-semibold hover:bg-green-50 px-3 py-2 rounded-lg transition-colors">
+                    className="flex items-center gap-2 text-sm text-brand font-semibold hover:bg-brand/10 px-3 py-2 rounded-lg transition-colors">
                     <Plus className="w-4 h-4" /> Add Certification
                   </button>
                 </div>
@@ -783,11 +783,11 @@ export default function ResumeBuilderPage() {
 
           {/* ── Preview Panel (desktop) ── */}
           <div className="w-[480px] shrink-0 sticky top-20 self-start hidden lg:block">
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="bg-paper-raised rounded-2xl border border-line overflow-hidden shadow-sm">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-line">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-700">Preview</span>
-                  <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{currentTemplate.name}</span>
+                  <span className="text-sm font-bold text-ink-soft">Preview</span>
+                  <span className="text-xs text-muted bg-paper px-2 py-0.5 rounded-full">{currentTemplate.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Live ATS badge */}
@@ -795,7 +795,7 @@ export default function ResumeBuilderPage() {
                     <Link href="/ats-check"
                       className={cn(
                         'flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors',
-                        atsScore >= 75 ? 'bg-green-50 text-green-700 border-green-200' :
+                        atsScore >= 75 ? 'bg-brand/10 text-brand-deep border-brand/30' :
                         atsScore >= 50 ? 'bg-amber-50 text-amber-700 border-amber-200' :
                         'bg-red-50 text-red-600 border-red-200'
                       )}>
@@ -803,24 +803,24 @@ export default function ResumeBuilderPage() {
                     </Link>
                   ) : (
                     <Link href="/ats-check"
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#16a34a] px-2 py-1 transition-colors">
+                      className="flex items-center gap-1 text-xs text-muted hover:text-brand px-2 py-1 transition-colors">
                       <Zap className="w-3 h-3" /> Check ATS
                     </Link>
                   )}
                   <button onClick={() => setShowPicker(true)}
-                    className="flex items-center gap-1 text-xs text-[#16a34a] font-semibold hover:bg-green-50 px-2 py-1 rounded-lg transition-colors">
+                    className="flex items-center gap-1 text-xs text-brand font-semibold hover:bg-brand/10 px-2 py-1 rounded-lg transition-colors">
                     <Palette className="w-3 h-3" /> Change
                   </button>
                   <button onClick={() => window.print()}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 border border-gray-200 rounded-lg transition-colors">
+                    className="flex items-center gap-1 text-xs text-muted hover:text-ink-soft px-2 py-1 border border-line rounded-lg transition-colors">
                     <Download className="w-3 h-3" /> Save PDF
                   </button>
                   <button onClick={handleDownloadDocx} disabled={docxDownloading} title="Download as Word (.docx)"
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 border border-gray-200 rounded-lg transition-colors disabled:opacity-50">
+                    className="flex items-center gap-1 text-xs text-muted hover:text-ink-soft px-2 py-1 border border-line rounded-lg transition-colors disabled:opacity-50">
                     <FileText className="w-3 h-3" /> Word
                   </button>
                   <button onClick={() => downloadTextResume(data)} title="Download as plain text (.txt)"
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 border border-gray-200 rounded-lg transition-colors">
+                    className="flex items-center gap-1 text-xs text-muted hover:text-ink-soft px-2 py-1 border border-line rounded-lg transition-colors">
                     <Download className="w-3 h-3" /> TXT
                   </button>
                 </div>
@@ -834,26 +834,26 @@ export default function ResumeBuilderPage() {
           {/* Mobile preview */}
           {preview && (
             <div className="fixed inset-0 bg-black/60 z-40 lg:hidden flex flex-col">
-              <div className="bg-white flex-1 overflow-y-auto mt-14">
+              <div className="bg-paper-raised flex-1 overflow-y-auto mt-14">
                 <TemplateComponent data={data} />
               </div>
-              <div className="bg-white border-t border-gray-100 p-4 flex flex-col gap-2">
+              <div className="bg-paper-raised border-t border-line p-4 flex flex-col gap-2">
                 <div className="flex gap-2">
                   <button onClick={() => window.print()}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#16a34a] text-white font-bold rounded-xl text-sm">
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-brand text-white font-bold rounded-xl text-sm">
                     <Printer className="w-4 h-4" /> PDF
                   </button>
                   <button onClick={handleDownloadDocx} disabled={docxDownloading}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl text-sm disabled:opacity-50">
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 border border-line text-ink-soft font-bold rounded-xl text-sm disabled:opacity-50">
                     <FileText className="w-4 h-4" /> Word
                   </button>
                   <button onClick={() => downloadTextResume(data)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl text-sm">
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 border border-line text-ink-soft font-bold rounded-xl text-sm">
                     <Download className="w-4 h-4" /> TXT
                   </button>
                 </div>
                 <button onClick={() => setPreview(false)}
-                  className="w-full py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl">Close</button>
+                  className="w-full py-2.5 border border-line text-ink-soft font-semibold rounded-xl">Close</button>
               </div>
             </div>
           )}

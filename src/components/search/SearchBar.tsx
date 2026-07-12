@@ -59,7 +59,7 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
     <div className="w-full max-w-2xl mx-auto">
       <form onSubmit={handleSubmit}>
         <div className="relative flex items-center">
-          <Search className="absolute left-4 w-5 h-5 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-4 w-5 h-5 text-muted pointer-events-none" />
           <input
             ref={inputRef}
             type="text"
@@ -67,9 +67,9 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by company name..."
             className={cn(
-              "w-full pl-11 sm:pl-12 pr-20 sm:pr-28 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border border-gray-200",
-              "bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
-              "placeholder:text-gray-400 transition-shadow"
+              "w-full pl-11 sm:pl-12 pr-20 sm:pr-28 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border border-line",
+              "bg-paper-raised shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+              "placeholder:text-muted transition-shadow"
             )}
           />
           <div className="absolute right-2 flex items-center gap-1">
@@ -77,7 +77,7 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
               <button
                 type="button"
                 onClick={handleClear}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+                className="p-2 text-muted hover:text-ink-soft rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -89,7 +89,7 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
                 "p-2 rounded-lg transition-colors relative",
                 showFilters || activeFilterCount > 0
                   ? "text-blue-600 bg-blue-50"
-                  : "text-gray-400 hover:text-gray-600"
+                  : "text-muted hover:text-ink-soft"
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -117,14 +117,14 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
         </div>
 
         {showFilters && (
-          <div className="mt-2 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
+          <div className="mt-2 p-4 bg-paper-raised rounded-2xl border border-line shadow-sm">
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 sm:items-center">
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 font-medium">State</label>
+                <label className="text-sm text-ink-soft font-medium">State</label>
                 <select
                   value={filters.state || ''}
                   onChange={(e) => setFilters(f => ({ ...f, state: e.target.value || undefined }))}
-                  className="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="text-sm border border-line rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All states</option>
                   {US_STATES.map(s => (
@@ -132,21 +132,21 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
                   ))}
                 </select>
               </div>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-ink-soft cursor-pointer">
                 <input
                   type="checkbox"
                   checked={filters.everify_only}
                   onChange={(e) => setFilters(f => ({ ...f, everify_only: e.target.checked }))}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-line text-blue-600 focus:ring-blue-500"
                 />
                 E-Verify enrolled only
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-ink-soft cursor-pointer">
                 <input
                   type="checkbox"
                   checked={filters.h1b_only}
                   onChange={(e) => setFilters(f => ({ ...f, h1b_only: e.target.checked }))}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-line text-blue-600 focus:ring-blue-500"
                 />
                 H-1B sponsors only
               </label>

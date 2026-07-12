@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#f0fdf4]">
+    <div className="min-h-screen bg-paper">
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <h1 className="text-2xl font-black text-gray-900 mb-2">Privacy Policy</h1>
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
               <h2 className="text-base font-bold text-gray-900 mb-2">Contact</h2>
               <p>
                 Privacy questions:{' '}
-                <a href="mailto:hello@jadsynq.com" className="text-[#16a34a] hover:underline">
+                <a href="mailto:hello@jadsynq.com" className="text-brand hover:underline">
                   hello@jadsynq.com
                 </a>
               </p>
@@ -88,9 +88,9 @@ export default function PrivacyPage() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-100 flex gap-4 text-xs text-gray-400">
-            <Link href="/disclaimer" className="hover:text-[#16a34a]">Data Disclaimer</Link>
-            <Link href="/terms" className="hover:text-[#16a34a]">Terms of Service</Link>
-            <Link href="/" className="hover:text-[#16a34a] ml-auto">← Back to home</Link>
+            <Link href="/disclaimer" className="hover:text-brand">Data Disclaimer</Link>
+            <Link href="/terms" className="hover:text-brand">Terms of Service</Link>
+            <Link href="/" className="hover:text-brand ml-auto">← Back to home</Link>
           </div>
         </div>
       </div>

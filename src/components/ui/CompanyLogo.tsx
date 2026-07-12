@@ -4,20 +4,20 @@ import { useState } from 'react'
 
 // Consistent brand color per company initial (same letter = same color)
 const AVATAR_COLORS = [
-  ['#16a34a', '#white'],  // A
+  ['#0E7C4A', '#white'],  // A
   ['#2563eb', '#white'],  // B
   ['#7c3aed', '#white'],  // C
   ['#dc2626', '#white'],  // D
   ['#ea580c', '#white'],  // E
   ['#0891b2', '#white'],  // F
-  ['#16a34a', '#white'],  // G
+  ['#0E7C4A', '#white'],  // G
   ['#1d4ed8', '#white'],  // H
   ['#9333ea', '#white'],  // I
   ['#be185d', '#white'],  // J
   ['#0f766e', '#white'],  // K
   ['#4f46e5', '#white'],  // L
   ['#b45309', '#white'],  // M
-  ['#15803d', '#white'],  // N
+  ['#0A5C37', '#white'],  // N
   ['#c2410c', '#white'],  // O
   ['#7e22ce', '#white'],  // P
   ['#0369a1', '#white'],  // Q
@@ -29,12 +29,12 @@ const AVATAR_COLORS = [
   ['#155e75', '#white'],  // W
   ['#831843', '#white'],  // X
   ['#3730a3', '#white'],  // Y
-  ['#166534', '#white'],  // Z
+  ['#0A5C37', '#white'],  // Z
 ]
 
 function avatarColor(name: string): string {
   const idx = (name.charCodeAt(0) - 65 + 26) % 26
-  return AVATAR_COLORS[idx]?.[0] ?? '#16a34a'
+  return AVATAR_COLORS[idx]?.[0] ?? '#0E7C4A'
 }
 
 interface CompanyLogoProps {

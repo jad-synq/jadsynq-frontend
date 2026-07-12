@@ -12,11 +12,11 @@ function QuestionList({ title, questions }: { title: string; questions: string[]
   if (!questions.length) return null
   return (
     <div className="mb-6">
-      <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">{title}</p>
+      <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">{title}</p>
       <ul className="space-y-2">
         {questions.map((q, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
-            <MessageCircle className="w-4 h-4 text-[#16a34a] shrink-0 mt-0.5" />
+          <li key={i} className="flex items-start gap-2 text-sm text-ink-soft bg-paper rounded-xl p-3">
+            <MessageCircle className="w-4 h-4 text-brand shrink-0 mt-0.5" />
             <span>{q}</span>
           </li>
         ))}
@@ -40,13 +40,13 @@ function InterviewPrepContent() {
   }, [query])
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-paper">
       <div className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center gap-2 mb-2">
-          <Briefcase className="w-5 h-5 text-[#16a34a]" />
-          <h1 className="text-xl font-bold text-gray-900">Interview Prep</h1>
+          <Briefcase className="w-5 h-5 text-brand" />
+          <h1 className="font-display text-xl font-bold text-ink">Interview Prep</h1>
         </div>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-muted mb-6">
           Common questions and tips by role -- including guidance for talking about visa sponsorship.
         </p>
 
@@ -54,12 +54,12 @@ function InterviewPrepContent() {
           {/* Role picker */}
           <div>
             <div className="relative mb-3">
-              <Search className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search roles..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#16a34a]"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
             <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
@@ -70,8 +70,8 @@ function InterviewPrepContent() {
                   className={cn(
                     'shrink-0 text-left px-3 py-2 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap lg:whitespace-normal',
                     selected.id === c.id
-                      ? 'bg-[#16a34a] text-white'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:border-[#16a34a] hover:text-[#16a34a]'
+                      ? 'bg-brand text-white'
+                      : 'bg-paper-raised border border-line text-ink-soft hover:border-brand hover:text-brand'
                   )}
                 >
                   {c.label}
@@ -82,32 +82,32 @@ function InterviewPrepContent() {
 
           {/* Content */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="font-bold text-gray-900 mb-4">{selected.label}</h2>
+            <div className="bg-paper-raised rounded-2xl border border-line p-6">
+              <h2 className="font-bold text-ink mb-4">{selected.label}</h2>
               <QuestionList title="Technical / Role-Specific" questions={selected.technicalQuestions} />
               <QuestionList title="Behavioral" questions={selected.behavioralQuestions} />
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-paper-raised rounded-2xl border border-line p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-4 h-4 text-[#16a34a]" />
-                <h2 className="font-bold text-gray-900">Answering with the STAR Method</h2>
+                <Sparkles className="w-4 h-4 text-brand" />
+                <h2 className="font-bold text-ink">Answering with the STAR Method</h2>
               </div>
               <ul className="space-y-2">
                 {STAR_TIPS.map((tip, i) => (
-                  <li key={i} className="text-sm text-gray-700">&bull; {tip}</li>
+                  <li key={i} className="text-sm text-ink-soft">&bull; {tip}</li>
                 ))}
               </ul>
             </div>
 
-            <div className="bg-white rounded-2xl border border-green-100 p-6">
+            <div className="bg-paper-raised rounded-2xl border border-green-100 p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Globe2 className="w-4 h-4 text-[#16a34a]" />
-                <h2 className="font-bold text-gray-900">Talking About Visa Sponsorship</h2>
+                <Globe2 className="w-4 h-4 text-brand" />
+                <h2 className="font-bold text-ink">Talking About Visa Sponsorship</h2>
               </div>
               <ul className="space-y-2">
                 {VISA_INTERVIEW_TIPS.map((tip, i) => (
-                  <li key={i} className="text-sm text-gray-700">&bull; {tip}</li>
+                  <li key={i} className="text-sm text-ink-soft">&bull; {tip}</li>
                 ))}
               </ul>
             </div>

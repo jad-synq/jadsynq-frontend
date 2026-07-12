@@ -25,9 +25,9 @@ const STATUS_META: Record<AppStatus, {
   applied:      { label: 'Applied',      icon: <Send className="w-3.5 h-3.5" />,        text: 'text-blue-700',    bg: 'bg-blue-50',    border: 'border-blue-200',   bar: 'bg-blue-400',    dot: 'bg-blue-400'    },
   phone_screen: { label: 'Phone Screen', icon: <Phone className="w-3.5 h-3.5" />,        text: 'text-yellow-700',  bg: 'bg-yellow-50',  border: 'border-yellow-200', bar: 'bg-yellow-400',  dot: 'bg-yellow-400'  },
   onsite:       { label: 'On-site',      icon: <Users className="w-3.5 h-3.5" />,        text: 'text-violet-700',  bg: 'bg-violet-50',  border: 'border-violet-200', bar: 'bg-violet-400',  dot: 'bg-violet-400'  },
-  offer:        { label: 'Offer',        icon: <PartyPopper className="w-3.5 h-3.5" />,  text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200',bar: 'bg-emerald-500', dot: 'bg-emerald-500' },
+  offer:        { label: 'Offer',        icon: <PartyPopper className="w-3.5 h-3.5" />,  text: 'text-gold-deep', bg: 'bg-gold/15', border: 'border-gold/40',bar: 'bg-gold', dot: 'bg-gold' },
   rejected:     { label: 'Rejected',     icon: <XCircle className="w-3.5 h-3.5" />,      text: 'text-red-600',     bg: 'bg-red-50',     border: 'border-red-200',    bar: 'bg-red-400',     dot: 'bg-red-400'     },
-  withdrawn:    { label: 'Withdrawn',    icon: <MinusCircle className="w-3.5 h-3.5" />,  text: 'text-gray-500',    bg: 'bg-gray-100',   border: 'border-gray-200',   bar: 'bg-gray-300',    dot: 'bg-gray-300'    },
+  withdrawn:    { label: 'Withdrawn',    icon: <MinusCircle className="w-3.5 h-3.5" />,  text: 'text-muted',    bg: 'bg-line',   border: 'border-line',   bar: 'bg-line',    dot: 'bg-line'    },
 }
 
 const ALL_STATUSES: AppStatus[] = ['applied', 'phone_screen', 'onsite', 'offer', 'rejected', 'withdrawn']
@@ -84,15 +84,15 @@ function AppModal({ initial, title, submitLabel, onSubmit, onClose }: {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div className="bg-paper-raised w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between rounded-t-3xl sm:rounded-t-2xl">
+        <div className="sticky top-0 bg-paper-raised px-6 pt-5 pb-4 border-b border-line flex items-center justify-between rounded-t-3xl sm:rounded-t-2xl">
           <div>
-            <h2 className="font-bold text-gray-900 text-base">{title}</h2>
-            <p className="text-xs text-gray-400 mt-0.5">All fields except company are optional</p>
+            <h2 className="font-bold text-ink text-base">{title}</h2>
+            <p className="text-xs text-muted mt-0.5">All fields except company are optional</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
-            <X className="w-4 h-4 text-gray-500" />
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-line transition-colors">
+            <X className="w-4 h-4 text-muted" />
           </button>
         </div>
 
@@ -100,22 +100,22 @@ function AppModal({ initial, title, submitLabel, onSubmit, onClose }: {
           {/* Company + Title */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+              <label className="block text-xs font-bold text-ink-soft mb-1.5">
                 Company <span className="text-red-400">*</span>
               </label>
               <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
                 <input required value={form.company_name} onChange={set('company_name')}
-                  className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent"
+                  className="w-full pl-9 pr-3 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                   placeholder="Google" />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Title</label>
+              <label className="block text-xs font-bold text-ink-soft mb-1.5">Job Title</label>
               <div className="relative">
-                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
                 <input value={form.job_title} onChange={set('job_title')}
-                  className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent"
+                  className="w-full pl-9 pr-3 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                   placeholder="Software Engineer" />
               </div>
             </div>
@@ -124,40 +124,40 @@ function AppModal({ initial, title, submitLabel, onSubmit, onClose }: {
           {/* Status + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Status</label>
+              <label className="block text-xs font-bold text-ink-soft mb-1.5">Status</label>
               <select value={form.status} onChange={set('status')}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent bg-white">
+                className="w-full px-3 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-paper-raised">
                 {ALL_STATUSES.map(s => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Applied Date</label>
+              <label className="block text-xs font-bold text-ink-soft mb-1.5">Applied Date</label>
               <div className="relative">
-                <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
                 <input type="date" value={form.applied_date} onChange={set('applied_date')}
-                  className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent" />
+                  className="w-full pl-9 pr-3 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent" />
               </div>
             </div>
           </div>
 
           {/* URL */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Posting URL</label>
+            <label className="block text-xs font-bold text-ink-soft mb-1.5">Job Posting URL</label>
             <div className="relative">
-              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
               <input type="url" value={form.job_url} onChange={set('job_url')}
-                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 placeholder="https://careers.google.com/jobs/..." />
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1.5">Notes</label>
+            <label className="block text-xs font-bold text-ink-soft mb-1.5">Notes</label>
             <div className="relative">
-              <StickyNote className="absolute left-3 top-3 w-3.5 h-3.5 text-gray-400" />
+              <StickyNote className="absolute left-3 top-3 w-3.5 h-3.5 text-muted" />
               <textarea value={form.notes} onChange={set('notes')} rows={3}
-                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:border-transparent resize-none"
+                className="w-full pl-9 pr-3 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-none"
                 placeholder="Referral from Jane, remote role, FAANG target..." />
             </div>
           </div>
@@ -171,11 +171,11 @@ function AppModal({ initial, title, submitLabel, onSubmit, onClose }: {
 
           <div className="flex gap-2 pt-1 pb-2">
             <button type="submit" disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors">
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-brand hover:bg-brand-deep text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors">
               {loading ? 'Saving…' : <><CheckCircle className="w-4 h-4" /> {submitLabel}</>}
             </button>
             <button type="button" onClick={onClose}
-              className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-xl transition-colors">
+              className="px-5 py-3 bg-line hover:bg-line text-ink-soft text-sm font-semibold rounded-xl transition-colors">
               Cancel
             </button>
           </div>
@@ -222,10 +222,10 @@ function AppCard({ app, onStatusChange, onDelete, onEdit }: {
 
   return (
     <div className={cn(
-      'bg-white rounded-2xl border hover:shadow-md transition-all group',
-      app.status === 'offer'    ? 'border-emerald-200 bg-gradient-to-r from-white to-emerald-50/30' :
-      app.status === 'rejected' ? 'border-gray-100 opacity-75' :
-      'border-gray-100 hover:border-gray-200'
+      'bg-paper-raised rounded-2xl border hover:shadow-md transition-all group',
+      app.status === 'offer'    ? 'border-gold/40 bg-gradient-to-r from-paper-raised to-gold/10' :
+      app.status === 'rejected' ? 'border-line opacity-75' :
+      'border-line hover:border-line'
     )}>
       {/* Left accent bar */}
       <div className="flex">
@@ -242,9 +242,9 @@ function AppCard({ app, onStatusChange, onDelete, onEdit }: {
                 {app.company_name[0]?.toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-gray-900 truncate">{app.company_name}</p>
-                <p className="text-sm text-gray-500 truncate mt-0.5">
-                  {app.job_title || <span className="italic text-gray-300">No title set</span>}
+                <p className="font-bold text-ink truncate">{app.company_name}</p>
+                <p className="text-sm text-muted truncate mt-0.5">
+                  {app.job_title || <span className="italic text-muted">No title set</span>}
                 </p>
               </div>
             </div>
@@ -252,11 +252,11 @@ function AppCard({ app, onStatusChange, onDelete, onEdit }: {
             {/* Actions */}
             <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => onEdit(app)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-line text-muted hover:text-ink-soft transition-colors">
                 <Pencil className="w-3.5 h-3.5" />
               </button>
               <button onClick={handleDelete} disabled={deleting}
-                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-40">
+                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-muted hover:text-red-500 transition-colors disabled:opacity-40">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -269,20 +269,20 @@ function AppCard({ app, onStatusChange, onDelete, onEdit }: {
               <button onClick={() => setMenuOpen(!menuOpen)}
                 className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                 <StatusBadge status={app.status as AppStatus} sm />
-                <ChevronDown className="w-3 h-3 text-gray-400" />
+                <ChevronDown className="w-3 h-3 text-muted" />
               </button>
               {menuOpen && (
-                <div className="absolute left-0 top-full mt-1.5 w-44 bg-white border border-gray-100 rounded-2xl shadow-xl py-1.5 z-20 overflow-hidden">
-                  <p className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Move to</p>
+                <div className="absolute left-0 top-full mt-1.5 w-44 bg-paper-raised border border-line rounded-2xl shadow-xl py-1.5 z-20 overflow-hidden">
+                  <p className="px-3 py-1 text-[10px] font-bold text-muted uppercase tracking-widest">Move to</p>
                   {ALL_STATUSES.map(s => (
                     <button key={s} onClick={() => handleStatus(s)}
                       className={cn(
-                        'w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
-                        s === app.status ? 'font-bold' : 'text-gray-700'
+                        'w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-paper transition-colors',
+                        s === app.status ? 'font-bold' : 'text-ink-soft'
                       )}>
                       <span className={cn('w-2 h-2 rounded-full shrink-0', STATUS_META[s].dot)} />
                       {STATUS_META[s].label}
-                      {s === app.status && <CheckCircle className="w-3.5 h-3.5 text-[#16a34a] ml-auto" />}
+                      {s === app.status && <CheckCircle className="w-3.5 h-3.5 text-brand ml-auto" />}
                     </button>
                   ))}
                 </div>
@@ -290,21 +290,21 @@ function AppCard({ app, onStatusChange, onDelete, onEdit }: {
             </div>
 
             {app.applied_date && (
-              <span className="flex items-center gap-1 text-xs text-gray-400">
+              <span className="flex items-center gap-1 text-xs text-muted">
                 <CalendarDays className="w-3 h-3" /> {app.applied_date}
               </span>
             )}
 
             {app.job_url && (
               <a href={app.job_url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs text-[#16a34a] hover:underline font-medium">
+                className="flex items-center gap-1 text-xs text-brand hover:underline font-medium">
                 <ExternalLink className="w-3 h-3" /> View posting
               </a>
             )}
           </div>
 
           {app.notes && (
-            <p className="mt-2.5 text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2 line-clamp-2 border border-gray-100">
+            <p className="mt-2.5 text-xs text-muted bg-paper rounded-xl px-3 py-2 line-clamp-2 border border-line">
               {app.notes}
             </p>
           )}
@@ -324,38 +324,38 @@ function UnauthenticatedView() {
     { company: 'Microsoft', title: 'Software Engineer',    status: 'applied'      as AppStatus },
   ]
   return (
-    <div className="min-h-screen bg-[#f0fdf4]">
-      <div className="bg-gradient-to-br from-[#0f2d1a] via-[#14532d] to-[#166534] px-6 py-14 text-center">
+    <div className="min-h-screen bg-paper">
+      <div className="bg-gradient-to-br from-ink via-ink to-brand-deep px-6 py-14 text-center">
         <div className="inline-flex items-center justify-center w-14 h-14 bg-white/10 border border-white/20 rounded-2xl mb-4">
           <Briefcase className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-3xl font-black text-white mb-2">Application Tracker</h1>
+        <h1 className="font-display text-3xl font-bold text-white mb-2">Application Tracker</h1>
         <p className="text-green-200 text-sm max-w-xs mx-auto">
           Track every job application — from first apply to offer letter.
         </p>
         <Link href="/auth"
-          className="inline-flex items-center gap-2 mt-6 bg-white text-[#16a34a] font-bold text-sm px-7 py-3 rounded-xl hover:bg-green-50 transition-colors shadow-lg">
+          className="inline-flex items-center gap-2 mt-6 bg-paper-raised text-brand font-bold text-sm px-7 py-3 rounded-xl hover:bg-brand/10 transition-colors shadow-lg">
           Start tracking free <ArrowUpRight className="w-4 h-4" />
         </Link>
       </div>
       <div className="max-w-lg mx-auto px-6 -mt-6 space-y-2.5 pb-12">
         {mockApps.map((a, i) => (
           <div key={i} className={cn(
-            'bg-white rounded-2xl border p-4 flex items-center gap-3',
-            a.status === 'offer' ? 'border-emerald-200' : 'border-gray-100'
+            'bg-paper-raised rounded-2xl border p-4 flex items-center gap-3',
+            a.status === 'offer' ? 'border-gold/40' : 'border-line'
           )}>
             <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border',
               STATUS_META[a.status].bg, STATUS_META[a.status].border, STATUS_META[a.status].text)}>
               {a.company[0]}
             </div>
             <div className="flex-1">
-              <p className="font-bold text-gray-900 text-sm">{a.company}</p>
-              <p className="text-xs text-gray-400">{a.title}</p>
+              <p className="font-bold text-ink text-sm">{a.company}</p>
+              <p className="text-xs text-muted">{a.title}</p>
             </div>
             <StatusBadge status={a.status} sm />
           </div>
         ))}
-        <div className="text-center pt-4 text-xs text-gray-400">Sign in to track your own applications</div>
+        <div className="text-center pt-4 text-xs text-muted">Sign in to track your own applications</div>
       </div>
     </div>
   )
@@ -389,11 +389,11 @@ function ApplicationsInner() {
 
   if (authLoading || (loading && user)) {
     return (
-      <div className="min-h-screen bg-[#f0fdf4]">
+      <div className="min-h-screen bg-paper">
         <div className="max-w-2xl mx-auto px-6 py-8 space-y-3">
-          <div className="h-32 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+          <div className="h-32 bg-paper-raised rounded-2xl border border-line animate-pulse" />
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+            <div key={i} className="h-20 bg-paper-raised rounded-2xl border border-line animate-pulse" />
           ))}
         </div>
       </div>
@@ -444,20 +444,20 @@ function ApplicationsInner() {
     setApps(prev => prev.filter(a => a.id !== id))
 
   return (
-    <div className="min-h-screen bg-[#f0fdf4]">
+    <div className="min-h-screen bg-paper">
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="bg-paper-raised border-b border-line">
         <div className="max-w-2xl mx-auto px-6 py-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-[#16a34a]" /> Application Tracker
+              <h1 className="font-display text-xl font-bold text-ink flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-brand" /> Application Tracker
               </h1>
-              <p className="text-xs text-gray-400 mt-0.5">{apps.length} application{apps.length !== 1 ? 's' : ''} tracked</p>
+              <p className="text-xs text-muted mt-0.5">{apps.length} application{apps.length !== 1 ? 's' : ''} tracked</p>
             </div>
             <button onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-brand hover:bg-brand-deep text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
               <Plus className="w-4 h-4" /> Add Application
             </button>
           </div>
@@ -465,14 +465,14 @@ function ApplicationsInner() {
           {/* Stats strip */}
           <div className="grid grid-cols-4 gap-2 mb-5">
             {[
-              { n: apps.length, l: 'Total',    icon: <Briefcase className="w-3.5 h-3.5" />, color: 'text-[#16a34a] bg-green-50'  },
+              { n: apps.length, l: 'Total',    icon: <Briefcase className="w-3.5 h-3.5" />, color: 'text-brand bg-brand/10'  },
               { n: active,      l: 'Active',   icon: <TrendingUp className="w-3.5 h-3.5" />, color: 'text-blue-600 bg-blue-50'    },
               { n: offers,      l: 'Offers',   icon: <Award className="w-3.5 h-3.5" />,      color: 'text-amber-600 bg-amber-50'  },
               { n: `${winRate}%`,l:'Win Rate', icon: <Sparkles className="w-3.5 h-3.5" />,   color: 'text-violet-600 bg-violet-50'},
             ].map(s => (
-              <div key={s.l} className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-center">
-                <p className="text-lg font-black text-gray-900">{s.n}</p>
-                <p className="text-[10px] font-semibold text-gray-400 mt-0.5">{s.l}</p>
+              <div key={s.l} className="bg-paper border border-line rounded-xl px-3 py-2.5 text-center">
+                <p className="text-lg font-black text-ink">{s.n}</p>
+                <p className="text-[10px] font-semibold text-muted mt-0.5">{s.l}</p>
               </div>
             ))}
           </div>
@@ -480,7 +480,7 @@ function ApplicationsInner() {
           {/* Segmented pipeline bar */}
           {apps.length > 0 && (
             <div className="mb-4">
-              <div className="flex h-2 rounded-full overflow-hidden gap-px bg-gray-100">
+              <div className="flex h-2 rounded-full overflow-hidden gap-px bg-line">
                 {ALL_STATUSES.map(s => {
                   const pct = (counts[s] || 0) / apps.length * 100
                   if (pct === 0) return null
@@ -489,7 +489,7 @@ function ApplicationsInner() {
               </div>
               <div className="flex gap-3 mt-2 flex-wrap">
                 {ALL_STATUSES.filter(s => (counts[s] || 0) > 0).map(s => (
-                  <span key={s} className="flex items-center gap-1 text-[10px] text-gray-500">
+                  <span key={s} className="flex items-center gap-1 text-[10px] text-muted">
                     <span className={cn('w-2 h-2 rounded-full', STATUS_META[s].dot)} />
                     {STATUS_META[s].label} ({counts[s]})
                   </span>
@@ -504,8 +504,8 @@ function ApplicationsInner() {
               className={cn(
                 'shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all',
                 filter === 'all'
-                  ? 'bg-[#16a34a] text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'bg-line text-muted hover:bg-line'
               )}>
               All ({apps.length})
             </button>
@@ -515,7 +515,7 @@ function ApplicationsInner() {
                   'shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border',
                   filter === s
                     ? cn(STATUS_META[s].bg, STATUS_META[s].text, STATUS_META[s].border)
-                    : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
+                    : 'bg-line text-muted border-transparent hover:bg-line'
                 )}>
                 {STATUS_META[s].icon} {STATUS_META[s].label} ({counts[s]})
               </button>
@@ -527,14 +527,14 @@ function ApplicationsInner() {
       {/* List */}
       <div className="max-w-2xl mx-auto px-6 py-5 space-y-2.5">
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
-            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <Briefcase className="w-6 h-6 text-[#16a34a]" />
+          <div className="bg-paper-raised rounded-2xl border border-dashed border-line p-12 text-center">
+            <div className="w-12 h-12 bg-brand/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <Briefcase className="w-6 h-6 text-brand" />
             </div>
-            <p className="font-bold text-gray-700 mb-1">
+            <p className="font-bold text-ink-soft mb-1">
               {filter === 'all' ? 'No applications yet' : `No ${STATUS_META[filter as AppStatus].label} applications`}
             </p>
-            <p className="text-sm text-gray-400 mb-5">
+            <p className="text-sm text-muted mb-5">
               {filter === 'all'
                 ? 'Log your first application or browse jobs to find H-1B sponsors'
                 : 'Try a different filter'}
@@ -542,12 +542,12 @@ function ApplicationsInner() {
             {filter === 'all' && (
               <div className="flex items-center justify-center gap-2">
                 <button onClick={() => setShowAdd(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] text-white text-sm font-bold rounded-xl hover:bg-[#15803d] transition-colors">
+                  className="flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-bold rounded-xl hover:bg-brand-deep transition-colors">
                   <Plus className="w-4 h-4" /> Add Application
                 </button>
                 <Link href="/jobs"
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors">
-                  <Sparkles className="w-4 h-4 text-[#16a34a]" /> Browse Jobs
+                  className="flex items-center gap-2 px-5 py-2.5 bg-paper-raised border border-line text-ink-soft text-sm font-semibold rounded-xl hover:bg-paper transition-colors">
+                  <Sparkles className="w-4 h-4 text-brand" /> Browse Jobs
                 </Link>
               </div>
             )}
@@ -598,10 +598,10 @@ function ApplicationsInner() {
 export default function ApplicationsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#f0fdf4]">
+      <div className="min-h-screen bg-paper">
         <div className="max-w-2xl mx-auto px-6 py-8 space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+            <div key={i} className="h-20 bg-paper-raised rounded-2xl border border-line animate-pulse" />
           ))}
         </div>
       </div>

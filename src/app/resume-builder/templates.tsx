@@ -47,7 +47,7 @@ export interface TemplateInfo {
 
 export const TEMPLATES: TemplateInfo[] = [
   { id: 'classic',   name: 'Classic',   description: 'Timeless serif layout, centered header', accent: '#1a1a1a' },
-  { id: 'modern',    name: 'Modern',    description: 'Green header bar, clean sans-serif',      accent: '#16a34a' },
+  { id: 'modern',    name: 'Modern',    description: 'Green header bar, clean sans-serif',      accent: '#0E7C4A' },
   { id: 'minimal',   name: 'Minimal',   description: 'Ultra-clean, generous white space',       accent: '#6b7280' },
   { id: 'twocol',    name: 'Two-Column', description: 'Sidebar for skills & contact info',      accent: '#1e40af' },
   { id: 'executive', name: 'Executive', description: 'Bold accent border, formal style',        accent: '#7c3aed' },
@@ -410,16 +410,16 @@ export function ModernThumb() {
   return (
     <svg viewBox="0 0 160 200" className="w-full h-full">
       <rect width="160" height="200" fill="white" />
-      <rect width="160" height="50" fill="#16a34a" />
+      <rect width="160" height="50" fill="#0E7C4A" />
       <rect x="12" y="14" width="80" height="9" rx="2" fill="white" />
       <rect x="12" y="27" width="100" height="4" rx="1" fill="#bbf7d0" />
       <rect x="12" y="35" width="70" height="4" rx="1" fill="#bbf7d0" />
-      <rect x="12" y="58" width="36" height="4" rx="1" fill="#16a34a" />
-      <rect x="12" y="66" width="2" height="40" fill="#16a34a" />
+      <rect x="12" y="58" width="36" height="4" rx="1" fill="#0E7C4A" />
+      <rect x="12" y="66" width="2" height="40" fill="#0E7C4A" />
       {[66,74,82,90].map(y => <rect key={y} x="18" y={y} width="120" height="3" rx="1" fill="#e5e7eb" />)}
-      <rect x="12" y="114" width="36" height="4" rx="1" fill="#16a34a" />
+      <rect x="12" y="114" width="36" height="4" rx="1" fill="#0E7C4A" />
       {[122,130,138].map(y => <rect key={y} x="12" y={y} width="130" height="3" rx="1" fill="#e5e7eb" />)}
-      <rect x="12" y="152" width="36" height="4" rx="1" fill="#16a34a" />
+      <rect x="12" y="152" width="36" height="4" rx="1" fill="#0E7C4A" />
       {[160,168].map(y => <rect key={y} x="12" y={y} width="110" height="3" rx="1" fill="#e5e7eb" />)}
     </svg>
   )
@@ -575,7 +575,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
   return (
     <div className="bg-white text-gray-900 min-h-full" style={{ fontFamily: 'system-ui, sans-serif', fontSize: 13 }}>
       {/* Green header */}
-      <div className="bg-[#16a34a] text-white px-8 py-6">
+      <div className="bg-brand text-white px-8 py-6">
         {p.name && <h1 className="text-2xl font-black tracking-wide">{p.name}</h1>}
         {contact.length > 0 && <p className="text-xs text-green-100 mt-1">{contact.join('  ·  ')}</p>}
         {p.visa && <p className="text-xs text-green-200 mt-0.5">Work Auth: {p.visa}</p>}
@@ -585,9 +585,9 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
         {data.experience.length > 0 && (
           <ModernSection title="Experience">
             {data.experience.map(e => (
-              <div key={e.id} className="mb-4 pl-3 border-l-2 border-[#16a34a]">
+              <div key={e.id} className="mb-4 pl-3 border-l-2 border-brand">
                 <div className="flex justify-between items-start">
-                  <div><p className="font-bold text-gray-900">{e.title}</p><p className="text-[#16a34a] text-xs font-semibold">{e.company}{e.location && ` · ${e.location}`}</p></div>
+                  <div><p className="font-bold text-gray-900">{e.title}</p><p className="text-brand text-xs font-semibold">{e.company}{e.location && ` · ${e.location}`}</p></div>
                   <span className="text-xs text-gray-400 shrink-0 ml-2">{dateRange(e.startDate, e.endDate, e.current)}</span>
                 </div>
                 <BulletList items={e.bullets} />
@@ -598,9 +598,9 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
         {data.education.length > 0 && (
           <ModernSection title="Education">
             {data.education.map(e => (
-              <div key={e.id} className="mb-2 pl-3 border-l-2 border-[#16a34a]">
+              <div key={e.id} className="mb-2 pl-3 border-l-2 border-brand">
                 <div className="flex justify-between items-start">
-                  <div><p className="font-bold">{e.degree}{e.field ? ` in ${e.field}` : ''}</p><p className="text-[#16a34a] text-xs font-semibold">{e.school}</p></div>
+                  <div><p className="font-bold">{e.degree}{e.field ? ` in ${e.field}` : ''}</p><p className="text-brand text-xs font-semibold">{e.school}</p></div>
                   <span className="text-xs text-gray-400 shrink-0 ml-2">{dateRange(e.startDate, e.endDate, false)}</span>
                 </div>
                 {e.gpa && <p className="text-xs text-gray-500">GPA: {e.gpa}</p>}
@@ -612,7 +612,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
         {data.projects.length > 0 && (
           <ModernSection title="Projects">
             {data.projects.map(proj => (
-              <div key={proj.id} className="mb-2 pl-3 border-l-2 border-[#16a34a]">
+              <div key={proj.id} className="mb-2 pl-3 border-l-2 border-brand">
                 <p className="font-bold">{proj.name}{proj.tech && <span className="text-xs font-normal text-gray-500 ml-2">{proj.tech}</span>}</p>
                 {proj.url && <p className="text-xs text-blue-600">{proj.url}</p>}
                 <BulletList items={proj.bullets} />
@@ -635,7 +635,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
 function ModernSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-5">
-      <h2 className="text-sm font-black uppercase tracking-widest text-[#16a34a] mb-2">{title}</h2>
+      <h2 className="text-sm font-black uppercase tracking-widest text-brand mb-2">{title}</h2>
       <div className="text-sm">{children}</div>
     </div>
   )

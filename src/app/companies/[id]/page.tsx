@@ -49,13 +49,13 @@ function OpenPositions({ listings, companyName, user, onAuth }: {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-      <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <div className="w-7 h-7 bg-green-50 rounded-lg flex items-center justify-center">
-          <Briefcase className="w-3.5 h-3.5 text-green-600" />
+    <div className="bg-paper-raised rounded-2xl border border-line p-6 mb-4">
+      <h2 className="font-semibold text-ink mb-4 flex items-center gap-2">
+        <div className="w-7 h-7 bg-brand/10 rounded-lg flex items-center justify-center">
+          <Briefcase className="w-3.5 h-3.5 text-brand" />
         </div>
         Open Positions
-        <span className="text-sm font-normal text-gray-400 ml-1">({listings.length})</span>
+        <span className="text-sm font-normal text-muted ml-1">({listings.length})</span>
       </h2>
       <div className="divide-y divide-gray-50">
         {listings.map(job => {
@@ -66,32 +66,32 @@ function OpenPositions({ listings, companyName, user, onAuth }: {
             <div key={job.id} className="py-3 first:pt-0 last:pb-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm leading-tight">{job.title}</p>
+                  <p className="font-semibold text-ink text-sm leading-tight">{job.title}</p>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {job.location && (
-                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <span className="flex items-center gap-1 text-xs text-muted">
                         <MapPin className="w-3 h-3" /> {job.location}
                       </span>
                     )}
                     {job.department && (
-                      <span className="text-xs text-gray-500">{job.department}</span>
+                      <span className="text-xs text-muted">{job.department}</span>
                     )}
                     {job.avg_wage && (
-                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <span className="flex items-center gap-1 text-xs text-muted">
                         <DollarSign className="w-3 h-3" /> {job.avg_wage >= 1000 ? `$${Math.round(job.avg_wage / 1000)}k` : `$${Math.round(job.avg_wage)}`} avg
                       </span>
                     )}
-                    {posted && <span className="text-xs text-gray-400">{posted}</span>}
+                    {posted && <span className="text-xs text-muted">{posted}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => handleLog(job)} disabled={isLogging || isLogged}
                     className={cn('flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
-                      isLogged ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200')}>
+                      isLogged ? 'bg-brand/10 text-brand-deep border-brand/30' : 'bg-paper hover:bg-line text-ink-soft border-line')}>
                     {isLogged ? <><CheckCircle2 className="w-3 h-3" /> Logged</> : <><Plus className="w-3 h-3" /> Log</>}
                   </button>
                   <a href={job.url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg transition-colors">
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-brand hover:bg-brand-deep text-white rounded-lg transition-colors">
                     Apply <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
@@ -159,7 +159,7 @@ export default function CompanyPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-paper">
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
           <Skeleton className="h-5 w-16" />
           <SkeletonHero />
@@ -175,9 +175,9 @@ export default function CompanyPage() {
 
   if (error || !company) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <main className="min-h-screen bg-paper flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 text-lg">{error || 'Company not found'}</p>
+          <p className="text-muted text-lg">{error || 'Company not found'}</p>
           <Link href="/" className="mt-4 inline-block text-blue-600 hover:underline">Back to search</Link>
         </div>
       </main>
@@ -198,12 +198,12 @@ export default function CompanyPage() {
   const maxPetitions = h1bHistory.length > 0 ? Math.max(...h1bHistory.map(y => y.petitions)) : 0
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-paper">
       <div className="max-w-3xl mx-auto px-4 py-8">
 
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-5 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-muted hover:text-ink-soft mb-5 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
@@ -223,13 +223,13 @@ export default function CompanyPage() {
                 className="shadow-lg"
               />
               <div>
-                <h1 className="text-2xl font-bold text-white leading-tight">{company.legal_name}</h1>
+                <h1 className="font-display text-2xl font-bold text-white leading-tight">{company.legal_name}</h1>
                 {company.dba_name && <p className="text-slate-300 text-sm mt-0.5">DBA: {company.dba_name}</p>}
                 {company.industry && <p className="text-slate-400 text-xs mt-1">{company.industry}</p>}
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <span className={cn(
                     'inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full',
-                    isEnrolled ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-slate-600 text-slate-300'
+                    isEnrolled ? 'bg-brand/20 text-[#8fd9ae] border border-brand/40' : 'bg-slate-600 text-slate-300'
                   )}>
                     {isEnrolled ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                     {isEnrolled ? 'E-Verify Enrolled' : 'Not E-Verify'}
@@ -278,7 +278,7 @@ export default function CompanyPage() {
               </a>
             )}
             <a href={careersUrl(company.careers_url, company.legal_name)} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 px-3 py-1 rounded-lg border border-emerald-500/30 transition-colors">
+              className="flex items-center gap-1.5 text-sm bg-gold/20 text-[#f2cd8a] hover:text-gold px-3 py-1 rounded-lg border border-gold/40 transition-colors">
               <Briefcase className="w-4 h-4" /> Careers <ExternalLink className="w-3 h-3 opacity-60" />
             </a>
             <a
@@ -319,7 +319,7 @@ export default function CompanyPage() {
               </span>
             )}
             {company.employee_count && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-paper text-ink-soft border border-line">
                 {company.employee_count >= 10000
                   ? `${Math.round(company.employee_count / 1000)}k+ employees`
                   : company.employee_count >= 1000
@@ -328,7 +328,7 @@ export default function CompanyPage() {
               </span>
             )}
             {company.total_funding_usd && !company.is_public && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-100">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand/10 text-brand-deep border border-brand/20">
                 <DollarSign className="w-3 h-3" />
                 {company.total_funding_usd >= 1_000_000_000
                   ? `$${(company.total_funding_usd / 1e9).toFixed(1)}B raised`
@@ -336,12 +336,12 @@ export default function CompanyPage() {
               </span>
             )}
             {company.founded_year && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-200">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-paper text-ink-soft border border-line">
                 Est. {company.founded_year}
               </span>
             )}
             {company.incorporation_state && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-200">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-paper text-ink-soft border border-line">
                 <MapPin className="w-3 h-3" /> Inc. in {company.incorporation_state}
               </span>
             )}
@@ -356,67 +356,67 @@ export default function CompanyPage() {
         {/* Stats grid */}
         {company.h1b_summary && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="bg-paper-raised rounded-2xl border border-line p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
                     <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
                   </div>
-                  <span className="text-xs text-gray-500 font-medium">H-1B last year</span>
+                  <span className="text-xs text-muted font-medium">H-1B last year</span>
                 </div>
                 {h1bHistory.length >= 2 && (
                   <Sparkline data={h1bHistory.slice().reverse().map(y => y.petitions)} width={48} height={20} />
                 )}
               </div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-ink">
                 {company.h1b_summary.total_petitions_last_year.toLocaleString()}
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="bg-paper-raised rounded-2xl border border-line p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <div className={cn(
                   'w-7 h-7 rounded-lg flex items-center justify-center',
-                  company.h1b_summary.approval_rate >= 0.95 ? 'bg-green-50' :
+                  company.h1b_summary.approval_rate >= 0.95 ? 'bg-brand/10' :
                   company.h1b_summary.approval_rate >= 0.8 ? 'bg-yellow-50' : 'bg-red-50'
                 )}>
                   <CheckCircle className={cn(
                     'w-3.5 h-3.5',
-                    company.h1b_summary.approval_rate >= 0.95 ? 'text-green-600' :
+                    company.h1b_summary.approval_rate >= 0.95 ? 'text-brand' :
                     company.h1b_summary.approval_rate >= 0.8 ? 'text-yellow-600' : 'text-red-600'
                   )} />
                 </div>
-                <span className="text-xs text-gray-500 font-medium">Approval rate</span>
+                <span className="text-xs text-muted font-medium">Approval rate</span>
               </div>
               <p className={cn(
                 'text-2xl font-bold',
-                company.h1b_summary.approval_rate >= 0.95 ? 'text-green-600' :
+                company.h1b_summary.approval_rate >= 0.95 ? 'text-brand' :
                 company.h1b_summary.approval_rate >= 0.8 ? 'text-yellow-600' : 'text-red-600'
               )}>
                 {formatApprovalRate(company.h1b_summary.approval_rate)}
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="bg-paper-raised rounded-2xl border border-line p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-7 h-7 bg-purple-50 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-3.5 h-3.5 text-purple-600" />
                 </div>
-                <span className="text-xs text-gray-500 font-medium">Avg wage</span>
+                <span className="text-xs text-muted font-medium">Avg wage</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatWage(company.h1b_summary.avg_wage)}</p>
+              <p className="text-2xl font-bold text-ink">{formatWage(company.h1b_summary.avg_wage)}</p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="bg-paper-raised rounded-2xl border border-line p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-7 h-7 bg-orange-50 rounded-lg flex items-center justify-center">
                   <Briefcase className="w-3.5 h-3.5 text-orange-600" />
                 </div>
-                <span className="text-xs text-gray-500 font-medium">Top roles</span>
+                <span className="text-xs text-muted font-medium">Top roles</span>
               </div>
               <div className="space-y-0.5">
                 {company.h1b_summary.top_job_titles.slice(0, 2).map((t, i) => (
-                  <p key={i} className="text-xs text-gray-700 truncate font-medium">{t}</p>
+                  <p key={i} className="text-xs text-ink-soft truncate font-medium">{t}</p>
                 ))}
               </div>
             </div>
@@ -425,40 +425,40 @@ export default function CompanyPage() {
 
         {/* E-Verify details */}
         {company.everify && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-            <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <div className="w-7 h-7 bg-green-50 rounded-lg flex items-center justify-center">
-                <Building2 className="w-3.5 h-3.5 text-green-600" />
+          <div className="bg-paper-raised rounded-2xl border border-line p-6 mb-4">
+            <h2 className="font-semibold text-ink mb-4 flex items-center gap-2">
+              <div className="w-7 h-7 bg-brand/10 rounded-lg flex items-center justify-center">
+                <Building2 className="w-3.5 h-3.5 text-brand" />
               </div>
               E-Verify Details
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-400 mb-1">Status</p>
-                <p className={cn('font-semibold capitalize', isEnrolled ? 'text-green-700' : 'text-gray-700')}>{company.everify.status}</p>
+              <div className="bg-paper rounded-xl p-3">
+                <p className="text-xs text-muted mb-1">Status</p>
+                <p className={cn('font-semibold capitalize', isEnrolled ? 'text-brand-deep' : 'text-ink-soft')}>{company.everify.status}</p>
               </div>
               {company.everify.enrollment_date && (
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 mb-1">Enrolled since</p>
-                  <p className="font-semibold text-gray-900">{company.everify.enrollment_date}</p>
+                <div className="bg-paper rounded-xl p-3">
+                  <p className="text-xs text-muted mb-1">Enrolled since</p>
+                  <p className="font-semibold text-ink">{company.everify.enrollment_date}</p>
                 </div>
               )}
               {company.everify.workforce_size && (
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 mb-1">Workforce</p>
-                  <p className="font-semibold text-gray-900">{company.everify.workforce_size}</p>
+                <div className="bg-paper rounded-xl p-3">
+                  <p className="text-xs text-muted mb-1">Workforce</p>
+                  <p className="font-semibold text-ink">{company.everify.workforce_size}</p>
                 </div>
               )}
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-400 mb-1">Federal contractor</p>
-                <p className={cn('font-semibold', company.everify.is_federal_contractor ? 'text-blue-700' : 'text-gray-700')}>
+              <div className="bg-paper rounded-xl p-3">
+                <p className="text-xs text-muted mb-1">Federal contractor</p>
+                <p className={cn('font-semibold', company.everify.is_federal_contractor ? 'text-blue-700' : 'text-ink-soft')}>
                   {company.everify.is_federal_contractor ? 'Yes' : 'No'}
                 </p>
               </div>
             </div>
             {company.everify.hiring_states.length > 0 && (
               <div className="mt-4">
-                <p className="text-xs text-gray-400 mb-2 flex items-center gap-1"><MapPin className="w-3 h-3" /> Hiring states</p>
+                <p className="text-xs text-muted mb-2 flex items-center gap-1"><MapPin className="w-3 h-3" /> Hiring states</p>
                 <div className="flex flex-wrap gap-1.5">
                   {company.everify.hiring_states.map(state => (
                     <span key={state} className="px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-xs font-semibold text-blue-700">
@@ -473,8 +473,8 @@ export default function CompanyPage() {
 
         {/* H-1B history with bar chart */}
         {h1bHistory.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-            <h2 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+          <div className="bg-paper-raised rounded-2xl border border-line p-6 mb-4">
+            <h2 className="font-semibold text-ink mb-5 flex items-center gap-2">
               <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
               </div>
@@ -490,7 +490,7 @@ export default function CompanyPage() {
                     style={{ height: `${maxPetitions > 0 ? Math.max(4, (year.petitions / maxPetitions) * 52) : 4}px` }}
                     title={`FY${year.fiscal_year}: ${year.petitions.toLocaleString()} petitions`}
                   />
-                  <span className="text-[9px] text-gray-400 leading-none">{String(year.fiscal_year).slice(-2)}</span>
+                  <span className="text-[9px] text-muted leading-none">{String(year.fiscal_year).slice(-2)}</span>
                 </div>
               ))}
             </div>
@@ -498,22 +498,22 @@ export default function CompanyPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-gray-400 text-xs border-b border-gray-100">
+                  <tr className="text-left text-muted text-xs border-b border-line">
                     <th className="pb-2 font-medium">Year</th>
                     <th className="pb-2 font-medium">Petitions</th>
-                    <th className="pb-2 font-medium text-green-600">Certified</th>
+                    <th className="pb-2 font-medium text-brand">Certified</th>
                     <th className="pb-2 font-medium text-red-500">Denied</th>
                     <th className="pb-2 font-medium">Avg Wage</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {h1bHistory.map(year => (
-                    <tr key={year.fiscal_year} className="text-gray-700 hover:bg-gray-50/50 transition-colors">
-                      <td className="py-2.5 font-semibold text-gray-900">FY{year.fiscal_year}</td>
+                    <tr key={year.fiscal_year} className="text-ink-soft hover:bg-paper/50 transition-colors">
+                      <td className="py-2.5 font-semibold text-ink">FY{year.fiscal_year}</td>
                       <td className="py-2.5 font-medium">{year.petitions.toLocaleString()}</td>
-                      <td className="py-2.5 text-green-600 font-medium">{year.certified.toLocaleString()}</td>
+                      <td className="py-2.5 text-brand font-medium">{year.certified.toLocaleString()}</td>
                       <td className="py-2.5 text-red-500">{year.denied.toLocaleString()}</td>
-                      <td className="py-2.5 text-gray-500">{formatWage(year.avg_wage)}</td>
+                      <td className="py-2.5 text-muted">{formatWage(year.avg_wage)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -528,22 +528,22 @@ export default function CompanyPage() {
         )}
 
         {/* OPT report */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+        <div className="bg-paper-raised rounded-2xl border border-line p-6">
+          <h2 className="font-semibold text-ink mb-1 flex items-center gap-2">
             <div className="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center">
               <ThumbsUp className="w-3.5 h-3.5 text-amber-600" />
             </div>
             OPT / STEM OPT Support
           </h2>
-          <p className="text-sm text-gray-500 mb-4">Has this company sponsored OPT or STEM OPT? Help others by sharing what you know.</p>
+          <p className="text-sm text-muted mb-4">Has this company sponsored OPT or STEM OPT? Help others by sharing what you know.</p>
           {optSubmitted ? (
-            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-brand-deep bg-brand/10 rounded-xl px-4 py-3">
               <CheckCircle className="w-4 h-4" /> Thank you for your report!
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
               <button onClick={() => handleOPTReport(true, true)} disabled={optLoading}
-                className="px-4 py-2 text-sm font-medium bg-green-50 text-green-700 rounded-xl hover:bg-green-100 disabled:opacity-50 transition-colors border border-green-100">
+                className="px-4 py-2 text-sm font-medium bg-brand/10 text-brand-deep rounded-xl hover:bg-brand/15 disabled:opacity-50 transition-colors border border-brand/20">
                 ✅ Supports OPT + STEM OPT
               </button>
               <button onClick={() => handleOPTReport(true, false)} disabled={optLoading}
@@ -555,7 +555,7 @@ export default function CompanyPage() {
                 ❌ Does not support
               </button>
               {!user && (
-                <p className="w-full text-xs text-gray-400 mt-1">
+                <p className="w-full text-xs text-muted mt-1">
                   <Link href="/auth" className="text-blue-600 hover:underline">Sign in</Link> to submit a report
                 </p>
               )}

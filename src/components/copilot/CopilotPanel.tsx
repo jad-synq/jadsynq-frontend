@@ -80,18 +80,18 @@ export default function CopilotPanel() {
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={close} />
-      <div className="relative w-full sm:w-[420px] h-full bg-white shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div className="relative w-full sm:w-[420px] h-full bg-paper-raised shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-line">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#16a34a] rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">Career Copilot</p>
-              <p className="text-xs text-gray-400">Powered by Claude</p>
+              <p className="font-display font-bold text-ink text-sm leading-tight">Career Copilot</p>
+              <p className="text-xs text-muted">Powered by Claude</p>
             </div>
           </div>
-          <button onClick={close} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+          <button onClick={close} className="p-2 text-muted hover:text-ink-soft rounded-lg hover:bg-paper transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -99,8 +99,8 @@ export default function CopilotPanel() {
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
           {messages.length === 0 && (
             <div className="text-center py-10">
-              <Sparkles className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">
+              <Sparkles className="w-8 h-8 text-muted mx-auto mb-3" />
+              <p className="text-sm text-muted">
                 Ask about your resume, a job match, or interview prep -- I can see your saved resume{jobContext ? ' and this job’s match details' : ''}.
               </p>
             </div>
@@ -109,7 +109,7 @@ export default function CopilotPanel() {
             <div key={i} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
               <div className={cn(
                 'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap',
-                m.role === 'user' ? 'bg-[#16a34a] text-white' : 'bg-gray-50 text-gray-800'
+                m.role === 'user' ? 'bg-brand text-white' : 'bg-paper text-ink-soft'
               )}>
                 {m.content || (sending && i === messages.length - 1 ? '…' : '')}
               </div>
@@ -123,9 +123,9 @@ export default function CopilotPanel() {
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-line">
           {!user ? (
-            <p className="text-sm text-gray-400 text-center">Sign in to use the Career Copilot.</p>
+            <p className="text-sm text-muted text-center">Sign in to use the Career Copilot.</p>
           ) : (
             <form
               onSubmit={e => { e.preventDefault(); void send(input) }}
@@ -136,12 +136,12 @@ export default function CopilotPanel() {
                 onChange={e => setInput(e.target.value)}
                 placeholder="Ask a question..."
                 disabled={sending}
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#16a34a] disabled:opacity-50"
+                className="flex-1 px-3 py-2 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={sending || !input.trim()}
-                className="p-2.5 bg-[#16a34a] hover:bg-[#15803d] disabled:opacity-50 text-white rounded-xl transition-colors"
+                className="p-2.5 bg-brand hover:bg-brand-deep disabled:opacity-50 text-white rounded-xl transition-colors"
               >
                 <Send className="w-4 h-4" />
               </button>

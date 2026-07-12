@@ -39,7 +39,7 @@ const ATS_LABEL: Record<string, string> = {
 }
 
 const ATS_COLOR: Record<string, string> = {
-  greenhouse: 'bg-green-50 text-green-700 border-green-100',
+  greenhouse: 'bg-brand/10 text-brand-deep border-brand/20',
   lever: 'bg-blue-50 text-blue-700 border-blue-100',
   ashby: 'bg-purple-50 text-purple-700 border-purple-100',
   workday: 'bg-orange-50 text-orange-700 border-orange-100',
@@ -92,7 +92,7 @@ const GAP_STYLE: Record<GapCategory, string> = {
   tech:  'bg-violet-50 text-violet-700 border-violet-100',
   tool:  'bg-sky-50 text-sky-700 border-sky-100',
   soft:  'bg-amber-50 text-amber-700 border-amber-100',
-  other: 'bg-gray-50 text-gray-600 border-gray-100',
+  other: 'bg-paper text-ink-soft border-line',
 }
 const GAP_LABEL: Record<GapCategory, string> = {
   tech: 'Tech', tool: 'Tool', soft: 'Soft skill', other: 'Keyword',
@@ -104,20 +104,20 @@ function GapAnalysisPanel({ gaps, totalJobs }: { gaps: GapItem[]; totalJobs: num
   const shown = expanded ? gaps : gaps.slice(0, 8)
 
   return (
-    <div className="mb-4 bg-white rounded-2xl border border-amber-100 p-5">
+    <div className="mb-4 bg-paper-raised rounded-2xl border border-amber-100 p-5">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center shrink-0">
           <AlertTriangle className="w-4 h-4 text-amber-500" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900">Skill Gap Analysis</p>
-          <p className="text-xs text-gray-400">
+          <p className="text-sm font-bold text-ink">Skill Gap Analysis</p>
+          <p className="text-xs text-muted">
             Skills missing from your resume that appear in your top {totalJobs} matches
           </p>
         </div>
         <a
           href="/ats-check"
-          className="shrink-0 text-xs text-[#16a34a] hover:underline font-semibold"
+          className="shrink-0 text-xs text-brand hover:underline font-semibold"
         >
           Fix resume →
         </a>
@@ -141,7 +141,7 @@ function GapAnalysisPanel({ gaps, totalJobs }: { gaps: GapItem[]; totalJobs: num
       {gaps.length > 8 && (
         <button
           onClick={() => setExpanded(x => !x)}
-          className="mt-3 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors"
+          className="mt-3 flex items-center gap-1 text-xs text-muted hover:text-ink-soft font-medium transition-colors"
         >
           {expanded
             ? <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
@@ -168,10 +168,10 @@ function MatchCard({ item }: { item: ScoredJob }) {
   const [logging, setLogging] = useState(false)
   const { job, ats } = item
   const score = ats.score
-  const scoreColor = score >= 75 ? 'text-emerald-600' : score >= 50 ? 'text-amber-500' : 'text-red-500'
-  const scoreBg   = score >= 75 ? 'bg-emerald-50 border-emerald-200' : score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'
+  const scoreColor = score >= 75 ? 'text-gold-deep' : score >= 50 ? 'text-amber-500' : 'text-red-500'
+  const scoreBg   = score >= 75 ? 'bg-gold/15 border-gold/40' : score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'
   const atsLabel  = ATS_LABEL[job.ats_source] || job.ats_source
-  const atsColor  = ATS_COLOR[job.ats_source]  || 'bg-gray-50 text-gray-600 border-gray-100'
+  const atsColor  = ATS_COLOR[job.ats_source]  || 'bg-paper text-ink-soft border-line'
   const posted    = timeAgo(job.posted_at)
 
   const techTags    = ats.matchedBuckets.tech.slice(0, 5)
@@ -214,30 +214,30 @@ function MatchCard({ item }: { item: ScoredJob }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all p-5">
+    <div className="bg-paper-raised rounded-2xl border border-line hover:border-brand/30 hover:shadow-md transition-all p-5">
       {/* Top row: logo + info + score */}
       <div className="flex items-start gap-4">
         <CompanyLogo logoUrl={job.logo_url} domain={job.domain} name={job.legal_name} size="lg" />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="font-bold text-gray-900 text-base leading-tight">{job.title}</h3>
+              <h3 className="font-bold text-ink text-base leading-tight">{job.title}</h3>
               <Link href={`/companies/${job.company_id}`}
-                className="text-sm text-[#16a34a] hover:underline font-semibold mt-0.5 inline-block">
+                className="text-sm text-brand hover:underline font-semibold mt-0.5 inline-block">
                 {job.legal_name}
               </Link>
             </div>
             {/* Score badge */}
             {ats.jdTooThin ? (
-              <div className="shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border bg-gray-50 border-gray-200"
+              <div className="shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border bg-paper border-line"
                 title="This job has no full description yet, so a match score can't be calculated accurately.">
-                <span className="text-xs font-bold text-gray-400">No score</span>
-                <span className="text-[10px] text-gray-400">yet</span>
+                <span className="text-xs font-bold text-muted">No score</span>
+                <span className="text-[10px] text-muted">yet</span>
               </div>
             ) : (
               <div className={cn('shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border', scoreBg)}>
                 <span className={cn('text-2xl font-black leading-none', scoreColor)}>{score}</span>
-                <span className="text-[10px] text-gray-400 font-semibold">/100</span>
+                <span className="text-[10px] text-muted font-semibold">/100</span>
                 <span className={cn('text-[10px] font-bold mt-0.5', scoreColor)}>Match</span>
               </div>
             )}
@@ -246,19 +246,19 @@ function MatchCard({ item }: { item: ScoredJob }) {
           {/* Meta row */}
           <div className="flex flex-wrap gap-2 mt-2">
             {job.location && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
+              <span className="flex items-center gap-1 text-xs text-muted">
                 <MapPin className="w-3 h-3" /> {job.location}
               </span>
             )}
             {job.department && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
+              <span className="flex items-center gap-1 text-xs text-muted">
                 <Layers className="w-3 h-3" /> {job.department}
               </span>
             )}
             <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full border', atsColor)}>
               {atsLabel}
             </span>
-            {posted && <span className="text-xs text-gray-400 ml-auto">{posted}</span>}
+            {posted && <span className="text-xs text-muted ml-auto">{posted}</span>}
           </div>
         </div>
       </div>
@@ -267,7 +267,7 @@ function MatchCard({ item }: { item: ScoredJob }) {
       {(techTags.length > 0 || toolsTags.length > 0) && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {techTags.map(k => (
-            <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
+            <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-gold/15 text-gold-deep border border-gold/30 font-medium">
               {k}
             </span>
           ))}
@@ -292,12 +292,12 @@ function MatchCard({ item }: { item: ScoredJob }) {
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2 mt-3">
         <a href={job.url} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-4 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors">
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-brand hover:bg-brand-deep text-white text-xs font-bold rounded-lg transition-colors">
           Apply Now <ExternalLink className="w-3 h-3" />
         </a>
         <button onClick={handleLog} disabled={logging || logged}
           className={cn('flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
-            logged ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200')}>
+            logged ? 'bg-brand/10 text-brand-deep border-brand/30' : 'bg-paper hover:bg-line text-ink-soft border-line')}>
           {logged ? <><CheckCircle2 className="w-3.5 h-3.5" /> Logged</> : <><Plus className="w-3.5 h-3.5" /> Log App</>}
         </button>
         <button onClick={handleCheckMatch}
@@ -305,7 +305,7 @@ function MatchCard({ item }: { item: ScoredJob }) {
           <Zap className="w-3 h-3" /> Check Match
         </button>
         <button onClick={handleExplainMatch}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 transition-colors">
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gold/15 hover:bg-gold/25 text-gold-deep text-xs font-semibold rounded-lg border border-gold/40 transition-colors">
           <Sparkles className="w-3 h-3" /> Explain Match
         </button>
         <Link href={`/interview-prep?role=${encodeURIComponent(job.title)}`}
@@ -325,7 +325,7 @@ function ListingCard({ listing }: { listing: JobListingResult }) {
   const [logged, setLogged] = useState(false)
   const [logging, setLogging] = useState(false)
   const atsLabel = ATS_LABEL[listing.ats_source] || listing.ats_source
-  const atsColor = ATS_COLOR[listing.ats_source] || 'bg-gray-50 text-gray-600 border-gray-100'
+  const atsColor = ATS_COLOR[listing.ats_source] || 'bg-paper text-ink-soft border-line'
   const posted = timeAgo(listing.posted_at || listing.scraped_at)
 
   const handleLog = async () => {
@@ -342,7 +342,7 @@ function ListingCard({ listing }: { listing: JobListingResult }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all p-5">
+    <div className="bg-paper-raised rounded-2xl border border-line hover:border-brand/30 hover:shadow-md transition-all p-5">
       <div className="flex items-start gap-4">
         <CompanyLogo
           logoUrl={listing.logo_url}
@@ -353,9 +353,9 @@ function ListingCard({ listing }: { listing: JobListingResult }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="font-bold text-gray-900 text-base leading-tight">{listing.title}</h3>
+              <h3 className="font-bold text-ink text-base leading-tight">{listing.title}</h3>
               <Link href={`/companies/${listing.company_id}`}
-                className="text-sm text-[#16a34a] hover:underline font-semibold mt-0.5 inline-block">
+                className="text-sm text-brand hover:underline font-semibold mt-0.5 inline-block">
                 {listing.legal_name}
               </Link>
             </div>
@@ -366,40 +366,40 @@ function ListingCard({ listing }: { listing: JobListingResult }) {
 
           <div className="flex flex-wrap gap-2 mt-2">
             {listing.location && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
+              <span className="flex items-center gap-1 text-xs text-muted">
                 <MapPin className="w-3 h-3" /> {listing.location}
               </span>
             )}
             {listing.department && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
+              <span className="flex items-center gap-1 text-xs text-muted">
                 <Layers className="w-3 h-3" /> {listing.department}
               </span>
             )}
             {listing.employment_type && (
-              <span className="text-xs text-gray-500">{listing.employment_type}</span>
+              <span className="text-xs text-muted">{listing.employment_type}</span>
             )}
             {listing.avg_wage && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
+              <span className="flex items-center gap-1 text-xs text-muted">
                 <DollarSign className="w-3 h-3" /> {formatWage(listing.avg_wage)} avg H-1B
               </span>
             )}
             {posted && (
-              <span className="text-xs text-gray-400 ml-auto">{posted}</span>
+              <span className="text-xs text-muted ml-auto">{posted}</span>
             )}
           </div>
 
           <div className="flex flex-wrap gap-2 mt-3">
             <a href={listing.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors">
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-brand hover:bg-brand-deep text-white text-xs font-bold rounded-lg transition-colors">
               Apply Now <ExternalLink className="w-3 h-3" />
             </a>
             <button onClick={handleLog} disabled={logging || logged}
               className={cn('flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
-                logged ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200')}>
+                logged ? 'bg-brand/10 text-brand-deep border-brand/30' : 'bg-paper hover:bg-line text-ink-soft border-line')}>
               {logged ? <><CheckCircle2 className="w-3.5 h-3.5" /> Logged</> : <><Plus className="w-3.5 h-3.5" /> Log App</>}
             </button>
             <Link href={`/companies/${listing.company_id}`}
-              className="flex items-center gap-1 px-3 py-1.5 text-gray-400 hover:text-gray-600 text-xs transition-colors">
+              className="flex items-center gap-1 px-3 py-1.5 text-muted hover:text-ink-soft text-xs transition-colors">
               H-1B data <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -432,21 +432,21 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
   const linkedinUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.job_title)}&company=${encodeURIComponent(job.legal_name)}`
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all p-5">
+    <div className="bg-paper-raised rounded-2xl border border-line hover:border-brand/30 hover:shadow-md transition-all p-5">
       <div className="flex items-start gap-4">
         <CompanyLogo logoUrl={job.logo_url} domain={job.domain} name={job.legal_name} size="lg" />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="font-bold text-gray-900 text-base truncate">{job.job_title}</h3>
+              <h3 className="font-bold text-ink text-base truncate">{job.job_title}</h3>
               <Link href={`/companies/${job.company_id}`}
-                className="text-sm text-[#16a34a] hover:underline font-semibold mt-0.5 inline-block">
+                className="text-sm text-brand hover:underline font-semibold mt-0.5 inline-block">
                 {job.legal_name}
               </Link>
             </div>
             <button onClick={handleSave} disabled={saveLoading}
               className={cn('p-1.5 rounded-lg transition-colors shrink-0 disabled:opacity-40',
-                saved ? 'text-[#16a34a] bg-green-50' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50')}>
+                saved ? 'text-brand bg-brand/10' : 'text-muted hover:text-muted hover:bg-paper')}>
               {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
             </button>
           </div>
@@ -458,7 +458,7 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
             {job.approval_rate !== null && (
               <span className={cn(
                 'flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border',
-                job.approval_rate >= 0.95 ? 'text-green-700 bg-green-50 border-green-100' :
+                job.approval_rate >= 0.95 ? 'text-brand-deep bg-brand/10 border-brand/20' :
                 job.approval_rate >= 0.8 ? 'text-yellow-700 bg-yellow-50 border-yellow-100' :
                 'text-red-600 bg-red-50 border-red-100'
               )}>
@@ -466,12 +466,12 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
               </span>
             )}
             {job.avg_wage && (
-              <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-ink-soft bg-paper px-2.5 py-1 rounded-full border border-line">
                 <DollarSign className="w-3 h-3" /> {formatWage(job.avg_wage)} avg
               </span>
             )}
             {isEnrolled && (
-              <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-gold-deep bg-gold/15 px-2.5 py-1 rounded-full border border-gold/30">
                 <CheckCircle className="w-3 h-3" /> E-Verify
               </span>
             )}
@@ -479,12 +479,12 @@ function JobCard({ job, onLogApp }: { job: JobRoleResult; onLogApp: (j: JobRoleR
 
           <div className="flex flex-wrap gap-2 mt-4">
             <button onClick={() => { if (!user) { router.push('/auth'); return }; onLogApp(job) }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-deep text-white text-xs font-bold rounded-lg transition-colors">
               <Plus className="w-3.5 h-3.5" /> Log Application
             </button>
             {job.careers_url && (
               <a href={job.careers_url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-semibold rounded-lg border border-gray-200 transition-colors">
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-paper hover:bg-line text-ink-soft text-xs font-semibold rounded-lg border border-line transition-colors">
                 <Briefcase className="w-3.5 h-3.5" /> Careers <ExternalLink className="w-3 h-3" />
               </a>
             )}
@@ -528,23 +528,23 @@ function LogAppModal({ job, onClose, onDone }: { job: JobRoleResult; onClose: ()
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+      <div className="bg-paper-raised rounded-2xl shadow-2xl max-w-sm w-full p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-900">Log Application</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+          <h3 className="font-bold text-ink">Log Application</h3>
+          <button onClick={onClose} className="text-muted hover:text-ink-soft"><X className="w-5 h-5" /></button>
         </div>
-        <div className="bg-green-50 rounded-xl p-4 mb-4 border border-green-100">
-          <p className="font-semibold text-gray-900">{job.job_title}</p>
-          <p className="text-sm text-[#16a34a] font-medium mt-0.5">{job.legal_name}</p>
+        <div className="bg-brand/10 rounded-xl p-4 mb-4 border border-brand/20">
+          <p className="font-semibold text-ink">{job.job_title}</p>
+          <p className="text-sm text-brand font-medium mt-0.5">{job.legal_name}</p>
         </div>
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
         <div className="flex gap-2">
           <button onClick={handleLog} disabled={loading}
-            className="flex-1 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
+            className="flex-1 py-2.5 bg-brand hover:bg-brand-deep text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
             {loading ? 'Logging…' : '✓ Log as Applied'}
           </button>
           <button onClick={onClose}
-            className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium rounded-xl transition-colors">
+            className="px-4 py-2.5 bg-line hover:bg-line text-ink-soft text-sm font-medium rounded-xl transition-colors">
             Cancel
           </button>
         </div>
@@ -725,26 +725,26 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0fdf4]">
+    <div className="min-h-screen bg-paper">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="bg-paper-raised border-b border-line">
         <div className="max-w-4xl mx-auto px-6 py-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-[#16a34a] rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center">
               <Briefcase className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
-              <p className="text-sm text-gray-500">Live openings + H-1B sponsorship data from verified employers</p>
+              <h1 className="font-display text-2xl font-bold text-ink">Jobs</h1>
+              <p className="text-sm text-muted">Live openings + H-1B sponsorship data from verified employers</p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+          <div className="flex gap-1 bg-line rounded-xl p-1 w-fit">
             <button
               onClick={() => setTab('foryou')}
               className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
-                tab === 'foryou' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
+                tab === 'foryou' ? 'bg-paper-raised text-ink shadow-sm' : 'text-muted hover:text-ink-soft')}>
               <Sparkles className="w-4 h-4 text-violet-500" />
               For You
               {scoredJobs.length > 0 && (
@@ -756,11 +756,11 @@ export default function JobsPage() {
             <button
               onClick={() => setTab('live')}
               className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
-                tab === 'live' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
-              <Zap className="w-4 h-4 text-[#16a34a]" />
+                tab === 'live' ? 'bg-paper-raised text-ink shadow-sm' : 'text-muted hover:text-ink-soft')}>
+              <Zap className="w-4 h-4 text-brand" />
               Live Openings
               {liveTotal > 0 && (
-                <span className="bg-[#16a34a] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                <span className="bg-brand text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                   {liveTotal.toLocaleString()}
                 </span>
               )}
@@ -768,7 +768,7 @@ export default function JobsPage() {
             <button
               onClick={() => setTab('h1b')}
               className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
-                tab === 'h1b' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
+                tab === 'h1b' ? 'bg-paper-raised text-ink shadow-sm' : 'text-muted hover:text-ink-soft')}>
               <TrendingUp className="w-4 h-4 text-blue-500" />
               H-1B Sponsors
             </button>
@@ -783,12 +783,12 @@ export default function JobsPage() {
           <>
             {/* Not signed in */}
             {!user && (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <Sparkles className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                <p className="font-semibold text-gray-700 mb-1">Sign in to see jobs matched to your resume</p>
-                <p className="text-sm text-gray-400 mb-5">We&apos;ll score every open position against your skills automatically</p>
+              <div className="text-center py-16 bg-paper-raised rounded-2xl border border-line">
+                <Sparkles className="w-10 h-10 text-line mx-auto mb-3" />
+                <p className="font-semibold text-ink-soft mb-1">Sign in to see jobs matched to your resume</p>
+                <p className="text-sm text-muted mb-5">We&apos;ll score every open position against your skills automatically</p>
                 <Link href="/auth"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#16a34a] text-white text-sm font-bold rounded-xl hover:bg-[#15803d] transition-colors">
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-bold rounded-xl hover:bg-brand-deep transition-colors">
                   Sign in / Sign up
                 </Link>
               </div>
@@ -803,14 +803,14 @@ export default function JobsPage() {
 
             {/* No resume saved — inline upload */}
             {user && !forYouLoading && forYouNoResume && (
-              <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-6">
+              <div className="bg-paper-raised rounded-2xl border border-dashed border-line p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center shrink-0">
                     <FileText className="w-5 h-5 text-violet-500" />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900">Add your resume to see matched jobs</p>
-                    <p className="text-sm text-gray-400">We&apos;ll rank every open role by how well it matches your skills</p>
+                    <p className="font-bold text-ink">Add your resume to see matched jobs</p>
+                    <p className="text-sm text-muted">We&apos;ll rank every open role by how well it matches your skills</p>
                   </div>
                 </div>
 
@@ -820,7 +820,7 @@ export default function JobsPage() {
                   onChange={e => { setInlineResumePaste(e.target.value); setInlineResumeError('') }}
                   placeholder="Paste your resume text here…"
                   rows={7}
-                  className="w-full px-3 py-2.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none font-mono mb-3"
+                  className="w-full px-3 py-2.5 text-xs border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none font-mono mb-3"
                 />
 
                 {inlineResumeError && (
@@ -838,22 +838,22 @@ export default function JobsPage() {
                   />
                   <button
                     onClick={() => inlineFileRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:border-gray-300 text-gray-600 text-xs font-semibold rounded-lg transition-colors">
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-line hover:border-line text-ink-soft text-xs font-semibold rounded-lg transition-colors">
                     <Upload className="w-3.5 h-3.5" /> Upload PDF or .txt
                   </button>
                   <button
                     onClick={handleInlineResumeSave}
                     disabled={inlineResumeSaving || !inlineResumePaste.trim()}
-                    className="flex items-center gap-1.5 px-4 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-lg disabled:opacity-40 transition-colors">
+                    className="flex items-center gap-1.5 px-4 py-1.5 bg-brand hover:bg-brand-deep text-white text-xs font-bold rounded-lg disabled:opacity-40 transition-colors">
                     {inlineResumeSaving ? 'Saving…' : <><Sparkles className="w-3.5 h-3.5" /> Save &amp; See Matches</>}
                   </button>
                   <Link href="/resume-builder"
-                    className="text-xs text-gray-400 hover:text-[#16a34a] hover:underline ml-auto">
+                    className="text-xs text-muted hover:text-brand hover:underline ml-auto">
                     Build from scratch →
                   </Link>
                 </div>
 
-                <p className="text-xs text-gray-400 mt-3">
+                <p className="text-xs text-muted mt-3">
                   Upload your PDF resume directly, or paste the text above.
                 </p>
               </div>
@@ -864,15 +864,15 @@ export default function JobsPage() {
               <>
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-4 h-4 text-violet-500" />
-                  <p className="text-sm font-bold text-gray-700">
+                  <p className="text-sm font-bold text-ink-soft">
                     {scoredJobs.length} jobs ranked by match to your resume
                   </p>
                   {resumeWordCount > 0 && (
-                    <span className="text-xs text-gray-400">({resumeWordCount} word resume)</span>
+                    <span className="text-xs text-muted">({resumeWordCount} word resume)</span>
                   )}
                   <button
                     onClick={() => { setForYouFetched(false); setScoredJobs([]); setGaps([]) }}
-                    className="ml-auto text-xs text-[#16a34a] hover:underline font-medium">
+                    className="ml-auto text-xs text-brand hover:underline font-medium">
                     Refresh
                   </button>
                 </div>
@@ -887,10 +887,10 @@ export default function JobsPage() {
 
             {/* Fetched but no jobs */}
             {user && !forYouLoading && !forYouNoResume && forYouFetched && scoredJobs.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <Building2 className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                <p className="font-semibold text-gray-700 mb-1">No matched jobs found right now</p>
-                <p className="text-sm text-gray-400">Check back after more jobs are scraped</p>
+              <div className="text-center py-16 bg-paper-raised rounded-2xl border border-line">
+                <Building2 className="w-10 h-10 text-line mx-auto mb-3" />
+                <p className="font-semibold text-ink-soft mb-1">No matched jobs found right now</p>
+                <p className="text-sm text-muted">Check back after more jobs are scraped</p>
               </div>
             )}
           </>
@@ -902,32 +902,32 @@ export default function JobsPage() {
             <form onSubmit={handleLiveSearch} className="mb-6">
               <div className="flex gap-2 mb-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                   <input
                     type="text"
                     value={liveInput}
                     onChange={e => setLiveInput(e.target.value)}
                     placeholder="Job title, role, or keyword…"
-                    className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] bg-white"
+                    className="w-full pl-11 pr-4 py-3.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand bg-paper-raised"
                   />
                 </div>
                 <div className="relative w-44">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                   <input
                     type="text"
                     value={liveLocation}
                     onChange={e => setLiveLocation(e.target.value)}
                     placeholder="Location"
-                    className="w-full pl-9 pr-3 py-3.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] bg-white"
+                    className="w-full pl-9 pr-3 py-3.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand bg-paper-raised"
                   />
                 </div>
                 <button type="submit"
-                  className="px-6 py-3.5 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold rounded-xl text-sm transition-colors">
+                  className="px-6 py-3.5 bg-brand hover:bg-brand-deep text-white font-bold rounded-xl text-sm transition-colors">
                   Search
                 </button>
               </div>
               {liveSearched && !liveLoading && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted">
                   {liveTotal.toLocaleString()} live openings from H-1B sponsors
                   {liveQuery && ` matching "${liveQuery}"`}
                 </p>
@@ -941,12 +941,12 @@ export default function JobsPage() {
             )}
 
             {!liveLoading && listings.length === 0 && liveSearched && (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                <p className="font-semibold text-gray-700 mb-1">No live openings found</p>
-                <p className="text-sm text-gray-400 mb-4">Try a different keyword or check back after the next scrape</p>
+              <div className="text-center py-16 bg-paper-raised rounded-2xl border border-line">
+                <Briefcase className="w-10 h-10 text-line mx-auto mb-3" />
+                <p className="font-semibold text-ink-soft mb-1">No live openings found</p>
+                <p className="text-sm text-muted mb-4">Try a different keyword or check back after the next scrape</p>
                 <button onClick={() => { setLiveInput(''); setLiveLocation(''); fetchListings('', '', 0) }}
-                  className="text-sm text-[#16a34a] hover:underline font-medium">
+                  className="text-sm text-brand hover:underline font-medium">
                   Show all openings
                 </button>
               </div>
@@ -958,7 +958,7 @@ export default function JobsPage() {
                 {liveOffset + LIMIT < liveTotal && (
                   <button
                     onClick={() => fetchListings(liveQuery, liveLocation, liveOffset + LIMIT)}
-                    className="w-full py-3 bg-white border border-gray-200 hover:border-[#16a34a] hover:text-[#16a34a] text-gray-600 text-sm font-semibold rounded-xl transition-all">
+                    className="w-full py-3 bg-paper-raised border border-line hover:border-brand hover:text-brand text-ink-soft text-sm font-semibold rounded-xl transition-all">
                     Load more ({liveTotal - liveOffset - LIMIT} remaining)
                   </button>
                 )}
@@ -973,7 +973,7 @@ export default function JobsPage() {
             <form onSubmit={handleSubmit} className="relative mb-6">
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                   <input
                     ref={inputRef}
                     type="text"
@@ -982,34 +982,34 @@ export default function JobsPage() {
                     onFocus={() => setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                     placeholder="e.g. Software Engineer, Data Scientist, Nurse..."
-                    className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] bg-white"
+                    className="w-full pl-11 pr-4 py-3.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand bg-paper-raised"
                   />
                   {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl z-20 overflow-hidden">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-paper-raised border border-line rounded-xl shadow-xl z-20 overflow-hidden">
                       {suggestions.map(s => (
                         <button key={s.title} type="button"
                           onMouseDown={() => handleSuggestion(s.title)}
-                          className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-green-50 text-left transition-colors">
-                          <span className="text-sm text-gray-900 font-medium">{s.title}</span>
-                          <span className="text-xs text-gray-400">{s.company_count} companies</span>
+                          className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-brand/10 text-left transition-colors">
+                          <span className="text-sm text-ink font-medium">{s.title}</span>
+                          <span className="text-xs text-muted">{s.company_count} companies</span>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
                 <button type="submit"
-                  className="px-6 py-3.5 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold rounded-xl text-sm transition-colors">
+                  className="px-6 py-3.5 bg-brand hover:bg-brand-deep text-white font-bold rounded-xl text-sm transition-colors">
                   Search
                 </button>
               </div>
               <div className="flex items-center gap-3 mt-3">
                 <button type="button" onClick={() => setEverifyOnly(!everifyOnly)}
                   className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors',
-                    everifyOnly ? 'bg-[#16a34a] text-white border-[#16a34a]' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300')}>
+                    everifyOnly ? 'bg-brand text-white border-brand' : 'bg-paper-raised text-ink-soft border-line hover:border-line')}>
                   <CheckCircle className="w-3.5 h-3.5" /> E-Verify enrolled only
                 </button>
                 {hasSearched && (
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-muted">
                     {loading ? 'Searching…' : `${total.toLocaleString()} results for "${query}"`}
                   </span>
                 )}
@@ -1019,13 +1019,13 @@ export default function JobsPage() {
             {!hasSearched && (
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-4 h-4 text-[#16a34a]" />
-                  <p className="text-sm font-bold text-gray-700">Popular roles with H-1B sponsorship</p>
+                  <Sparkles className="w-4 h-4 text-brand" />
+                  <p className="text-sm font-bold text-ink-soft">Popular roles with H-1B sponsorship</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {POPULAR_ROLES.map(role => (
                     <button key={role} onClick={() => handleSuggestion(role)}
-                      className="px-4 py-2 bg-white border border-gray-200 hover:border-[#16a34a] hover:text-[#16a34a] hover:bg-green-50 text-gray-600 text-sm font-medium rounded-xl transition-all shadow-sm">
+                      className="px-4 py-2 bg-paper-raised border border-line hover:border-brand hover:text-brand hover:bg-brand/10 text-ink-soft text-sm font-medium rounded-xl transition-all shadow-sm">
                       {role}
                     </button>
                   ))}
@@ -1040,12 +1040,12 @@ export default function JobsPage() {
             )}
 
             {!loading && hasSearched && jobs.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <Building2 className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                <p className="font-semibold text-gray-700 mb-1">No H-1B data for &ldquo;{query}&rdquo;</p>
-                <p className="text-sm text-gray-400 mb-4">Try a slightly different title</p>
+              <div className="text-center py-16 bg-paper-raised rounded-2xl border border-line">
+                <Building2 className="w-10 h-10 text-line mx-auto mb-3" />
+                <p className="font-semibold text-ink-soft mb-1">No H-1B data for &ldquo;{query}&rdquo;</p>
+                <p className="text-sm text-muted mb-4">Try a slightly different title</p>
                 <button onClick={() => { setHasSearched(false); setInputValue('') }}
-                  className="text-sm text-[#16a34a] hover:underline font-medium">← Try another role</button>
+                  className="text-sm text-brand hover:underline font-medium">← Try another role</button>
               </div>
             )}
 
@@ -1056,7 +1056,7 @@ export default function JobsPage() {
                 ))}
                 {offset + LIMIT < total && (
                   <button onClick={() => doSearch(query, offset + LIMIT)}
-                    className="w-full py-3 bg-white border border-gray-200 hover:border-[#16a34a] hover:text-[#16a34a] text-gray-600 text-sm font-semibold rounded-xl transition-all">
+                    className="w-full py-3 bg-paper-raised border border-line hover:border-brand hover:text-brand text-ink-soft text-sm font-semibold rounded-xl transition-all">
                     Load more ({total - offset - LIMIT} remaining)
                   </button>
                 )}
@@ -1072,7 +1072,7 @@ export default function JobsPage() {
       )}
 
       {logSuccess && (
-        <div className="fixed bottom-20 sm:bottom-6 right-6 bg-[#16a34a] text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 z-50">
+        <div className="fixed bottom-20 sm:bottom-6 right-6 bg-brand text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 z-50">
           <CheckCircle className="w-4 h-4" />
           <span className="text-sm font-semibold">Application logged!</span>
           <Link href="/applications" className="text-sm underline ml-1">View →</Link>
