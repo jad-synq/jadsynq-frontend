@@ -71,6 +71,11 @@ function computeGaps(items: ScoredJob[]): GapItem[] {
     }
   }
   for (const { ats } of items) {
+    // A JD that's just a job title (no real description ever got scraped)
+    // produces a near-empty keyword set -- counting its "missing" keywords
+    // would mean a handful of thin listings drive what looks like a broad
+    // skill gap across the whole match list.
+    if (ats.jdTooThin) continue
     add(ats.missingBuckets.tech, 'tech')
     add(ats.missingBuckets.tools, 'tool')
     add(ats.missingBuckets.soft, 'soft')
@@ -211,11 +216,19 @@ function MatchCard({ item }: { item: ScoredJob }) {
               </Link>
             </div>
             {/* Score badge */}
-            <div className={cn('shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border', scoreBg)}>
-              <span className={cn('text-2xl font-black leading-none', scoreColor)}>{score}</span>
-              <span className="text-[10px] text-gray-400 font-semibold">/100</span>
-              <span className={cn('text-[10px] font-bold mt-0.5', scoreColor)}>Match</span>
-            </div>
+            {ats.jdTooThin ? (
+              <div className="shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border bg-gray-50 border-gray-200"
+                title="This job has no full description yet, so a match score can't be calculated accurately.">
+                <span className="text-xs font-bold text-gray-400">No score</span>
+                <span className="text-[10px] text-gray-400">yet</span>
+              </div>
+            ) : (
+              <div className={cn('shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border', scoreBg)}>
+                <span className={cn('text-2xl font-black leading-none', scoreColor)}>{score}</span>
+                <span className="text-[10px] text-gray-400 font-semibold">/100</span>
+                <span className={cn('text-[10px] font-bold mt-0.5', scoreColor)}>Match</span>
+              </div>
+            )}
           </div>
 
           {/* Meta row */}
@@ -581,7 +594,14 @@ export default function JobsPage() {
         const ats = analyze(resumeText, jdText)
         return { job, ats }
       })
-      scored.sort((a, b) => b.ats.score - a.ats.score)
+      // Jobs with a real, usable job description sort by match score first;
+      // jobs where the scraper never backfilled a description (JD is just a
+      // title/department) get pushed to the end instead of being interleaved
+      // by a score that isn't measuring much of anything.
+      scored.sort((a, b) => {
+        if (a.ats.jdTooThin !== b.ats.jdTooThin) return a.ats.jdTooThin ? 1 : -1
+        return b.ats.score - a.ats.score
+      })
       setScoredJobs(scored)
       setGaps(computeGaps(scored))
       setForYouFetched(true)
