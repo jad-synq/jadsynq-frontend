@@ -55,6 +55,52 @@ function OpenPositions({ listings, companyName, user, onAuth }: {
     return `${Math.floor(d / 365)}y ago`
   }
 
+  const FREE_POSITIONS = 3
+  const capped = !user && listings.length > FREE_POSITIONS
+  const visible = capped ? listings.slice(0, FREE_POSITIONS) : listings
+
+  const renderJob = (job: JobListingResult) => {
+    const posted = timeAgo(job.posted_at)
+    const isLogged = loggedIds.has(job.id)
+    const isLogging = loggingId === job.id
+    return (
+      <div key={job.id} className="py-3 first:pt-0 last:pb-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-semibold text-ink text-sm leading-tight">{job.title}</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {job.location && (
+                <span className="flex items-center gap-1 text-xs text-muted">
+                  <MapPin className="w-3 h-3" /> {job.location}
+                </span>
+              )}
+              {job.department && (
+                <span className="text-xs text-muted">{job.department}</span>
+              )}
+              {job.avg_wage && (
+                <span className="flex items-center gap-1 text-xs text-muted">
+                  <DollarSign className="w-3 h-3" /> {job.avg_wage >= 1000 ? `$${Math.round(job.avg_wage / 1000)}k` : `$${Math.round(job.avg_wage)}`} avg
+                </span>
+              )}
+              {posted && <span className="text-xs text-muted">{posted}</span>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => handleLog(job)} disabled={isLogging || isLogged}
+              className={cn('flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
+                isLogged ? 'bg-brand/10 text-brand-deep border-brand/30' : 'bg-paper hover:bg-line text-ink-soft border-line')}>
+              {isLogged ? <><CheckCircle2 className="w-3 h-3" /> Logged</> : <><Plus className="w-3 h-3" /> Log</>}
+            </button>
+            <a href={job.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-brand hover:bg-brand-deep text-white rounded-lg transition-colors">
+              Apply <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-paper-raised rounded-2xl border border-line p-6 mb-4">
       <h2 className="font-semibold text-ink mb-4 flex items-center gap-2">
@@ -65,48 +111,15 @@ function OpenPositions({ listings, companyName, user, onAuth }: {
         <span className="text-sm font-normal text-muted ml-1">({listings.length})</span>
       </h2>
       <div className="divide-y divide-gray-50">
-        {listings.map(job => {
-          const posted = timeAgo(job.posted_at)
-          const isLogged = loggedIds.has(job.id)
-          const isLogging = loggingId === job.id
-          return (
-            <div key={job.id} className="py-3 first:pt-0 last:pb-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-ink text-sm leading-tight">{job.title}</p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {job.location && (
-                      <span className="flex items-center gap-1 text-xs text-muted">
-                        <MapPin className="w-3 h-3" /> {job.location}
-                      </span>
-                    )}
-                    {job.department && (
-                      <span className="text-xs text-muted">{job.department}</span>
-                    )}
-                    {job.avg_wage && (
-                      <span className="flex items-center gap-1 text-xs text-muted">
-                        <DollarSign className="w-3 h-3" /> {job.avg_wage >= 1000 ? `$${Math.round(job.avg_wage / 1000)}k` : `$${Math.round(job.avg_wage)}`} avg
-                      </span>
-                    )}
-                    {posted && <span className="text-xs text-muted">{posted}</span>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => handleLog(job)} disabled={isLogging || isLogged}
-                    className={cn('flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60',
-                      isLogged ? 'bg-brand/10 text-brand-deep border-brand/30' : 'bg-paper hover:bg-line text-ink-soft border-line')}>
-                    {isLogged ? <><CheckCircle2 className="w-3 h-3" /> Logged</> : <><Plus className="w-3 h-3" /> Log</>}
-                  </button>
-                  <a href={job.url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-brand hover:bg-brand-deep text-white rounded-lg transition-colors">
-                    Apply <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {visible.map(renderJob)}
       </div>
+      {capped && (
+        <div className="mt-3 pt-3 border-t border-line text-center">
+          <button onClick={onAuth} className="text-sm text-brand hover:underline font-semibold">
+            Sign in free to see all {listings.length} open roles at {companyName} →
+          </button>
+        </div>
+      )}
     </div>
   )
 }

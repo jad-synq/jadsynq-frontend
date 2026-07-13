@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { Sparkles, X, Send, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -28,11 +29,11 @@ export default function CopilotPanel() {
 
   // Seed a contextual opening message when opened from a specific job card.
   useEffect(() => {
-    if (isOpen && jobContext && messages.length === 0) {
+    if (isOpen && user && jobContext && messages.length === 0) {
       void send(`Can you explain my match for ${jobContext.title} at ${jobContext.company} and how I can improve it?`)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, jobContext])
+  }, [isOpen, user, jobContext])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -125,7 +126,13 @@ export default function CopilotPanel() {
 
         <div className="p-4 border-t border-line">
           {!user ? (
-            <p className="text-sm text-muted text-center">Sign in to use the Career Copilot.</p>
+            <Link
+              href="/auth"
+              onClick={close}
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-brand hover:bg-brand-deep text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              Sign in free to use the Career Copilot →
+            </Link>
           ) : (
             <form
               onSubmit={e => { e.preventDefault(); void send(input) }}
