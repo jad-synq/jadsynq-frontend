@@ -12,11 +12,11 @@ import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { useCopilotStore } from '@/lib/copilotStore'
 
-function SealMark({ className }: { className?: string }) {
+function BrandMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} fill="none" aria-hidden="true">
-      <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="5" />
-      <path d="M58,30 L58,62 Q58,75 45,75 Q37,75 32,70" stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20,54 L37,71 L50,42 L63,54 L80,22" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="80" cy="22" r="7" fill="currentColor" />
     </svg>
   )
 }
@@ -66,7 +66,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       {/* Logo */}
       <div className="px-4 py-5 border-b border-white/10">
         <Link href="/" onClick={onNavClick} className="flex items-center gap-2.5">
-          <SealMark className="w-7 h-7 text-brand shrink-0" />
+          <BrandMark className="w-7 h-7 text-brand shrink-0" />
           <span className="font-display text-xl font-bold text-white tracking-tight">JADsynq</span>
         </Link>
       </div>
@@ -160,7 +160,7 @@ function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
         <Menu className="w-5 h-5" />
       </button>
       <div className="flex items-center gap-2">
-        <SealMark className="w-5 h-5 text-brand shrink-0" />
+        <BrandMark className="w-5 h-5 text-brand shrink-0" />
         <span className="font-display font-bold text-white text-base tracking-tight">JADsynq</span>
         {current && current.href !== '/' && (
           <>
@@ -241,7 +241,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
       )}>
         <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
-            <SealMark className="w-7 h-7 text-brand shrink-0" />
+            <BrandMark className="w-7 h-7 text-brand shrink-0" />
             <span className="font-display text-xl font-bold text-white tracking-tight">JADsynq</span>
           </div>
           <button onClick={onClose} className="p-2 text-white/60 hover:text-white rounded-lg hover:bg-white/10 transition-colors">

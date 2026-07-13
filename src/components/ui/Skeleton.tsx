@@ -134,8 +134,8 @@ export function PageLoader({ message = 'Loading…' }: { message?: string }) {
     <div className="min-h-screen bg-paper flex flex-col items-center justify-center gap-5">
       <div className="flex items-center gap-3">
         <svg className="w-8 h-8 text-brand" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-          <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="5" />
-          <path d="M58,30 L58,62 Q58,75 45,75 Q37,75 32,70" stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M20,54 L37,71 L50,42 L63,54 L80,22" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="80" cy="22" r="7" fill="currentColor" />
         </svg>
         <span className="font-display text-xl font-bold text-ink tracking-tight">JADsynq</span>
       </div>
