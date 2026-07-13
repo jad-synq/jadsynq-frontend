@@ -8,12 +8,16 @@ import SearchBar, { SearchFilters } from '@/components/search/SearchBar'
 import SearchResultCard from '@/components/search/SearchResultCard'
 import { searchCompanies, SearchResult } from '@/lib/api'
 import { useMotionAllowed } from '@/hooks/useReducedMotion'
+import { useAuth } from '@/hooks/useAuth'
+import LandingPage from '@/components/marketing/LandingPage'
+import { PageLoader } from '@/components/ui/Skeleton'
 
 // Three.js/WebGL needs `window`/`document`, which don't exist during
 // Next.js server-side rendering -- ssr:false defers this to the client only.
 const HeroScene = dynamic(() => import('@/components/three/HeroScene'), { ssr: false })
 
 export default function HomePage() {
+  const { user, loading: authLoading } = useAuth()
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -41,6 +45,9 @@ export default function HomePage() {
       setLoading(false)
     }
   }
+
+  if (authLoading) return <PageLoader />
+  if (!user) return <LandingPage />
 
   return (
     <div className="min-h-screen bg-paper">
