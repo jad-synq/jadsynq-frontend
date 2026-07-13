@@ -20,6 +20,7 @@ import { saveResume } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { extractResumeText } from '@/lib/pdf'
 import { downloadDocxResume, downloadTextResume } from './export'
+import { FullPageAuthGate } from '@/components/ui/TeaserGate'
 
 const VISA_OPTIONS = ['', 'U.S. Citizen / Permanent Resident', 'H-1B Visa', 'OPT (F-1)', 'STEM OPT Extension', 'CPT', 'TN Visa', 'Other']
 
@@ -324,7 +325,7 @@ function PreviewRow({ label, value, multiline = false }: { label: string; value:
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ResumeBuilderPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   const [data, setData] = useState<ResumeData>(BLANK)
@@ -483,6 +484,16 @@ export default function ResumeBuilderPage() {
   const TemplateComponent = TEMPLATE_COMPONENTS[templateId]
   const currentTemplate = TEMPLATES.find(t => t.id === templateId)!
   const wordCount = buildResumeText(data).split(/\s+/).filter(Boolean).length
+
+  if (!authLoading && !user) {
+    return (
+      <FullPageAuthGate
+        icon={FileText}
+        title="Resume Builder needs an account"
+        description="Build an ATS-friendly resume with live scoring, pick from multiple templates, and save your progress — free with an account."
+      />
+    )
+  }
 
   return (
     <>

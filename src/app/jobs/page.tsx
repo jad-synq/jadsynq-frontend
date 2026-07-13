@@ -23,6 +23,9 @@ import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { analyze, ATSResult } from '@/lib/ats'
 import { useCopilotStore } from '@/lib/copilotStore'
+import { TeaserFade, TeaserCTA } from '@/components/ui/TeaserGate'
+
+const FREE_VISIBLE = 8
 
 const POPULAR_ROLES = [
   'Software Engineer', 'Data Engineer', 'Data Scientist',
@@ -1047,16 +1050,33 @@ export default function JobsPage() {
             )}
 
             {!liveLoading && listings.length > 0 && (
-              <div className="space-y-3">
-                {listings.map(l => <ListingCard key={l.id} listing={l} />)}
-                {liveOffset + LIMIT < liveTotal && (
-                  <button
-                    onClick={() => fetchListings(liveQuery, liveLocation, liveOffset + LIMIT)}
-                    className="w-full py-3 bg-paper-raised border border-line hover:border-brand hover:text-brand text-ink-soft text-sm font-semibold rounded-xl transition-all">
-                    Load more ({liveTotal - liveOffset - LIMIT} remaining)
-                  </button>
-                )}
-              </div>
+              !user && listings.length > FREE_VISIBLE ? (
+                <>
+                  <div className="space-y-3">
+                    {listings.slice(0, FREE_VISIBLE).map(l => <ListingCard key={l.id} listing={l} />)}
+                  </div>
+                  <TeaserFade>
+                    <div className="space-y-3">
+                      {listings.slice(FREE_VISIBLE, FREE_VISIBLE + 3).map(l => <ListingCard key={l.id} listing={l} />)}
+                    </div>
+                  </TeaserFade>
+                  <TeaserCTA
+                    title={`See all ${liveTotal.toLocaleString()} live openings`}
+                    description="Sign in free to browse every open role, match them against your resume, and log applications as you go."
+                  />
+                </>
+              ) : (
+                <div className="space-y-3">
+                  {listings.map(l => <ListingCard key={l.id} listing={l} />)}
+                  {liveOffset + LIMIT < liveTotal && (
+                    <button
+                      onClick={() => fetchListings(liveQuery, liveLocation, liveOffset + LIMIT)}
+                      className="w-full py-3 bg-paper-raised border border-line hover:border-brand hover:text-brand text-ink-soft text-sm font-semibold rounded-xl transition-all">
+                      Load more ({liveTotal - liveOffset - LIMIT} remaining)
+                    </button>
+                  )}
+                </div>
+              )
             )}
           </>
         )}
@@ -1144,17 +1164,38 @@ export default function JobsPage() {
             )}
 
             {!loading && jobs.length > 0 && (
-              <div className="space-y-3">
-                {jobs.map((job, i) => (
-                  <JobCard key={`${job.company_id}-${job.job_title}-${i}`} job={job} onLogApp={setLogJob} />
-                ))}
-                {offset + LIMIT < total && (
-                  <button onClick={() => doSearch(query, offset + LIMIT)}
-                    className="w-full py-3 bg-paper-raised border border-line hover:border-brand hover:text-brand text-ink-soft text-sm font-semibold rounded-xl transition-all">
-                    Load more ({total - offset - LIMIT} remaining)
-                  </button>
-                )}
-              </div>
+              !user && jobs.length > FREE_VISIBLE ? (
+                <>
+                  <div className="space-y-3">
+                    {jobs.slice(0, FREE_VISIBLE).map((job, i) => (
+                      <JobCard key={`${job.company_id}-${job.job_title}-${i}`} job={job} onLogApp={setLogJob} />
+                    ))}
+                  </div>
+                  <TeaserFade>
+                    <div className="space-y-3">
+                      {jobs.slice(FREE_VISIBLE, FREE_VISIBLE + 3).map((job, i) => (
+                        <JobCard key={`${job.company_id}-${job.job_title}-teaser-${i}`} job={job} onLogApp={setLogJob} />
+                      ))}
+                    </div>
+                  </TeaserFade>
+                  <TeaserCTA
+                    title={`See all ${total.toLocaleString()} results`}
+                    description="Sign in free to see every company hiring for this role, plus approval rates and average wages."
+                  />
+                </>
+              ) : (
+                <div className="space-y-3">
+                  {jobs.map((job, i) => (
+                    <JobCard key={`${job.company_id}-${job.job_title}-${i}`} job={job} onLogApp={setLogJob} />
+                  ))}
+                  {offset + LIMIT < total && (
+                    <button onClick={() => doSearch(query, offset + LIMIT)}
+                      className="w-full py-3 bg-paper-raised border border-line hover:border-brand hover:text-brand text-ink-soft text-sm font-semibold rounded-xl transition-all">
+                      Load more ({total - offset - LIMIT} remaining)
+                    </button>
+                  )}
+                </div>
+              )
             )}
           </>
         )}

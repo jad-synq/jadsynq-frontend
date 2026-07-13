@@ -13,6 +13,8 @@ import {
   ATSResult, ReadabilityResult,
 } from '@/lib/ats'
 import { buildResumeText as builderBuildResumeText } from '../resume-builder/templates'
+import { useAuth } from '@/hooks/useAuth'
+import { FullPageAuthGate } from '@/components/ui/TeaserGate'
 
 // ── Score Ring ────────────────────────────────────────────────────────────────
 
@@ -96,6 +98,7 @@ function ScoreBar({ label, score, max, desc }: { label: string; score: number; m
 type Tab = 'ats' | 'readability' | 'cover'
 
 export default function ATSCheckPage() {
+  const { user, loading: authLoading } = useAuth()
   const [resume, setResume] = useState('')
   const [jd, setJd] = useState('')
   const [atsResult, setAtsResult] = useState<ATSResult | null>(null)
@@ -158,6 +161,16 @@ export default function ATSCheckPage() {
     { id: 'readability', label: 'Readability' },
     { id: 'cover',      label: 'Cover Letter' },
   ]
+
+  if (!authLoading && !user) {
+    return (
+      <FullPageAuthGate
+        icon={Zap}
+        title="ATS Check needs an account"
+        description="Score your resume against any job description, fix readability issues, and generate a tailored cover letter — free with an account."
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-paper">

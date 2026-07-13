@@ -10,6 +10,9 @@ import CompanyLogo, { linkedinCompanyUrl } from '@/components/ui/CompanyLogo'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
+import { TeaserFade, TeaserCTA } from '@/components/ui/TeaserGate'
+
+const FREE_VISIBLE = 10
 
 function SaveButton({ companyId }: { companyId: string }) {
   const { user } = useAuth()
@@ -65,6 +68,7 @@ const COMPANY_SIZE_LABEL: Record<string, string> = {
 }
 
 export default function CompaniesPage() {
+  const { user } = useAuth()
   const [companies, setCompanies] = useState<CompanyListItem[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -118,6 +122,93 @@ export default function CompaniesPage() {
 
   const totalPages = Math.ceil(total / PER_PAGE)
   const activeFilters = [everifyOnly && 'E-Verify', h1bOnly && 'H-1B sponsors', companySize && COMPANY_SIZE_LABEL[companySize]].filter(Boolean)
+
+  const gated = !user && page === 1 && companies.length > FREE_VISIBLE
+  const visibleCompanies = gated ? companies.slice(0, FREE_VISIBLE) : companies
+  const teaserCompanies = gated ? companies.slice(FREE_VISIBLE, FREE_VISIBLE + 3) : []
+
+  const renderCompanyRow = (company: CompanyListItem, i: number) => (
+    <Link
+      key={company.id}
+      href={`/companies/${company.id}`}
+      className="flex items-center gap-4 bg-paper-raised rounded-2xl border border-line p-4 hover:border-blue-200 hover:shadow-sm transition-all group"
+    >
+      {/* Rank */}
+      <span className="text-xs text-muted font-semibold w-5 shrink-0 text-right">
+        {(page - 1) * PER_PAGE + i + 1}
+      </span>
+
+      {/* Logo */}
+      <CompanyLogo
+        logoUrl={company.logo_url}
+        domain={company.domain}
+        name={company.legal_name}
+        size="md"
+      />
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-ink group-hover:text-blue-600 transition-colors truncate">{company.legal_name}</p>
+        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+          {company.everify_status === 'enrolled' && (
+            <span className="flex items-center gap-1 text-xs text-brand-deep font-medium">
+              <CheckCircle className="w-3 h-3" /> E-Verify
+            </span>
+          )}
+          {company.h1b_petitions_last_year > 0 && (
+            <span className="flex items-center gap-1 text-xs text-muted">
+              <TrendingUp className="w-3 h-3 text-blue-400" /> {company.h1b_petitions_last_year.toLocaleString()} H-1B
+            </span>
+          )}
+          {company.avg_wage && (
+            <span className="flex items-center gap-1 text-xs text-muted">
+              <DollarSign className="w-3 h-3" /> {formatWage(company.avg_wage)} avg
+            </span>
+          )}
+          {company.company_size && (
+            <span className="text-xs font-medium text-gold-deep bg-gold/15 px-2 py-0.5 rounded-full border border-gold/30">
+              {COMPANY_SIZE_LABEL[company.company_size]}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Sparkline trend */}
+      {company.petition_trend?.length >= 2 && (
+        <div className="shrink-0 hidden sm:flex flex-col items-end gap-0.5">
+          <Sparkline data={company.petition_trend} width={56} height={22} />
+          <span className="text-[9px] text-muted font-medium">trend</span>
+        </div>
+      )}
+
+      {/* Approval badge */}
+      {company.approval_rate !== null && (
+        <div className={cn(
+          'shrink-0 px-3 py-1.5 rounded-xl text-sm font-bold',
+          company.approval_rate >= 0.95 ? 'bg-brand/10 text-brand-deep' :
+          company.approval_rate >= 0.8 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-600'
+        )}>
+          {formatApprovalRate(company.approval_rate)}
+        </div>
+      )}
+
+      {/* LinkedIn icon */}
+      <a
+        href={linkedinCompanyUrl(company.domain, company.legal_name)}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()}
+        title="View on LinkedIn"
+        className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-[#0a66c2] hover:bg-blue-50 transition-colors"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+      </a>
+
+      <SaveButton companyId={company.id} />
+    </Link>
+  )
 
   return (
     <main className="min-h-screen bg-paper">
@@ -289,94 +380,31 @@ export default function CompaniesPage() {
             <button onClick={clearSearch} className="mt-3 text-sm text-blue-600 hover:underline">Clear search</button>
           </div>
         ) : (
-          <div className="space-y-2">
-            {companies.map((company, i) => (
-              <Link
-                key={company.id}
-                href={`/companies/${company.id}`}
-                className="flex items-center gap-4 bg-paper-raised rounded-2xl border border-line p-4 hover:border-blue-200 hover:shadow-sm transition-all group"
-              >
-                {/* Rank */}
-                <span className="text-xs text-muted font-semibold w-5 shrink-0 text-right">
-                  {(page - 1) * PER_PAGE + i + 1}
-                </span>
+          <>
+            <div className="space-y-2">
+              {visibleCompanies.map((company, i) => renderCompanyRow(company, i))}
+            </div>
 
-                {/* Logo */}
-                <CompanyLogo
-                  logoUrl={company.logo_url}
-                  domain={company.domain}
-                  name={company.legal_name}
-                  size="md"
-                />
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-ink group-hover:text-blue-600 transition-colors truncate">{company.legal_name}</p>
-                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                    {company.everify_status === 'enrolled' && (
-                      <span className="flex items-center gap-1 text-xs text-brand-deep font-medium">
-                        <CheckCircle className="w-3 h-3" /> E-Verify
-                      </span>
-                    )}
-                    {company.h1b_petitions_last_year > 0 && (
-                      <span className="flex items-center gap-1 text-xs text-muted">
-                        <TrendingUp className="w-3 h-3 text-blue-400" /> {company.h1b_petitions_last_year.toLocaleString()} H-1B
-                      </span>
-                    )}
-                    {company.avg_wage && (
-                      <span className="flex items-center gap-1 text-xs text-muted">
-                        <DollarSign className="w-3 h-3" /> {formatWage(company.avg_wage)} avg
-                      </span>
-                    )}
-                    {company.company_size && (
-                      <span className="text-xs font-medium text-gold-deep bg-gold/15 px-2 py-0.5 rounded-full border border-gold/30">
-                        {COMPANY_SIZE_LABEL[company.company_size]}
-                      </span>
-                    )}
-                  </div>
+            {gated && teaserCompanies.length > 0 && (
+              <>
+                <div className="space-y-2 mt-2">
+                  <TeaserFade>
+                    <div className="space-y-2">
+                      {teaserCompanies.map((company, i) => renderCompanyRow(company, FREE_VISIBLE + i))}
+                    </div>
+                  </TeaserFade>
                 </div>
-
-                {/* Sparkline trend */}
-                {company.petition_trend?.length >= 2 && (
-                  <div className="shrink-0 hidden sm:flex flex-col items-end gap-0.5">
-                    <Sparkline data={company.petition_trend} width={56} height={22} />
-                    <span className="text-[9px] text-muted font-medium">trend</span>
-                  </div>
-                )}
-
-                {/* Approval badge */}
-                {company.approval_rate !== null && (
-                  <div className={cn(
-                    'shrink-0 px-3 py-1.5 rounded-xl text-sm font-bold',
-                    company.approval_rate >= 0.95 ? 'bg-brand/10 text-brand-deep' :
-                    company.approval_rate >= 0.8 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-600'
-                  )}>
-                    {formatApprovalRate(company.approval_rate)}
-                  </div>
-                )}
-
-                {/* LinkedIn icon */}
-                <a
-                  href={linkedinCompanyUrl(company.domain, company.legal_name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  title="View on LinkedIn"
-                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-[#0a66c2] hover:bg-blue-50 transition-colors"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                  </svg>
-                </a>
-
-                <SaveButton companyId={company.id} />
-              </Link>
-            ))}
-          </div>
+                <TeaserCTA
+                  title={`See all ${total.toLocaleString()} companies`}
+                  description="Sign in free to browse the full database, get personalized matches by visa & experience, and save companies you're interested in."
+                />
+              </>
+            )}
+          </>
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {!gated && totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 mt-8">
             <button
               onClick={() => fetchCompanies(page - 1)}
