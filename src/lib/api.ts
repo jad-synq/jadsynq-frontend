@@ -313,6 +313,7 @@ export const getJobListings = (params: {
   max_experience_years?: number
   min_wage?: number
   max_wage?: number
+  posted_within_hours?: number
   limit?: number
   offset?: number
 }) => api.get<JobListingsResponse>('/api/jobs/listings', { params })

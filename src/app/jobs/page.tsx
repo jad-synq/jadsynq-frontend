@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import {
   searchJobs, getJobTitleSuggestions, getJobListings,
-  getJobMatches, getResume, saveResume,
+  getJobMatches, getResume, saveResume, getMe,
   createApplication, saveCompany, unsaveCompany,
   JobRoleResult, JobTitleSuggestion, JobListingResult, JobMatchResult,
 } from '@/lib/api'
@@ -35,6 +35,13 @@ const EXPERIENCE_LEVEL_MAX_YEARS: Record<'entry' | 'mid' | 'senior', number | un
   entry: 2,
   mid: 5,
   senior: undefined,
+}
+
+const POSTED_WITHIN_HOURS: Record<'24h' | '3d' | 'week' | 'month', number> = {
+  '24h': 24,
+  '3d': 72,
+  week: 24 * 7,
+  month: 24 * 30,
 }
 
 const ATS_LABEL: Record<string, string> = {
@@ -606,6 +613,10 @@ export default function JobsPage() {
   const [liveExperienceLevel, setLiveExperienceLevel] = useState<'' | 'entry' | 'mid' | 'senior'>('')
   const [liveMinWage, setLiveMinWage] = useState('')
   const [liveMaxWage, setLiveMaxWage] = useState('')
+  const [livePostedWithin, setLivePostedWithin] = useState<'' | '24h' | '3d' | 'week' | 'month'>('')
+  const [liveRecommendedOnly, setLiveRecommendedOnly] = useState(false)
+  const [liveTargetRoles, setLiveTargetRoles] = useState<string[]>([])
+  const [liveTargetCities, setLiveTargetCities] = useState<string[]>([])
 
   // H-1B state
   const [query, setQuery] = useState('')
@@ -687,6 +698,15 @@ export default function JobsPage() {
     fetchListings('', '', 0)
   }, [])
 
+  // Load target roles/cities for the "Recommended only" filter
+  useEffect(() => {
+    if (!user) return
+    getMe().then(res => {
+      setLiveTargetRoles(res.data.target_roles)
+      setLiveTargetCities(res.data.target_cities)
+    }).catch(() => {})
+  }, [user])
+
   // Load popular H-1B titles on mount
   useEffect(() => {
     getJobTitleSuggestions('').then(res => setSuggestions(res.data)).catch(() => {})
@@ -712,6 +732,7 @@ export default function JobsPage() {
         max_experience_years: liveExperienceLevel ? EXPERIENCE_LEVEL_MAX_YEARS[liveExperienceLevel] : undefined,
         min_wage: liveMinWage ? Number(liveMinWage) : undefined,
         max_wage: liveMaxWage ? Number(liveMaxWage) : undefined,
+        posted_within_hours: livePostedWithin ? POSTED_WITHIN_HOURS[livePostedWithin] : undefined,
         limit: LIMIT,
         offset: newOffset,
       })
@@ -781,6 +802,21 @@ export default function JobsPage() {
     }
     finally { setInlineResumeSaving(false) }
   }
+
+  // Client-side filter over the current page of live listings -- matches
+  // the same logic as the "For You" target-role/city boost, but as a hard
+  // filter here since this tab has no server-side notion of "target".
+  const hasLiveTargets = liveTargetRoles.length > 0 || liveTargetCities.length > 0
+  const displayedListings = liveRecommendedOnly
+    ? listings.filter(l => {
+        const titleLower = l.title.toLowerCase()
+        const locationLower = (l.location ?? '').toLowerCase()
+        return (
+          liveTargetRoles.some(role => titleLower.includes(role.toLowerCase())) ||
+          liveTargetCities.some(city => locationLower.includes(city.toLowerCase().split(',')[0]))
+        )
+      })
+    : listings
 
   return (
     <div className="min-h-screen bg-paper">
@@ -1023,6 +1059,17 @@ export default function JobsPage() {
                   placeholder="Max $"
                   className="w-24 px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
                 />
+                <select
+                  value={livePostedWithin}
+                  onChange={e => setLivePostedWithin(e.target.value as typeof livePostedWithin)}
+                  className="px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
+                >
+                  <option value="">Any time posted</option>
+                  <option value="24h">Last 24 hours</option>
+                  <option value="3d">Last 3 days</option>
+                  <option value="week">Last week</option>
+                  <option value="month">Last month</option>
+                </select>
                 <button
                   type="button"
                   onClick={() => fetchListings(liveQuery, liveLocation, 0)}
@@ -1030,6 +1077,18 @@ export default function JobsPage() {
                 >
                   Apply filters
                 </button>
+                {hasLiveTargets && (
+                  <button
+                    type="button"
+                    onClick={() => setLiveRecommendedOnly(!liveRecommendedOnly)}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors',
+                      liveRecommendedOnly ? 'bg-brand text-white border-brand' : 'bg-gold/15 text-gold-deep border-gold/30 hover:bg-gold/25'
+                    )}
+                  >
+                    <Target className="w-3.5 h-3.5" /> Recommended only
+                  </button>
+                )}
               </div>
 
               {liveSearched && !liveLoading && (
@@ -1046,14 +1105,21 @@ export default function JobsPage() {
               </div>
             )}
 
-            {!liveLoading && listings.length === 0 && liveSearched && (
+            {!liveLoading && displayedListings.length === 0 && liveSearched && (
               <div className="text-center py-16 bg-paper-raised rounded-2xl border border-line">
                 <Briefcase className="w-10 h-10 text-line mx-auto mb-3" />
-                <p className="font-semibold text-ink-soft mb-1">No live openings found</p>
-                <p className="text-sm text-muted mb-4">Try a different keyword or check back after the next scrape</p>
+                <p className="font-semibold text-ink-soft mb-1">
+                  {liveRecommendedOnly ? 'No matches on this page' : 'No live openings found'}
+                </p>
+                <p className="text-sm text-muted mb-4">
+                  {liveRecommendedOnly
+                    ? 'Try loading more results, or turn off "Recommended only"'
+                    : 'Try a different keyword or check back after the next scrape'}
+                </p>
                 <button onClick={() => {
                   setLiveInput(''); setLiveLocation('')
                   setLiveEmploymentType(''); setLiveExperienceLevel(''); setLiveMinWage(''); setLiveMaxWage('')
+                  setLivePostedWithin(''); setLiveRecommendedOnly(false)
                   fetchListings('', '', 0)
                 }}
                   className="text-sm text-brand hover:underline font-medium">
@@ -1062,9 +1128,9 @@ export default function JobsPage() {
               </div>
             )}
 
-            {!liveLoading && listings.length > 0 && (
+            {!liveLoading && displayedListings.length > 0 && (
               <div className="space-y-3">
-                {listings.map(l => <ListingCard key={l.id} listing={l} />)}
+                {displayedListings.map(l => <ListingCard key={l.id} listing={l} />)}
                 {liveOffset + LIMIT < liveTotal && (
                   <button
                     onClick={() => fetchListings(liveQuery, liveLocation, liveOffset + LIMIT)}
