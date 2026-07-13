@@ -230,6 +230,31 @@ export default function ProfilePage() {
   const winRate = applications.length
     ? Math.round(((counts.offer || 0) / applications.length) * 100)
     : 0
+  const responseRate = applications.length
+    ? Math.round((((counts.phone_screen || 0) + (counts.onsite || 0) + (counts.offer || 0)) / applications.length) * 100)
+    : 0
+
+  // Applications logged per month, last 6 months -- falls back to
+  // updated_at when applied_date wasn't set (it's optional on the form).
+  const monthlyTrend = (() => {
+    const months: { key: string; label: string; count: number }[] = []
+    const now = new Date()
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('en-US', { month: 'short' }), count: 0 })
+    }
+    const byKey = new Map(months.map(m => [m.key, m]))
+    for (const app of applications) {
+      const dateStr = app.applied_date || app.updated_at
+      if (!dateStr) continue
+      const d = new Date(dateStr)
+      const key = `${d.getFullYear()}-${d.getMonth()}`
+      const bucket = byKey.get(key)
+      if (bucket) bucket.count++
+    }
+    return months
+  })()
+
   const handle = user.email?.split('@')[0] ?? 'User'
   const currentVisa = VISA_OPTIONS.find(v => v.value === visaType)
   const tip = visaType ? VISA_TIPS[visaType] : null
@@ -385,12 +410,35 @@ export default function ProfilePage() {
         {tab === 'overview' && (
           <>
             {/* Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <MetricCard icon={<Briefcase className="w-4 h-4 text-brand" />}  value={applications.length} label="Total Applied"  accent="bg-brand/10"  />
               <MetricCard icon={<TrendingUp className="w-4 h-4 text-blue-500" />}   value={active}              label="In Progress"    sub="active now"      accent="bg-blue-50"   />
               <MetricCard icon={<Award className="w-4 h-4 text-amber-500" />}       value={offers}              label="Offers"         sub="received"        accent="bg-amber-50"  />
               <MetricCard icon={<Bookmark className="w-4 h-4 text-violet-500" />}   value={savedCount}          label="Saved"          sub="companies"       accent="bg-violet-50" />
+              <MetricCard icon={<Target className="w-4 h-4 text-gold-deep" />}      value={`${responseRate}%`}  label="Response Rate"  sub="past applied"    accent="bg-gold/15"   />
             </div>
+
+            {/* Applications over time */}
+            {applications.length > 0 && (
+              <div className="bg-paper-raised rounded-2xl border border-line p-6 shadow-sm">
+                <h3 className="font-bold text-ink mb-4">Applications, Last 6 Months</h3>
+                <div className="flex items-end gap-3 h-24">
+                  {monthlyTrend.map(m => {
+                    const max = Math.max(...monthlyTrend.map(x => x.count), 1)
+                    return (
+                      <div key={m.key} className="flex-1 flex flex-col items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-ink-soft tabular-nums">{m.count || ''}</span>
+                        <div
+                          className="w-full bg-brand/70 rounded-t-md"
+                          style={{ height: `${Math.max(4, (m.count / max) * 64)}px` }}
+                        />
+                        <span className="text-xs text-muted font-medium">{m.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Pipeline */}
             {applications.length > 0 ? (
