@@ -6,10 +6,10 @@ import Link from 'next/link'
 import {
   ArrowLeft, CheckCircle, CheckCircle2, XCircle, TrendingUp,
   DollarSign, Building2, MapPin, Briefcase, Bookmark, BookmarkCheck,
-  ThumbsUp, Globe, ExternalLink, Plus, BookOpen
+  ThumbsUp, Globe, ExternalLink, Plus, BookOpen, Flame, Lightbulb
 } from 'lucide-react'
 import { isAxiosError } from 'axios'
-import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, getJobListings, createApplication, CompanyProfile, H1BYearSummary, JobListingResult } from '@/lib/api'
+import { getCompanyCached, getCompanyH1B, saveCompany, unsaveCompany, getSavedCompanies, submitOPTReport, getJobListings, createApplication, CompanyProfile, H1BYearSummary, JobListingResult, HiringActivity } from '@/lib/api'
 import { formatWage, formatApprovalRate, cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import CompanyLogo, { linkedinCompanyUrl, careersUrl } from '@/components/ui/CompanyLogo'
@@ -20,6 +20,20 @@ const COMPANY_SIZE_LABEL: Record<string, string> = {
   small_medium: '50-500 employees',
   medium_large: '500-5K employees',
   mnc: '5K+ employees (MNC)',
+}
+
+const HIRING_ACTIVITY_LABEL: Record<HiringActivity, string> = {
+  actively_hiring: 'Actively hiring',
+  moderate: 'Hiring at a steady pace',
+  slow: 'Slow hiring',
+  no_recent_activity: 'No active job postings',
+}
+
+const HIRING_ACTIVITY_STYLE: Record<HiringActivity, string> = {
+  actively_hiring: 'bg-brand/10 text-brand-deep border-brand/20',
+  moderate: 'bg-blue-50 text-blue-700 border-blue-100',
+  slow: 'bg-amber-50 text-amber-700 border-amber-100',
+  no_recent_activity: 'bg-paper text-muted border-line',
 }
 
 function OpenPositions({ listings, companyName, user, onAuth }: {
@@ -339,6 +353,13 @@ export default function CompanyPage() {
                 {COMPANY_SIZE_LABEL[company.company_size]}
               </span>
             )}
+            {company.hiring_activity && (
+              <span className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border', HIRING_ACTIVITY_STYLE[company.hiring_activity])}>
+                {company.hiring_activity === 'actively_hiring' && <Flame className="w-3 h-3" />}
+                {HIRING_ACTIVITY_LABEL[company.hiring_activity]}
+                {company.open_jobs_count > 0 && ` (${company.open_jobs_count})`}
+              </span>
+            )}
             {company.total_funding_usd && !company.is_public && (
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand/10 text-brand-deep border border-brand/20">
                 <DollarSign className="w-3 h-3" />
@@ -531,6 +552,26 @@ export default function CompanyPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Application strategy */}
+        {company.application_strategy.length > 0 && (
+          <div className="bg-paper-raised rounded-2xl border border-line p-6 mb-4">
+            <h2 className="font-semibold text-ink mb-4 flex items-center gap-2">
+              <div className="w-7 h-7 bg-gold/15 rounded-lg flex items-center justify-center">
+                <Lightbulb className="w-3.5 h-3.5 text-gold-deep" />
+              </div>
+              How to Apply Here
+            </h2>
+            <ul className="space-y-2.5">
+              {company.application_strategy.map((tip, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-sm text-ink-soft leading-relaxed">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 shrink-0" />
+                  {tip}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

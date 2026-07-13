@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import Sidebar from "@/components/ui/Sidebar";
 import BackendWarmup from "@/components/ui/BackendWarmup";
+import OnboardingGate from "@/components/ui/OnboardingGate";
 import CopilotPanel from "@/components/copilot/CopilotPanel";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -57,6 +58,7 @@ export default function RootLayout({
       <body className={`${newsreader.variable} ${manrope.variable} font-sans antialiased bg-paper text-ink`}>
         <AuthProvider>
           <BackendWarmup />
+          <OnboardingGate />
           <Sidebar />
           {/* Main content: sidebar offset on desktop, top+bottom bar on mobile */}
           <main className="md:ml-60 min-h-screen pt-14 md:pt-0 pb-16 md:pb-0">

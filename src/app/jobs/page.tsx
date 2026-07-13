@@ -7,7 +7,7 @@ import {
   Search, CheckCircle, CheckCircle2, TrendingUp, DollarSign, Building2,
   Briefcase, ExternalLink, Plus, ChevronRight, Bookmark,
   BookmarkCheck, Sparkles, X, MapPin, Layers, Zap, Upload, FileText,
-  AlertTriangle, ChevronDown, ChevronUp, BookOpen
+  AlertTriangle, ChevronDown, ChevronUp, BookOpen, Target
 } from 'lucide-react'
 import {
   searchJobs, getJobTitleSuggestions, getJobListings,
@@ -165,6 +165,7 @@ interface ScoredJob {
   job: JobMatchResult
   ats: ATSResult
   overqualifiedGap: boolean
+  targetMatch: boolean
 }
 
 function MatchCard({ item, resumeYears }: { item: ScoredJob; resumeYears: number | null }) {
@@ -173,7 +174,7 @@ function MatchCard({ item, resumeYears }: { item: ScoredJob; resumeYears: number
   const openCopilot = useCopilotStore(s => s.open)
   const [logged, setLogged] = useState(false)
   const [logging, setLogging] = useState(false)
-  const { job, ats, overqualifiedGap } = item
+  const { job, ats, overqualifiedGap, targetMatch } = item
   const score = ats.score
   const scoreColor = score >= 75 ? 'text-gold-deep' : score >= 50 ? 'text-amber-500' : 'text-red-500'
   const scoreBg   = score >= 75 ? 'bg-gold/15 border-gold/40' : score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'
@@ -252,6 +253,11 @@ function MatchCard({ item, resumeYears }: { item: ScoredJob; resumeYears: number
 
           {/* Meta row */}
           <div className="flex flex-wrap gap-2 mt-2">
+            {targetMatch && (
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gold/15 text-gold-deep border border-gold/40">
+                <Target className="w-3 h-3" /> Matches your targets
+              </span>
+            )}
             {job.location && (
               <span className="flex items-center gap-1 text-xs text-muted">
                 <MapPin className="w-3 h-3" /> {job.location}
@@ -628,6 +634,8 @@ export default function JobsPage() {
     ]).then(([matchRes, resumeRes]) => {
       const resumeText = resumeRes?.data?.resume_text ?? ''
       const resumeYears = matchRes.data.resume_years
+      const targetRoles = matchRes.data.target_roles
+      const targetCities = matchRes.data.target_cities
       setResumeYears(resumeYears)
       setResumeWordCount(matchRes.data.resume_word_count)
       const scored: ScoredJob[] = matchRes.data.jobs.map(job => {
@@ -641,7 +649,13 @@ export default function JobsPage() {
           job.min_years_experience != null &&
           job.min_years_experience > resumeYears + 1
         )
-        return { job, ats, overqualifiedGap }
+        const titleLower = job.title.toLowerCase()
+        const locationLower = (job.location ?? '').toLowerCase()
+        const targetMatch = (
+          targetRoles.some(role => titleLower.includes(role.toLowerCase())) ||
+          targetCities.some(city => locationLower.includes(city.toLowerCase().split(',')[0]))
+        )
+        return { job, ats, overqualifiedGap, targetMatch }
       })
       // Jobs with a real, usable job description sort by match score first;
       // jobs where the scraper never backfilled a description (JD is just a
@@ -649,10 +663,12 @@ export default function JobsPage() {
       // by a score that isn't measuring much of anything. Jobs that ask for
       // more experience than the resume shows get demoted below both, since
       // a high keyword-overlap score doesn't mean much if the seniority bar
-      // is out of reach.
+      // is out of reach. Jobs matching a stated target role/city get a boost
+      // within whatever tier they land in.
       scored.sort((a, b) => {
         if (a.ats.jdTooThin !== b.ats.jdTooThin) return a.ats.jdTooThin ? 1 : -1
         if (a.overqualifiedGap !== b.overqualifiedGap) return a.overqualifiedGap ? 1 : -1
+        if (a.targetMatch !== b.targetMatch) return a.targetMatch ? -1 : 1
         return b.ats.score - a.ats.score
       })
       setScoredJobs(scored)

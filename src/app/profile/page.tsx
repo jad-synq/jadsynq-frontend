@@ -7,7 +7,7 @@ import {
   ChevronRight, TrendingUp, Award,
   Building2, LogOut, Settings, Mail,
   BarChart3, Sparkles, Target, Clock,
-  ArrowUpRight, FileText, Star, Upload, Puzzle, Copy, Check
+  ArrowUpRight, FileText, Star, Upload, Puzzle, Copy, Check, Loader2, Crosshair
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -15,6 +15,7 @@ import {
   getResume, saveResume, UserResume,
   VisaType, AppStatus, JobApplication
 } from '@/lib/api'
+import { COMMON_ROLES, US_CITIES, nearestCity } from '@/lib/onboardingOptions'
 import { cn } from '@/lib/utils'
 import BrandedLoader from '@/components/ui/BrandedLoader'
 import { Skeleton, SkeletonText } from '@/components/ui/Skeleton'
@@ -173,6 +174,12 @@ export default function ProfilePage() {
   const [yearsExperienceInput, setYearsExperienceInput] = useState('')
   const [yearsSaving, setYearsSaving]                   = useState(false)
   const [yearsSaveOk, setYearsSaveOk]                   = useState(false)
+  const [targetRoles, setTargetRoles]                   = useState<string[]>([])
+  const [targetCities, setTargetCities]                 = useState<string[]>([])
+  const [targetAnywhere, setTargetAnywhere]              = useState(true)
+  const [locating, setLocating]                          = useState(false)
+  const [targetSaving, setTargetSaving]                 = useState(false)
+  const [targetSaveOk, setTargetSaveOk]                 = useState(false)
   const resumeFileRef = useRef<HTMLInputElement>(null)
 
   const handleCopyExtensionToken = async () => {
@@ -198,6 +205,9 @@ export default function ProfilePage() {
       setSelected(me.data.visa_type as VisaType | null)
       setYearsExperience(me.data.years_experience_override)
       setYearsExperienceInput(me.data.years_experience_override?.toString() ?? '')
+      setTargetRoles(me.data.target_roles)
+      setTargetCities(me.data.target_cities)
+      setTargetAnywhere(me.data.target_cities.length === 0)
       setApps(apps.data)
       setSavedCount(saved.data.length)
       setResume(res ? res.data : null)
@@ -264,6 +274,37 @@ export default function ProfilePage() {
       setYearsExperience(parsed); setYearsSaveOk(true)
       setTimeout(() => setYearsSaveOk(false), 3000)
     } catch { /**/ } finally { setYearsSaving(false) }
+  }
+
+  const toggleTargetRole = (role: string) => {
+    setTargetRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role])
+  }
+
+  const toggleTargetCity = (city: string) => {
+    setTargetCities(prev => prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city])
+  }
+
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const nearest = nearestCity(pos.coords.latitude, pos.coords.longitude)
+        setTargetCities(prev => prev.includes(nearest.name) ? prev : [...prev, nearest.name])
+        setLocating(false)
+      },
+      () => setLocating(false),
+      { timeout: 8000 }
+    )
+  }
+
+  const handleSaveTargets = async () => {
+    setTargetSaving(true); setTargetSaveOk(false)
+    try {
+      await updateMe({ target_roles: targetRoles, target_cities: targetAnywhere ? [] : targetCities })
+      setTargetSaveOk(true)
+      setTimeout(() => setTargetSaveOk(false), 3000)
+    } catch { /**/ } finally { setTargetSaving(false) }
   }
 
   const TABS = [
@@ -775,6 +816,85 @@ export default function ProfilePage() {
                     {yearsSaveOk ? <><Check className="w-4 h-4" /> Saved</> : yearsSaving ? 'Saving…' : 'Save'}
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Target roles & locations */}
+            <div className="bg-paper-raised rounded-2xl border border-line shadow-sm overflow-hidden">
+              <p className="px-5 pt-4 pb-2 text-[11px] font-bold text-muted uppercase tracking-widest">Target Roles &amp; Locations</p>
+              <div className="px-5 py-4">
+                <p className="text-xs text-muted mb-3">
+                  Used to rank jobs and companies for you — this never hides anything, it just reorders what you see.
+                </p>
+
+                <p className="text-xs font-semibold text-ink-soft mb-1.5">Roles</p>
+                <div className="flex flex-wrap gap-1.5 mb-4 max-h-40 overflow-y-auto pr-1">
+                  {COMMON_ROLES.map(role => (
+                    <button
+                      key={role}
+                      onClick={() => toggleTargetRole(role)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+                        targetRoles.includes(role)
+                          ? 'bg-brand text-white border-brand'
+                          : 'bg-paper text-ink-soft border-line hover:border-brand/40'
+                      )}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-xs font-semibold text-ink-soft mb-1.5">Locations</p>
+                <button
+                  onClick={() => setTargetAnywhere(!targetAnywhere)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-xl border-2 mb-2 transition-all',
+                    targetAnywhere ? 'border-brand bg-brand/10' : 'border-line'
+                  )}
+                >
+                  <span className={cn('text-xs font-bold', targetAnywhere ? 'text-brand-deep' : 'text-ink')}>Anywhere in the US</span>
+                  <div className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center', targetAnywhere ? 'border-brand bg-brand' : 'border-line')}>
+                    {targetAnywhere && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </button>
+                {!targetAnywhere && (
+                  <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                    <button
+                      onClick={handleUseLocation}
+                      disabled={locating}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold text-brand border border-brand/40 hover:bg-brand/10 transition-colors disabled:opacity-60"
+                    >
+                      {locating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
+                      {locating ? 'Locating…' : 'Use my location'}
+                    </button>
+                    {US_CITIES.map(city => (
+                      <button
+                        key={city.name}
+                        onClick={() => toggleTargetCity(city.name)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+                          targetCities.includes(city.name)
+                            ? 'bg-brand text-white border-brand'
+                            : 'bg-paper text-ink-soft border-line hover:border-brand/40'
+                        )}
+                      >
+                        {city.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSaveTargets}
+                  disabled={targetSaving}
+                  className={cn(
+                    'flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50',
+                    targetSaveOk ? 'bg-brand/10 text-brand border border-brand/30' : 'bg-brand hover:bg-brand-deep text-white'
+                  )}
+                >
+                  {targetSaveOk ? <><Check className="w-4 h-4" /> Saved</> : targetSaving ? 'Saving…' : 'Save preferences'}
+                </button>
               </div>
             </div>
 
