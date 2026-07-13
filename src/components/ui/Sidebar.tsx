@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Search, Building2, Briefcase, Bookmark, User,
-  LogOut, X, BriefcaseBusiness, FileText, Zap, Menu, Sparkles
+  LogOut, X, BriefcaseBusiness, FileText, Zap, Menu, Sparkles, TrendingUp
 } from 'lucide-react'
 
 import { useAuth } from '@/hooks/useAuth'
@@ -29,6 +29,7 @@ const NAV = [
   { href: '/saved',          icon: Bookmark,          label: 'Saved',       group: 'main',  bottomTab: true  },
   { href: '/resume-builder', icon: FileText,          label: 'Resume',      group: 'tools', bottomTab: false },
   { href: '/ats-check',      icon: Zap,               label: 'ATS Check',   group: 'tools', bottomTab: false },
+  { href: '/insights',       icon: TrendingUp,        label: 'Insights',    group: 'tools', bottomTab: false },
   { href: '/profile',        icon: User,              label: 'Profile',     group: 'user',  bottomTab: false },
 ]
 
