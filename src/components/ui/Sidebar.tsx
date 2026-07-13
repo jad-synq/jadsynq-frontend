@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Search, Building2, Briefcase, Bookmark, User,
-  LogOut, X, BriefcaseBusiness, FileText, Zap, Menu, Sparkles
+  LogOut, X, BriefcaseBusiness, FileText, Zap, Menu, Sparkles,
+  ChevronLeft, ChevronRight
 } from 'lucide-react'
 
 import { useAuth } from '@/hooks/useAuth'
@@ -32,27 +33,31 @@ const NAV = [
   { href: '/profile',        icon: User,              label: 'Profile',     group: 'user',  bottomTab: false },
 ]
 
-function NavItem({ href, icon: Icon, label, active, onClick }: {
-  href: string; icon: React.ElementType; label: string; active: boolean; onClick?: () => void
+function NavItem({ href, icon: Icon, label, active, onClick, collapsed }: {
+  href: string; icon: React.ElementType; label: string; active: boolean; onClick?: () => void; collapsed?: boolean
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
+      title={collapsed ? label : undefined}
       className={cn(
         'flex items-center gap-3 px-4 py-2.5 rounded-xl mx-2 text-sm font-medium transition-all',
+        collapsed && 'justify-center px-0 mx-auto w-11',
         active
           ? 'bg-brand text-white shadow-sm shadow-black/30'
           : 'text-green-100/70 hover:bg-white/10 hover:text-white'
       )}
     >
       <Icon className="shrink-0" style={{ width: 18, height: 18 }} />
-      {label}
+      {!collapsed && label}
     </Link>
   )
 }
 
-function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
+function SidebarContent({ onNavClick, collapsed, onToggleCollapsed }: {
+  onNavClick?: () => void; collapsed?: boolean; onToggleCollapsed?: () => void
+}) {
   const { user, loading, signOut } = useAuth()
   const pathname = usePathname()
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
@@ -64,49 +69,73 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-4 py-5 border-b border-white/10">
-        <Link href="/" onClick={onNavClick} className="flex items-center gap-2.5">
+      <div className={cn('py-5 border-b border-white/10 flex items-center', collapsed ? 'px-0 justify-center' : 'px-4 justify-between')}>
+        <Link href="/" onClick={onNavClick} className="flex items-center gap-2.5 min-w-0">
           <BrandMark className="w-7 h-7 text-brand shrink-0" />
-          <span className="font-display text-xl font-bold text-white tracking-tight">JADsynq</span>
+          {!collapsed && <span className="font-display text-xl font-bold text-white tracking-tight">JADsynq</span>}
         </Link>
+        {!collapsed && onToggleCollapsed && (
+          <button
+            onClick={onToggleCollapsed}
+            title="Collapse sidebar"
+            className="hidden md:flex p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
       </div>
+      {collapsed && onToggleCollapsed && (
+        <button
+          onClick={onToggleCollapsed}
+          title="Expand sidebar"
+          className="hidden md:flex items-center justify-center py-2 text-white/40 hover:text-white hover:bg-white/10 transition-colors border-b border-white/10"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
 
       {/* Nav */}
-      <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto">
-        <p className="px-6 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Navigation</p>
+      <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden">
+        {!collapsed && <p className="px-6 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Navigation</p>}
         {NAV.filter(i => i.group === 'main').map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} collapsed={collapsed} />
         ))}
-        <p className="px-6 pt-4 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Career Tools</p>
+        {!collapsed && <p className="px-6 pt-4 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Career Tools</p>}
         {NAV.filter(i => i.group === 'tools').map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} collapsed={collapsed} />
         ))}
         <button
           onClick={handleAskCopilot}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl mx-2 text-sm font-medium transition-all text-green-100/70 hover:bg-white/10 hover:text-white w-[calc(100%-1rem)]"
+          title={collapsed ? 'Ask Copilot' : undefined}
+          className={cn(
+            'flex items-center gap-3 px-4 py-2.5 rounded-xl mx-2 text-sm font-medium transition-all text-green-100/70 hover:bg-white/10 hover:text-white',
+            collapsed ? 'justify-center px-0 mx-auto w-11' : 'w-[calc(100%-1rem)]'
+          )}
         >
           <Sparkles className="shrink-0" style={{ width: 18, height: 18 }} />
-          Ask Copilot
+          {!collapsed && 'Ask Copilot'}
         </button>
-        <p className="px-6 pt-4 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Account</p>
+        {!collapsed && <p className="px-6 pt-4 pb-2 text-[10px] font-bold text-green-400/60 uppercase tracking-widest">Account</p>}
         {NAV.filter(i => i.group === 'user').map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} />
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavClick} collapsed={collapsed} />
         ))}
       </nav>
 
       {/* Legal */}
-      <div className="px-4 pb-2 flex flex-wrap gap-x-3 gap-y-1">
-        {[
-          { href: '/disclaimer', label: 'Disclaimer' },
-          { href: '/privacy',    label: 'Privacy' },
-          { href: '/terms',      label: 'Terms' },
-        ].map(l => (
-          <Link key={l.href} href={l.href} onClick={onNavClick}
-            className="text-[10px] text-green-300/40 hover:text-green-300/80 transition-colors">
-            {l.label}
-          </Link>
-        ))}
-      </div>
+      {!collapsed && (
+        <div className="px-4 pb-2 flex flex-wrap gap-x-3 gap-y-1">
+          {[
+            { href: '/disclaimer', label: 'Disclaimer' },
+            { href: '/privacy',    label: 'Privacy' },
+            { href: '/terms',      label: 'Terms' },
+          ].map(l => (
+            <Link key={l.href} href={l.href} onClick={onNavClick}
+              className="text-[10px] text-green-300/40 hover:text-green-300/80 transition-colors">
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* User section */}
       <div className="border-t border-white/10 p-3">
@@ -114,22 +143,33 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
           <div className="h-10 bg-white/10 rounded-xl animate-pulse" />
         ) : user ? (
           <div className="space-y-1">
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center shrink-0 text-white text-sm font-bold">
+            <div className={cn('flex items-center gap-3 px-2 py-2', collapsed && 'justify-center px-0')}>
+              <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center shrink-0 text-white text-sm font-bold" title={collapsed ? user.email ?? undefined : undefined}>
                 {(user.email ?? '?')[0].toUpperCase()}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{user.email?.split('@')[0]}</p>
-                <p className="text-[10px] text-green-300/60 truncate">{user.email}</p>
-              </div>
+              {!collapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-white truncate">{user.email?.split('@')[0]}</p>
+                  <p className="text-[10px] text-green-300/60 truncate">{user.email}</p>
+                </div>
+              )}
             </div>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-colors"
+              title={collapsed ? 'Sign out' : undefined}
+              className={cn(
+                'flex items-center gap-2.5 rounded-xl text-xs text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-colors',
+                collapsed ? 'justify-center w-11 mx-auto py-2' : 'w-full px-3 py-2'
+              )}
             >
-              <LogOut className="w-3.5 h-3.5" /> Sign out
+              <LogOut className="w-3.5 h-3.5" /> {!collapsed && 'Sign out'}
             </button>
           </div>
+        ) : collapsed ? (
+          <Link href="/auth" onClick={onNavClick} title="Sign in"
+            className="flex items-center justify-center w-11 mx-auto py-2.5 bg-brand hover:bg-brand-deep text-white rounded-xl transition-colors">
+            <User className="w-4 h-4" />
+          </Link>
         ) : (
           <div className="space-y-2 px-2">
             <Link href="/auth" onClick={onNavClick}
@@ -258,14 +298,19 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
 // ── Root export ───────────────────────────────────────────────────────────────
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed = false, onToggleCollapsed }: {
+  collapsed?: boolean; onToggleCollapsed?: () => void
+} = {}) {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 w-60 bg-ink z-40">
-        <SidebarContent />
+      <aside className={cn(
+        'hidden md:flex flex-col fixed inset-y-0 left-0 bg-ink z-40 transition-[width] duration-200',
+        collapsed ? 'w-[76px]' : 'w-60'
+      )}>
+        <SidebarContent collapsed={collapsed} onToggleCollapsed={onToggleCollapsed} />
       </aside>
 
       {/* Mobile top bar */}
