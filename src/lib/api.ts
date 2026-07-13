@@ -72,7 +72,10 @@ export interface CompanyProfile {
   funding_stage: string | null
   total_funding_usd: number | null
   incorporation_state: string | null
+  company_size: CompanySize | null
 }
+
+export type CompanySize = 'startup' | 'small_medium' | 'medium_large' | 'mnc'
 
 export interface H1BYearSummary {
   fiscal_year: number
@@ -124,6 +127,7 @@ export interface CompanyListItem {
   domain: string | null
   match_confidence: number
   petition_trend: number[]
+  company_size: CompanySize | null
 }
 
 export interface CompaniesListResponse {
@@ -140,6 +144,7 @@ export const getCompanies = (params: {
   everify_only?: boolean
   h1b_only?: boolean
   sort?: 'petitions' | 'approval_rate' | 'avg_wage' | 'name'
+  company_size?: CompanySize
 }) => api.get<CompaniesListResponse>('/api/companies', { params })
 
 export type VisaType = 'OPT' | 'STEM_OPT' | 'H1B' | 'GC' | 'CITIZEN' | 'OTHER'
@@ -149,12 +154,13 @@ export interface UserProfile {
   id: string
   email: string | null
   visa_type: VisaType | null
+  years_experience_override: number | null
 }
 
 export const getMe = () => api.get<UserProfile>('/api/users/me')
 
-export const updateMe = (visa_type: VisaType) =>
-  api.patch<UserProfile>('/api/users/me', { visa_type })
+export const updateMe = (updates: { visa_type?: VisaType; years_experience_override?: number | null }) =>
+  api.patch<UserProfile>('/api/users/me', updates)
 
 export interface JobApplication {
   id: string
@@ -233,6 +239,8 @@ export interface JobListingResult {
   posted_at: string | null
   scraped_at: string
   avg_wage: number | null
+  min_years_experience: number | null
+  max_years_experience: number | null
 }
 
 export interface JobListingsResponse {
@@ -286,6 +294,10 @@ export const getJobListings = (params: {
   title?: string
   location?: string
   ats_source?: string
+  employment_type?: string
+  max_experience_years?: number
+  min_wage?: number
+  max_wage?: number
   limit?: number
   offset?: number
 }) => api.get<JobListingsResponse>('/api/jobs/listings', { params })
@@ -332,12 +344,15 @@ export interface JobMatchResult {
   url: string
   description_snippet: string | null
   posted_at: string | null
+  min_years_experience: number | null
+  max_years_experience: number | null
 }
 
 export interface JobMatchesResponse {
   jobs: JobMatchResult[]
   total: number
   resume_word_count: number
+  resume_years: number | null
 }
 
 export const getResume = () => api.get<UserResume>('/api/resume')

@@ -169,6 +169,10 @@ export default function ProfilePage() {
   const [resumeSaveOk, setResumeSaveOk] = useState(false)
   const [showReplaceResume, setShowReplaceResume] = useState(false)
   const [tokenCopied, setTokenCopied] = useState(false)
+  const [yearsExperience, setYearsExperience]           = useState<number | null>(null)
+  const [yearsExperienceInput, setYearsExperienceInput] = useState('')
+  const [yearsSaving, setYearsSaving]                   = useState(false)
+  const [yearsSaveOk, setYearsSaveOk]                   = useState(false)
   const resumeFileRef = useRef<HTMLInputElement>(null)
 
   const handleCopyExtensionToken = async () => {
@@ -192,6 +196,8 @@ export default function ProfilePage() {
     ]).then(([me, apps, saved, res]) => {
       setVisaType(me.data.visa_type as VisaType | null)
       setSelected(me.data.visa_type as VisaType | null)
+      setYearsExperience(me.data.years_experience_override)
+      setYearsExperienceInput(me.data.years_experience_override?.toString() ?? '')
       setApps(apps.data)
       setSavedCount(saved.data.length)
       setResume(res ? res.data : null)
@@ -243,10 +249,21 @@ export default function ProfilePage() {
     if (!selected) return
     setSaving(true); setSaveOk(false)
     try {
-      await updateMe(selected)
+      await updateMe({ visa_type: selected })
       setVisaType(selected); setSaveOk(true)
       setTimeout(() => setSaveOk(false), 3000)
     } catch { /**/ } finally { setSaving(false) }
+  }
+
+  const handleSaveYearsExperience = async () => {
+    const parsed = yearsExperienceInput.trim() === '' ? null : parseInt(yearsExperienceInput, 10)
+    if (parsed !== null && (isNaN(parsed) || parsed < 0)) return
+    setYearsSaving(true); setYearsSaveOk(false)
+    try {
+      await updateMe({ years_experience_override: parsed })
+      setYearsExperience(parsed); setYearsSaveOk(true)
+      setTimeout(() => setYearsSaveOk(false), 3000)
+    } catch { /**/ } finally { setYearsSaving(false) }
   }
 
   const TABS = [
@@ -717,6 +734,45 @@ export default function ProfilePage() {
                   <button onClick={() => setTab('visa')}
                     className="text-xs font-semibold text-brand hover:underline">
                     Edit
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Years of experience */}
+            <div className="bg-paper-raised rounded-2xl border border-line shadow-sm overflow-hidden">
+              <p className="px-5 pt-4 pb-2 text-[11px] font-bold text-muted uppercase tracking-widest">Job Matching</p>
+              <div className="px-5 py-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-brand/10 rounded-xl flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-ink">Years of experience</p>
+                    <p className="text-xs text-muted mt-0.5">
+                      We estimate this from your resume&apos;s work history. Set it directly if that estimate looks off — it keeps &quot;For You&quot; job matches from ranking roles that ask for more experience than you have.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={60}
+                    value={yearsExperienceInput}
+                    onChange={e => setYearsExperienceInput(e.target.value)}
+                    placeholder="e.g. 3"
+                    className="w-24 px-3 py-2 rounded-xl text-sm border border-line focus:outline-none focus:ring-2 focus:ring-brand bg-paper text-ink"
+                  />
+                  <button
+                    onClick={handleSaveYearsExperience}
+                    disabled={yearsSaving || parseInt(yearsExperienceInput || '-1', 10) === (yearsExperience ?? -1)}
+                    className={cn(
+                      'flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50',
+                      yearsSaveOk ? 'bg-brand/10 text-brand border border-brand/30' : 'bg-brand hover:bg-brand-deep text-white'
+                    )}
+                  >
+                    {yearsSaveOk ? <><Check className="w-4 h-4" /> Saved</> : yearsSaving ? 'Saving…' : 'Save'}
                   </button>
                 </div>
               </div>

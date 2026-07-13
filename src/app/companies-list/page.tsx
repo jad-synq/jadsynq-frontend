@@ -50,6 +50,20 @@ const SORT_OPTIONS = [
   { value: 'name', label: 'Name (A–Z)' },
 ]
 
+const COMPANY_SIZE_OPTIONS: { value: 'startup' | 'small_medium' | 'medium_large' | 'mnc'; label: string }[] = [
+  { value: 'startup', label: 'Startup (<50)' },
+  { value: 'small_medium', label: 'Small-Medium (50-500)' },
+  { value: 'medium_large', label: 'Medium-Large (500-5K)' },
+  { value: 'mnc', label: 'MNC (5K+)' },
+]
+
+const COMPANY_SIZE_LABEL: Record<string, string> = {
+  startup: 'Startup',
+  small_medium: '50-500',
+  medium_large: '500-5K',
+  mnc: '5K+ (MNC)',
+}
+
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<CompanyListItem[]>([])
   const [total, setTotal] = useState(0)
@@ -61,6 +75,7 @@ export default function CompaniesPage() {
   const [sort, setSort] = useState('petitions')
   const [everifyOnly, setEverifyOnly] = useState(false)
   const [h1bOnly, setH1bOnly] = useState(false)
+  const [companySize, setCompanySize] = useState<'' | 'startup' | 'small_medium' | 'medium_large' | 'mnc'>('')
   const [showFilters, setShowFilters] = useState(false)
 
   const PER_PAGE = 50
@@ -76,6 +91,7 @@ export default function CompaniesPage() {
         everify_only: everifyOnly,
         h1b_only: h1bOnly,
         sort: sort as 'petitions' | 'approval_rate' | 'avg_wage' | 'name',
+        company_size: companySize || undefined,
       })
       setCompanies(res.data.companies)
       setTotal(res.data.total)
@@ -93,7 +109,7 @@ export default function CompaniesPage() {
       setSlowLoad(false)
       setLoading(false)
     }
-  }, [query, sort, everifyOnly, h1bOnly])
+  }, [query, sort, everifyOnly, h1bOnly, companySize])
 
   useEffect(() => { fetchCompanies(1) }, [fetchCompanies])
 
@@ -101,7 +117,7 @@ export default function CompaniesPage() {
   const clearSearch = () => { setInputValue(''); setQuery('') }
 
   const totalPages = Math.ceil(total / PER_PAGE)
-  const activeFilters = [everifyOnly && 'E-Verify', h1bOnly && 'H-1B sponsors'].filter(Boolean)
+  const activeFilters = [everifyOnly && 'E-Verify', h1bOnly && 'H-1B sponsors', companySize && COMPANY_SIZE_LABEL[companySize]].filter(Boolean)
 
   return (
     <main className="min-h-screen bg-paper">
@@ -209,6 +225,23 @@ export default function CompaniesPage() {
                 </button>
               </div>
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Company size</label>
+              <div className="flex flex-wrap gap-2">
+                {COMPANY_SIZE_OPTIONS.map(o => (
+                  <button
+                    key={o.value}
+                    onClick={() => setCompanySize(companySize === o.value ? '' : o.value)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                      companySize === o.value ? 'bg-brand text-white' : 'bg-line text-ink-soft hover:bg-line'
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -229,6 +262,11 @@ export default function CompaniesPage() {
             {h1bOnly && (
               <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm border border-blue-100">
                 H-1B sponsors <button onClick={() => setH1bOnly(false)} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {companySize && (
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-gold/15 text-gold-deep rounded-full text-sm border border-gold/30">
+                {COMPANY_SIZE_LABEL[companySize]} <button onClick={() => setCompanySize('')} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
               </span>
             )}
           </div>
@@ -288,6 +326,11 @@ export default function CompaniesPage() {
                     {company.avg_wage && (
                       <span className="flex items-center gap-1 text-xs text-muted">
                         <DollarSign className="w-3 h-3" /> {formatWage(company.avg_wage)} avg
+                      </span>
+                    )}
+                    {company.company_size && (
+                      <span className="text-xs font-medium text-gold-deep bg-gold/15 px-2 py-0.5 rounded-full border border-gold/30">
+                        {COMPANY_SIZE_LABEL[company.company_size]}
                       </span>
                     )}
                   </div>
