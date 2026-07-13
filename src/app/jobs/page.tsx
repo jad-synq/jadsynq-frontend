@@ -31,6 +31,12 @@ const POPULAR_ROLES = [
   'Electrical Engineer', 'Civil Engineer', 'Nurse',
 ]
 
+const EXPERIENCE_LEVEL_MAX_YEARS: Record<'entry' | 'mid' | 'senior', number | undefined> = {
+  entry: 2,
+  mid: 5,
+  senior: undefined,
+}
+
 const ATS_LABEL: Record<string, string> = {
   greenhouse: 'Greenhouse',
   lever: 'Lever',
@@ -158,15 +164,16 @@ function GapAnalysisPanel({ gaps, totalJobs }: { gaps: GapItem[]; totalJobs: num
 interface ScoredJob {
   job: JobMatchResult
   ats: ATSResult
+  overqualifiedGap: boolean
 }
 
-function MatchCard({ item }: { item: ScoredJob }) {
+function MatchCard({ item, resumeYears }: { item: ScoredJob; resumeYears: number | null }) {
   const { user } = useAuth()
   const router = useRouter()
   const openCopilot = useCopilotStore(s => s.open)
   const [logged, setLogged] = useState(false)
   const [logging, setLogging] = useState(false)
-  const { job, ats } = item
+  const { job, ats, overqualifiedGap } = item
   const score = ats.score
   const scoreColor = score >= 75 ? 'text-gold-deep' : score >= 50 ? 'text-amber-500' : 'text-red-500'
   const scoreBg   = score >= 75 ? 'bg-gold/15 border-gold/40' : score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'
@@ -260,6 +267,13 @@ function MatchCard({ item }: { item: ScoredJob }) {
             </span>
             {posted && <span className="text-xs text-muted ml-auto">{posted}</span>}
           </div>
+
+          {overqualifiedGap && (
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 w-fit">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              Requires {job.min_years_experience}+ years experience — your resume shows ~{resumeYears}
+            </div>
+          )}
         </div>
       </div>
 
@@ -565,6 +579,7 @@ export default function JobsPage() {
   const [forYouFetched, setForYouFetched] = useState(false)
   const [forYouNoResume, setForYouNoResume] = useState(false)
   const [scoredJobs, setScoredJobs] = useState<ScoredJob[]>([])
+  const [resumeYears, setResumeYears] = useState<number | null>(null)
   const [gaps, setGaps] = useState<GapItem[]>([])
   const [resumeWordCount, setResumeWordCount] = useState(0)
   const [inlineResumePaste, setInlineResumePaste] = useState('')
@@ -581,6 +596,10 @@ export default function JobsPage() {
   const [liveOffset, setLiveOffset] = useState(0)
   const [liveLoading, setLiveLoading] = useState(false)
   const [liveSearched, setLiveSearched] = useState(false)
+  const [liveEmploymentType, setLiveEmploymentType] = useState('')
+  const [liveExperienceLevel, setLiveExperienceLevel] = useState<'' | 'entry' | 'mid' | 'senior'>('')
+  const [liveMinWage, setLiveMinWage] = useState('')
+  const [liveMaxWage, setLiveMaxWage] = useState('')
 
   // H-1B state
   const [query, setQuery] = useState('')
@@ -608,18 +627,32 @@ export default function JobsPage() {
       getResume().catch(() => null),
     ]).then(([matchRes, resumeRes]) => {
       const resumeText = resumeRes?.data?.resume_text ?? ''
+      const resumeYears = matchRes.data.resume_years
+      setResumeYears(resumeYears)
       setResumeWordCount(matchRes.data.resume_word_count)
       const scored: ScoredJob[] = matchRes.data.jobs.map(job => {
         const jdText = `${job.title} ${job.department ?? ''} ${job.description_snippet ?? ''}`
         const ats = analyze(resumeText, jdText)
-        return { job, ats }
+        // A 1-year tolerance so a resume showing 3 years isn't demoted for
+        // a "3+ years" posting -- only flag postings that ask for
+        // meaningfully more experience than the resume shows.
+        const overqualifiedGap = (
+          resumeYears != null &&
+          job.min_years_experience != null &&
+          job.min_years_experience > resumeYears + 1
+        )
+        return { job, ats, overqualifiedGap }
       })
       // Jobs with a real, usable job description sort by match score first;
       // jobs where the scraper never backfilled a description (JD is just a
       // title/department) get pushed to the end instead of being interleaved
-      // by a score that isn't measuring much of anything.
+      // by a score that isn't measuring much of anything. Jobs that ask for
+      // more experience than the resume shows get demoted below both, since
+      // a high keyword-overlap score doesn't mean much if the seniority bar
+      // is out of reach.
       scored.sort((a, b) => {
         if (a.ats.jdTooThin !== b.ats.jdTooThin) return a.ats.jdTooThin ? 1 : -1
+        if (a.overqualifiedGap !== b.overqualifiedGap) return a.overqualifiedGap ? 1 : -1
         return b.ats.score - a.ats.score
       })
       setScoredJobs(scored)
@@ -656,7 +689,16 @@ export default function JobsPage() {
     setLiveLoading(true)
     setLiveSearched(true)
     try {
-      const res = await getJobListings({ title: title || undefined, location: location || undefined, limit: LIMIT, offset: newOffset })
+      const res = await getJobListings({
+        title: title || undefined,
+        location: location || undefined,
+        employment_type: liveEmploymentType || undefined,
+        max_experience_years: liveExperienceLevel ? EXPERIENCE_LEVEL_MAX_YEARS[liveExperienceLevel] : undefined,
+        min_wage: liveMinWage ? Number(liveMinWage) : undefined,
+        max_wage: liveMaxWage ? Number(liveMaxWage) : undefined,
+        limit: LIMIT,
+        offset: newOffset,
+      })
       setListings(res.data.listings)
       setLiveTotal(res.data.total)
       setLiveOffset(newOffset)
@@ -879,7 +921,7 @@ export default function JobsPage() {
                 <GapAnalysisPanel gaps={gaps} totalJobs={scoredJobs.length} />
                 <div className="space-y-3">
                   {scoredJobs.map(item => (
-                    <MatchCard key={item.job.id} item={item} />
+                    <MatchCard key={item.job.id} item={item} resumeYears={resumeYears} />
                   ))}
                 </div>
               </>
@@ -926,6 +968,54 @@ export default function JobsPage() {
                   Search
                 </button>
               </div>
+
+              <div className="flex flex-wrap gap-2 mb-2">
+                <select
+                  value={liveEmploymentType}
+                  onChange={e => setLiveEmploymentType(e.target.value)}
+                  className="px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
+                >
+                  <option value="">Any employment type</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
+                </select>
+                <select
+                  value={liveExperienceLevel}
+                  onChange={e => setLiveExperienceLevel(e.target.value as typeof liveExperienceLevel)}
+                  className="px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
+                >
+                  <option value="">Any experience level</option>
+                  <option value="entry">Entry level (0-2 yrs)</option>
+                  <option value="mid">Mid level (0-5 yrs)</option>
+                  <option value="senior">Senior (no cap)</option>
+                </select>
+                <input
+                  type="number"
+                  min={0}
+                  value={liveMinWage}
+                  onChange={e => setLiveMinWage(e.target.value)}
+                  placeholder="Min $"
+                  className="w-24 px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={liveMaxWage}
+                  onChange={e => setLiveMaxWage(e.target.value)}
+                  placeholder="Max $"
+                  className="w-24 px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+                <button
+                  type="button"
+                  onClick={() => fetchListings(liveQuery, liveLocation, 0)}
+                  className="px-3 py-2 bg-paper hover:bg-line text-ink-soft text-xs font-semibold rounded-lg border border-line transition-colors"
+                >
+                  Apply filters
+                </button>
+              </div>
+
               {liveSearched && !liveLoading && (
                 <p className="text-xs text-muted">
                   {liveTotal.toLocaleString()} live openings from H-1B sponsors
@@ -945,7 +1035,11 @@ export default function JobsPage() {
                 <Briefcase className="w-10 h-10 text-line mx-auto mb-3" />
                 <p className="font-semibold text-ink-soft mb-1">No live openings found</p>
                 <p className="text-sm text-muted mb-4">Try a different keyword or check back after the next scrape</p>
-                <button onClick={() => { setLiveInput(''); setLiveLocation(''); fetchListings('', '', 0) }}
+                <button onClick={() => {
+                  setLiveInput(''); setLiveLocation('')
+                  setLiveEmploymentType(''); setLiveExperienceLevel(''); setLiveMinWage(''); setLiveMaxWage('')
+                  fetchListings('', '', 0)
+                }}
                   className="text-sm text-brand hover:underline font-medium">
                   Show all openings
                 </button>

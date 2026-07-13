@@ -15,6 +15,13 @@ import { useAuth } from '@/hooks/useAuth'
 import CompanyLogo, { linkedinCompanyUrl, careersUrl } from '@/components/ui/CompanyLogo'
 import { SkeletonHero, SkeletonStat, SkeletonCard, Skeleton, Sparkline } from '@/components/ui/Skeleton'
 
+const COMPANY_SIZE_LABEL: Record<string, string> = {
+  startup: 'Startup',
+  small_medium: '50-500 employees',
+  medium_large: '500-5K employees',
+  mnc: '5K+ employees (MNC)',
+}
+
 function OpenPositions({ listings, companyName, user, onAuth }: {
   listings: JobListingResult[]
   companyName: string
@@ -325,6 +332,11 @@ export default function CompanyPage() {
                   : company.employee_count >= 1000
                   ? `${(company.employee_count / 1000).toFixed(1)}k employees`
                   : `${company.employee_count.toLocaleString()} employees`}
+              </span>
+            )}
+            {company.company_size && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gold/15 text-gold-deep border border-gold/30">
+                {COMPANY_SIZE_LABEL[company.company_size]}
               </span>
             )}
             {company.total_funding_usd && !company.is_public && (
