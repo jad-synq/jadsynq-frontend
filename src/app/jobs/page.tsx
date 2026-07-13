@@ -7,11 +7,11 @@ import {
   Search, CheckCircle, CheckCircle2, TrendingUp, DollarSign, Building2,
   Briefcase, ExternalLink, Plus, ChevronRight, Bookmark,
   BookmarkCheck, Sparkles, X, MapPin, Layers, Zap, Upload, FileText,
-  AlertTriangle, ChevronDown, ChevronUp, BookOpen
+  AlertTriangle, ChevronDown, ChevronUp, BookOpen, Target
 } from 'lucide-react'
 import {
   searchJobs, getJobTitleSuggestions, getJobListings,
-  getJobMatches, getResume, saveResume,
+  getJobMatches, getResume, saveResume, getMe,
   createApplication, saveCompany, unsaveCompany,
   JobRoleResult, JobTitleSuggestion, JobListingResult, JobMatchResult,
 } from '@/lib/api'
@@ -35,6 +35,13 @@ const EXPERIENCE_LEVEL_MAX_YEARS: Record<'entry' | 'mid' | 'senior', number | un
   entry: 2,
   mid: 5,
   senior: undefined,
+}
+
+const POSTED_WITHIN_HOURS: Record<'24h' | '3d' | 'week' | 'month', number> = {
+  '24h': 24,
+  '3d': 72,
+  week: 24 * 7,
+  month: 24 * 30,
 }
 
 const ATS_LABEL: Record<string, string> = {
@@ -165,6 +172,7 @@ interface ScoredJob {
   job: JobMatchResult
   ats: ATSResult
   overqualifiedGap: boolean
+  targetMatch: boolean
 }
 
 function MatchCard({ item, resumeYears }: { item: ScoredJob; resumeYears: number | null }) {
@@ -173,7 +181,7 @@ function MatchCard({ item, resumeYears }: { item: ScoredJob; resumeYears: number
   const openCopilot = useCopilotStore(s => s.open)
   const [logged, setLogged] = useState(false)
   const [logging, setLogging] = useState(false)
-  const { job, ats, overqualifiedGap } = item
+  const { job, ats, overqualifiedGap, targetMatch } = item
   const score = ats.score
   const scoreColor = score >= 75 ? 'text-gold-deep' : score >= 50 ? 'text-amber-500' : 'text-red-500'
   const scoreBg   = score >= 75 ? 'bg-gold/15 border-gold/40' : score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'
@@ -252,6 +260,11 @@ function MatchCard({ item, resumeYears }: { item: ScoredJob; resumeYears: number
 
           {/* Meta row */}
           <div className="flex flex-wrap gap-2 mt-2">
+            {targetMatch && (
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gold/15 text-gold-deep border border-gold/40">
+                <Target className="w-3 h-3" /> Matches your targets
+              </span>
+            )}
             {job.location && (
               <span className="flex items-center gap-1 text-xs text-muted">
                 <MapPin className="w-3 h-3" /> {job.location}
@@ -600,6 +613,10 @@ export default function JobsPage() {
   const [liveExperienceLevel, setLiveExperienceLevel] = useState<'' | 'entry' | 'mid' | 'senior'>('')
   const [liveMinWage, setLiveMinWage] = useState('')
   const [liveMaxWage, setLiveMaxWage] = useState('')
+  const [livePostedWithin, setLivePostedWithin] = useState<'' | '24h' | '3d' | 'week' | 'month'>('')
+  const [liveRecommendedOnly, setLiveRecommendedOnly] = useState(false)
+  const [liveTargetRoles, setLiveTargetRoles] = useState<string[]>([])
+  const [liveTargetCities, setLiveTargetCities] = useState<string[]>([])
 
   // H-1B state
   const [query, setQuery] = useState('')
@@ -628,6 +645,8 @@ export default function JobsPage() {
     ]).then(([matchRes, resumeRes]) => {
       const resumeText = resumeRes?.data?.resume_text ?? ''
       const resumeYears = matchRes.data.resume_years
+      const targetRoles = matchRes.data.target_roles
+      const targetCities = matchRes.data.target_cities
       setResumeYears(resumeYears)
       setResumeWordCount(matchRes.data.resume_word_count)
       const scored: ScoredJob[] = matchRes.data.jobs.map(job => {
@@ -641,7 +660,13 @@ export default function JobsPage() {
           job.min_years_experience != null &&
           job.min_years_experience > resumeYears + 1
         )
-        return { job, ats, overqualifiedGap }
+        const titleLower = job.title.toLowerCase()
+        const locationLower = (job.location ?? '').toLowerCase()
+        const targetMatch = (
+          targetRoles.some(role => titleLower.includes(role.toLowerCase())) ||
+          targetCities.some(city => locationLower.includes(city.toLowerCase().split(',')[0]))
+        )
+        return { job, ats, overqualifiedGap, targetMatch }
       })
       // Jobs with a real, usable job description sort by match score first;
       // jobs where the scraper never backfilled a description (JD is just a
@@ -649,10 +674,12 @@ export default function JobsPage() {
       // by a score that isn't measuring much of anything. Jobs that ask for
       // more experience than the resume shows get demoted below both, since
       // a high keyword-overlap score doesn't mean much if the seniority bar
-      // is out of reach.
+      // is out of reach. Jobs matching a stated target role/city get a boost
+      // within whatever tier they land in.
       scored.sort((a, b) => {
         if (a.ats.jdTooThin !== b.ats.jdTooThin) return a.ats.jdTooThin ? 1 : -1
         if (a.overqualifiedGap !== b.overqualifiedGap) return a.overqualifiedGap ? 1 : -1
+        if (a.targetMatch !== b.targetMatch) return a.targetMatch ? -1 : 1
         return b.ats.score - a.ats.score
       })
       setScoredJobs(scored)
@@ -670,6 +697,15 @@ export default function JobsPage() {
   useEffect(() => {
     fetchListings('', '', 0)
   }, [])
+
+  // Load target roles/cities for the "Recommended only" filter
+  useEffect(() => {
+    if (!user) return
+    getMe().then(res => {
+      setLiveTargetRoles(res.data.target_roles)
+      setLiveTargetCities(res.data.target_cities)
+    }).catch(() => {})
+  }, [user])
 
   // Load popular H-1B titles on mount
   useEffect(() => {
@@ -696,6 +732,7 @@ export default function JobsPage() {
         max_experience_years: liveExperienceLevel ? EXPERIENCE_LEVEL_MAX_YEARS[liveExperienceLevel] : undefined,
         min_wage: liveMinWage ? Number(liveMinWage) : undefined,
         max_wage: liveMaxWage ? Number(liveMaxWage) : undefined,
+        posted_within_hours: livePostedWithin ? POSTED_WITHIN_HOURS[livePostedWithin] : undefined,
         limit: LIMIT,
         offset: newOffset,
       })
@@ -765,6 +802,21 @@ export default function JobsPage() {
     }
     finally { setInlineResumeSaving(false) }
   }
+
+  // Client-side filter over the current page of live listings -- matches
+  // the same logic as the "For You" target-role/city boost, but as a hard
+  // filter here since this tab has no server-side notion of "target".
+  const hasLiveTargets = liveTargetRoles.length > 0 || liveTargetCities.length > 0
+  const displayedListings = liveRecommendedOnly
+    ? listings.filter(l => {
+        const titleLower = l.title.toLowerCase()
+        const locationLower = (l.location ?? '').toLowerCase()
+        return (
+          liveTargetRoles.some(role => titleLower.includes(role.toLowerCase())) ||
+          liveTargetCities.some(city => locationLower.includes(city.toLowerCase().split(',')[0]))
+        )
+      })
+    : listings
 
   return (
     <div className="min-h-screen bg-paper">
@@ -1007,6 +1059,17 @@ export default function JobsPage() {
                   placeholder="Max $"
                   className="w-24 px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
                 />
+                <select
+                  value={livePostedWithin}
+                  onChange={e => setLivePostedWithin(e.target.value as typeof livePostedWithin)}
+                  className="px-3 py-2 border border-line rounded-lg text-xs font-medium bg-paper-raised text-ink-soft focus:outline-none focus:ring-2 focus:ring-brand"
+                >
+                  <option value="">Any time posted</option>
+                  <option value="24h">Last 24 hours</option>
+                  <option value="3d">Last 3 days</option>
+                  <option value="week">Last week</option>
+                  <option value="month">Last month</option>
+                </select>
                 <button
                   type="button"
                   onClick={() => fetchListings(liveQuery, liveLocation, 0)}
@@ -1014,6 +1077,18 @@ export default function JobsPage() {
                 >
                   Apply filters
                 </button>
+                {hasLiveTargets && (
+                  <button
+                    type="button"
+                    onClick={() => setLiveRecommendedOnly(!liveRecommendedOnly)}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors',
+                      liveRecommendedOnly ? 'bg-brand text-white border-brand' : 'bg-gold/15 text-gold-deep border-gold/30 hover:bg-gold/25'
+                    )}
+                  >
+                    <Target className="w-3.5 h-3.5" /> Recommended only
+                  </button>
+                )}
               </div>
 
               {liveSearched && !liveLoading && (
@@ -1030,14 +1105,21 @@ export default function JobsPage() {
               </div>
             )}
 
-            {!liveLoading && listings.length === 0 && liveSearched && (
+            {!liveLoading && displayedListings.length === 0 && liveSearched && (
               <div className="text-center py-16 bg-paper-raised rounded-2xl border border-line">
                 <Briefcase className="w-10 h-10 text-line mx-auto mb-3" />
-                <p className="font-semibold text-ink-soft mb-1">No live openings found</p>
-                <p className="text-sm text-muted mb-4">Try a different keyword or check back after the next scrape</p>
+                <p className="font-semibold text-ink-soft mb-1">
+                  {liveRecommendedOnly ? 'No matches on this page' : 'No live openings found'}
+                </p>
+                <p className="text-sm text-muted mb-4">
+                  {liveRecommendedOnly
+                    ? 'Try loading more results, or turn off "Recommended only"'
+                    : 'Try a different keyword or check back after the next scrape'}
+                </p>
                 <button onClick={() => {
                   setLiveInput(''); setLiveLocation('')
                   setLiveEmploymentType(''); setLiveExperienceLevel(''); setLiveMinWage(''); setLiveMaxWage('')
+                  setLivePostedWithin(''); setLiveRecommendedOnly(false)
                   fetchListings('', '', 0)
                 }}
                   className="text-sm text-brand hover:underline font-medium">
@@ -1046,9 +1128,9 @@ export default function JobsPage() {
               </div>
             )}
 
-            {!liveLoading && listings.length > 0 && (
+            {!liveLoading && displayedListings.length > 0 && (
               <div className="space-y-3">
-                {listings.map(l => <ListingCard key={l.id} listing={l} />)}
+                {displayedListings.map(l => <ListingCard key={l.id} listing={l} />)}
                 {liveOffset + LIMIT < liveTotal && (
                   <button
                     onClick={() => fetchListings(liveQuery, liveLocation, liveOffset + LIMIT)}

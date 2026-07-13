@@ -7,7 +7,7 @@ import {
   ChevronRight, TrendingUp, Award,
   Building2, LogOut, Settings, Mail,
   BarChart3, Sparkles, Target, Clock,
-  ArrowUpRight, FileText, Star, Upload, Puzzle, Copy, Check
+  ArrowUpRight, FileText, Star, Upload, Puzzle, Copy, Check, Loader2, Crosshair
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -15,6 +15,7 @@ import {
   getResume, saveResume, UserResume,
   VisaType, AppStatus, JobApplication
 } from '@/lib/api'
+import { COMMON_ROLES, US_CITIES, nearestCity } from '@/lib/onboardingOptions'
 import { cn } from '@/lib/utils'
 import BrandedLoader from '@/components/ui/BrandedLoader'
 import { Skeleton, SkeletonText } from '@/components/ui/Skeleton'
@@ -173,6 +174,12 @@ export default function ProfilePage() {
   const [yearsExperienceInput, setYearsExperienceInput] = useState('')
   const [yearsSaving, setYearsSaving]                   = useState(false)
   const [yearsSaveOk, setYearsSaveOk]                   = useState(false)
+  const [targetRoles, setTargetRoles]                   = useState<string[]>([])
+  const [targetCities, setTargetCities]                 = useState<string[]>([])
+  const [targetAnywhere, setTargetAnywhere]              = useState(true)
+  const [locating, setLocating]                          = useState(false)
+  const [targetSaving, setTargetSaving]                 = useState(false)
+  const [targetSaveOk, setTargetSaveOk]                 = useState(false)
   const resumeFileRef = useRef<HTMLInputElement>(null)
 
   const handleCopyExtensionToken = async () => {
@@ -198,6 +205,9 @@ export default function ProfilePage() {
       setSelected(me.data.visa_type as VisaType | null)
       setYearsExperience(me.data.years_experience_override)
       setYearsExperienceInput(me.data.years_experience_override?.toString() ?? '')
+      setTargetRoles(me.data.target_roles)
+      setTargetCities(me.data.target_cities)
+      setTargetAnywhere(me.data.target_cities.length === 0)
       setApps(apps.data)
       setSavedCount(saved.data.length)
       setResume(res ? res.data : null)
@@ -220,6 +230,31 @@ export default function ProfilePage() {
   const winRate = applications.length
     ? Math.round(((counts.offer || 0) / applications.length) * 100)
     : 0
+  const responseRate = applications.length
+    ? Math.round((((counts.phone_screen || 0) + (counts.onsite || 0) + (counts.offer || 0)) / applications.length) * 100)
+    : 0
+
+  // Applications logged per month, last 6 months -- falls back to
+  // updated_at when applied_date wasn't set (it's optional on the form).
+  const monthlyTrend = (() => {
+    const months: { key: string; label: string; count: number }[] = []
+    const now = new Date()
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('en-US', { month: 'short' }), count: 0 })
+    }
+    const byKey = new Map(months.map(m => [m.key, m]))
+    for (const app of applications) {
+      const dateStr = app.applied_date || app.updated_at
+      if (!dateStr) continue
+      const d = new Date(dateStr)
+      const key = `${d.getFullYear()}-${d.getMonth()}`
+      const bucket = byKey.get(key)
+      if (bucket) bucket.count++
+    }
+    return months
+  })()
+
   const handle = user.email?.split('@')[0] ?? 'User'
   const currentVisa = VISA_OPTIONS.find(v => v.value === visaType)
   const tip = visaType ? VISA_TIPS[visaType] : null
@@ -264,6 +299,37 @@ export default function ProfilePage() {
       setYearsExperience(parsed); setYearsSaveOk(true)
       setTimeout(() => setYearsSaveOk(false), 3000)
     } catch { /**/ } finally { setYearsSaving(false) }
+  }
+
+  const toggleTargetRole = (role: string) => {
+    setTargetRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role])
+  }
+
+  const toggleTargetCity = (city: string) => {
+    setTargetCities(prev => prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city])
+  }
+
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const nearest = nearestCity(pos.coords.latitude, pos.coords.longitude)
+        setTargetCities(prev => prev.includes(nearest.name) ? prev : [...prev, nearest.name])
+        setLocating(false)
+      },
+      () => setLocating(false),
+      { timeout: 8000 }
+    )
+  }
+
+  const handleSaveTargets = async () => {
+    setTargetSaving(true); setTargetSaveOk(false)
+    try {
+      await updateMe({ target_roles: targetRoles, target_cities: targetAnywhere ? [] : targetCities })
+      setTargetSaveOk(true)
+      setTimeout(() => setTargetSaveOk(false), 3000)
+    } catch { /**/ } finally { setTargetSaving(false) }
   }
 
   const TABS = [
@@ -344,12 +410,35 @@ export default function ProfilePage() {
         {tab === 'overview' && (
           <>
             {/* Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <MetricCard icon={<Briefcase className="w-4 h-4 text-brand" />}  value={applications.length} label="Total Applied"  accent="bg-brand/10"  />
               <MetricCard icon={<TrendingUp className="w-4 h-4 text-blue-500" />}   value={active}              label="In Progress"    sub="active now"      accent="bg-blue-50"   />
               <MetricCard icon={<Award className="w-4 h-4 text-amber-500" />}       value={offers}              label="Offers"         sub="received"        accent="bg-amber-50"  />
               <MetricCard icon={<Bookmark className="w-4 h-4 text-violet-500" />}   value={savedCount}          label="Saved"          sub="companies"       accent="bg-violet-50" />
+              <MetricCard icon={<Target className="w-4 h-4 text-gold-deep" />}      value={`${responseRate}%`}  label="Response Rate"  sub="past applied"    accent="bg-gold/15"   />
             </div>
+
+            {/* Applications over time */}
+            {applications.length > 0 && (
+              <div className="bg-paper-raised rounded-2xl border border-line p-6 shadow-sm">
+                <h3 className="font-bold text-ink mb-4">Applications, Last 6 Months</h3>
+                <div className="flex items-end gap-3 h-24">
+                  {monthlyTrend.map(m => {
+                    const max = Math.max(...monthlyTrend.map(x => x.count), 1)
+                    return (
+                      <div key={m.key} className="flex-1 flex flex-col items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-ink-soft tabular-nums">{m.count || ''}</span>
+                        <div
+                          className="w-full bg-brand/70 rounded-t-md"
+                          style={{ height: `${Math.max(4, (m.count / max) * 64)}px` }}
+                        />
+                        <span className="text-xs text-muted font-medium">{m.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Pipeline */}
             {applications.length > 0 ? (
@@ -775,6 +864,85 @@ export default function ProfilePage() {
                     {yearsSaveOk ? <><Check className="w-4 h-4" /> Saved</> : yearsSaving ? 'Saving…' : 'Save'}
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Target roles & locations */}
+            <div className="bg-paper-raised rounded-2xl border border-line shadow-sm overflow-hidden">
+              <p className="px-5 pt-4 pb-2 text-[11px] font-bold text-muted uppercase tracking-widest">Target Roles &amp; Locations</p>
+              <div className="px-5 py-4">
+                <p className="text-xs text-muted mb-3">
+                  Used to rank jobs and companies for you — this never hides anything, it just reorders what you see.
+                </p>
+
+                <p className="text-xs font-semibold text-ink-soft mb-1.5">Roles</p>
+                <div className="flex flex-wrap gap-1.5 mb-4 max-h-40 overflow-y-auto pr-1">
+                  {COMMON_ROLES.map(role => (
+                    <button
+                      key={role}
+                      onClick={() => toggleTargetRole(role)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+                        targetRoles.includes(role)
+                          ? 'bg-brand text-white border-brand'
+                          : 'bg-paper text-ink-soft border-line hover:border-brand/40'
+                      )}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-xs font-semibold text-ink-soft mb-1.5">Locations</p>
+                <button
+                  onClick={() => setTargetAnywhere(!targetAnywhere)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-xl border-2 mb-2 transition-all',
+                    targetAnywhere ? 'border-brand bg-brand/10' : 'border-line'
+                  )}
+                >
+                  <span className={cn('text-xs font-bold', targetAnywhere ? 'text-brand-deep' : 'text-ink')}>Anywhere in the US</span>
+                  <div className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center', targetAnywhere ? 'border-brand bg-brand' : 'border-line')}>
+                    {targetAnywhere && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </button>
+                {!targetAnywhere && (
+                  <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                    <button
+                      onClick={handleUseLocation}
+                      disabled={locating}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold text-brand border border-brand/40 hover:bg-brand/10 transition-colors disabled:opacity-60"
+                    >
+                      {locating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
+                      {locating ? 'Locating…' : 'Use my location'}
+                    </button>
+                    {US_CITIES.map(city => (
+                      <button
+                        key={city.name}
+                        onClick={() => toggleTargetCity(city.name)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+                          targetCities.includes(city.name)
+                            ? 'bg-brand text-white border-brand'
+                            : 'bg-paper text-ink-soft border-line hover:border-brand/40'
+                        )}
+                      >
+                        {city.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSaveTargets}
+                  disabled={targetSaving}
+                  className={cn(
+                    'flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50',
+                    targetSaveOk ? 'bg-brand/10 text-brand border border-brand/30' : 'bg-brand hover:bg-brand-deep text-white'
+                  )}
+                >
+                  {targetSaveOk ? <><Check className="w-4 h-4" /> Saved</> : targetSaving ? 'Saving…' : 'Save preferences'}
+                </button>
               </div>
             </div>
 

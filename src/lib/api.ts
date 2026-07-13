@@ -73,9 +73,12 @@ export interface CompanyProfile {
   total_funding_usd: number | null
   incorporation_state: string | null
   company_size: CompanySize | null
+  hiring_activity: HiringActivity | null
+  application_strategy: string[]
 }
 
 export type CompanySize = 'startup' | 'small_medium' | 'medium_large' | 'mnc'
+export type HiringActivity = 'actively_hiring' | 'moderate' | 'slow' | 'no_recent_activity'
 
 export interface H1BYearSummary {
   fiscal_year: number
@@ -128,6 +131,8 @@ export interface CompanyListItem {
   match_confidence: number
   petition_trend: number[]
   company_size: CompanySize | null
+  matching_openings: number
+  hiring_activity: HiringActivity | null
 }
 
 export interface CompaniesListResponse {
@@ -143,8 +148,10 @@ export const getCompanies = (params: {
   per_page?: number
   everify_only?: boolean
   h1b_only?: boolean
-  sort?: 'petitions' | 'approval_rate' | 'avg_wage' | 'name'
+  sort?: 'petitions' | 'approval_rate' | 'avg_wage' | 'name' | 'recommended'
   company_size?: CompanySize
+  target_roles?: string[]
+  target_cities?: string[]
 }) => api.get<CompaniesListResponse>('/api/companies', { params })
 
 export type VisaType = 'OPT' | 'STEM_OPT' | 'H1B' | 'GC' | 'CITIZEN' | 'OTHER'
@@ -155,12 +162,20 @@ export interface UserProfile {
   email: string | null
   visa_type: VisaType | null
   years_experience_override: number | null
+  target_roles: string[]
+  target_cities: string[]
+  onboarding_completed: boolean
 }
 
 export const getMe = () => api.get<UserProfile>('/api/users/me')
 
-export const updateMe = (updates: { visa_type?: VisaType; years_experience_override?: number | null }) =>
-  api.patch<UserProfile>('/api/users/me', updates)
+export const updateMe = (updates: {
+  visa_type?: VisaType
+  years_experience_override?: number | null
+  target_roles?: string[]
+  target_cities?: string[]
+  onboarding_completed?: boolean
+}) => api.patch<UserProfile>('/api/users/me', updates)
 
 export interface JobApplication {
   id: string
@@ -298,6 +313,7 @@ export const getJobListings = (params: {
   max_experience_years?: number
   min_wage?: number
   max_wage?: number
+  posted_within_hours?: number
   limit?: number
   offset?: number
 }) => api.get<JobListingsResponse>('/api/jobs/listings', { params })
@@ -353,6 +369,8 @@ export interface JobMatchesResponse {
   total: number
   resume_word_count: number
   resume_years: number | null
+  target_roles: string[]
+  target_cities: string[]
 }
 
 export const getResume = () => api.get<UserResume>('/api/resume')
@@ -362,3 +380,48 @@ export const saveResume = (data: { resume_text: string; resume_data?: object | n
 
 export const getJobMatches = (params?: { limit?: number }) =>
   api.get<JobMatchesResponse>('/api/resume/matches', { params })
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+export interface TopHiringCompany {
+  id: string
+  legal_name: string
+  logo_url: string | null
+  active_listings: number
+}
+
+export interface TopRole {
+  title: string
+  listing_count: number
+}
+
+export interface TopIndustry {
+  industry: string
+  total_petitions: number
+}
+
+export interface H1BYearTrend {
+  fiscal_year: number
+  total_petitions: number
+  certified: number
+  denied: number
+  approval_rate: number | null
+}
+
+export interface MarketInsights {
+  top_hiring_companies: TopHiringCompany[]
+  top_roles: TopRole[]
+  top_industries: TopIndustry[]
+  h1b_trend: H1BYearTrend[]
+}
+
+// Cached client-side for an hour -- this is aggregate, non-personalized
+// data that only changes as new scrapes/fiscal years land.
+export async function getMarketInsights(): Promise<{ data: MarketInsights }> {
+  const key = '/api/analytics/market'
+  const cached = cacheGet<MarketInsights>(key)
+  if (cached) return { data: cached }
+  const res = await api.get<MarketInsights>(key)
+  cacheSet(key, res.data, TTL_1HR)
+  return res
+}

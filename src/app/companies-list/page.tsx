@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck } from 'lucide-react'
-import { getCompaniesCached, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
+import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck, Flame, Target } from 'lucide-react'
+import { getCompaniesCached, getMe, CompanyListItem, HiringActivity, saveCompany, unsaveCompany } from '@/lib/api'
 import BrandedLoader from '@/components/ui/BrandedLoader'
 import { SkeletonCard, Sparkline } from '@/components/ui/Skeleton'
 import CompanyLogo, { linkedinCompanyUrl } from '@/components/ui/CompanyLogo'
@@ -50,6 +50,20 @@ const SORT_OPTIONS = [
   { value: 'name', label: 'Name (A–Z)' },
 ]
 
+const HIRING_ACTIVITY_LABEL: Record<HiringActivity, string> = {
+  actively_hiring: 'Actively hiring',
+  moderate: 'Hiring',
+  slow: 'Slow hiring',
+  no_recent_activity: 'No active postings',
+}
+
+const HIRING_ACTIVITY_STYLE: Record<HiringActivity, string> = {
+  actively_hiring: 'bg-brand/10 text-brand-deep border-brand/20',
+  moderate: 'bg-blue-50 text-blue-700 border-blue-100',
+  slow: 'bg-amber-50 text-amber-700 border-amber-100',
+  no_recent_activity: 'bg-paper text-muted border-line',
+}
+
 const COMPANY_SIZE_OPTIONS: { value: 'startup' | 'small_medium' | 'medium_large' | 'mnc'; label: string }[] = [
   { value: 'startup', label: 'Startup (<50)' },
   { value: 'small_medium', label: 'Small-Medium (50-500)' },
@@ -65,6 +79,7 @@ const COMPANY_SIZE_LABEL: Record<string, string> = {
 }
 
 export default function CompaniesPage() {
+  const { user } = useAuth()
   const [companies, setCompanies] = useState<CompanyListItem[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -77,8 +92,19 @@ export default function CompaniesPage() {
   const [h1bOnly, setH1bOnly] = useState(false)
   const [companySize, setCompanySize] = useState<'' | 'startup' | 'small_medium' | 'medium_large' | 'mnc'>('')
   const [showFilters, setShowFilters] = useState(false)
+  const [targetRoles, setTargetRoles] = useState<string[]>([])
+  const [targetCities, setTargetCities] = useState<string[]>([])
 
   const PER_PAGE = 50
+  const hasTargets = targetRoles.length > 0 || targetCities.length > 0
+
+  useEffect(() => {
+    if (!user) return
+    getMe().then(res => {
+      setTargetRoles(res.data.target_roles)
+      setTargetCities(res.data.target_cities)
+    }).catch(() => {})
+  }, [user])
 
   const fetchCompanies = useCallback(async (p = 1, attempt = 1) => {
     setLoading(true)
@@ -90,8 +116,10 @@ export default function CompaniesPage() {
         per_page: PER_PAGE,
         everify_only: everifyOnly,
         h1b_only: h1bOnly,
-        sort: sort as 'petitions' | 'approval_rate' | 'avg_wage' | 'name',
+        sort: sort as 'petitions' | 'approval_rate' | 'avg_wage' | 'name' | 'recommended',
         company_size: companySize || undefined,
+        target_roles: targetRoles,
+        target_cities: targetCities,
       })
       setCompanies(res.data.companies)
       setTotal(res.data.total)
@@ -109,7 +137,7 @@ export default function CompaniesPage() {
       setSlowLoad(false)
       setLoading(false)
     }
-  }, [query, sort, everifyOnly, h1bOnly, companySize])
+  }, [query, sort, everifyOnly, h1bOnly, companySize, targetRoles, targetCities])
 
   useEffect(() => { fetchCompanies(1) }, [fetchCompanies])
 
@@ -188,6 +216,17 @@ export default function CompaniesPage() {
             <div>
               <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Sort by</label>
               <div className="flex flex-wrap gap-2">
+                {hasTargets && (
+                  <button
+                    onClick={() => setSort('recommended')}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                      sort === 'recommended' ? 'bg-brand text-white' : 'bg-gold/15 text-gold-deep hover:bg-gold/25'
+                    )}
+                  >
+                    <Target className="w-3.5 h-3.5" /> Recommended for you
+                  </button>
+                )}
                 {SORT_OPTIONS.map(o => (
                   <button
                     key={o.value}
@@ -331,6 +370,17 @@ export default function CompaniesPage() {
                     {company.company_size && (
                       <span className="text-xs font-medium text-gold-deep bg-gold/15 px-2 py-0.5 rounded-full border border-gold/30">
                         {COMPANY_SIZE_LABEL[company.company_size]}
+                      </span>
+                    )}
+                    {company.hiring_activity && company.hiring_activity !== 'no_recent_activity' && (
+                      <span className={cn('flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border', HIRING_ACTIVITY_STYLE[company.hiring_activity])}>
+                        {company.hiring_activity === 'actively_hiring' && <Flame className="w-3 h-3" />}
+                        {HIRING_ACTIVITY_LABEL[company.hiring_activity]}
+                      </span>
+                    )}
+                    {sort === 'recommended' && company.matching_openings > 0 && (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-brand-deep bg-brand/10 px-2 py-0.5 rounded-full border border-brand/20">
+                        <Target className="w-3 h-3" /> {company.matching_openings} matching {company.matching_openings === 1 ? 'role' : 'roles'}
                       </span>
                     )}
                   </div>
