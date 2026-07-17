@@ -138,6 +138,7 @@ export default function CompanyPage() {
   const [saveLoading, setSaveLoading] = useState(false)
   const [optSubmitted, setOptSubmitted] = useState(false)
   const [optLoading, setOptLoading] = useState(false)
+  const [optContactEmail, setOptContactEmail] = useState('')
   const [listings, setListings] = useState<JobListingResult[]>([])
   const [listingsLoaded, setListingsLoaded] = useState(false)
 
@@ -210,7 +211,11 @@ export default function CompanyPage() {
     if (!user) { router.push('/auth'); return }
     setOptLoading(true)
     try {
-      await submitOPTReport(id, { supports_opt: supportsOpt, supports_stem_opt: supportsStemOpt })
+      await submitOPTReport(id, {
+        supports_opt: supportsOpt,
+        supports_stem_opt: supportsStemOpt,
+        contact_email: optContactEmail.trim() || undefined,
+      })
       setOptSubmitted(true)
     } catch { /* ignore */ } finally { setOptLoading(false) }
   }
@@ -561,6 +566,33 @@ export default function CompanyPage() {
             OPT / STEM OPT Support
           </h2>
           <p className="text-sm text-muted mb-4">Has this company sponsored OPT or STEM OPT? Help others by sharing what you know.</p>
+
+          {company.opt_support && company.opt_support.reports_count > 0 && (
+            <div className="mb-4 px-4 py-3 rounded-xl border border-line bg-paper">
+              <p className="text-sm font-medium text-ink-soft">
+                {company.opt_support.supports_stem_opt === true && '✅ Reported to support OPT + STEM OPT'}
+                {company.opt_support.supports_stem_opt === false && company.opt_support.supports_opt === true && '👍 Reported to support OPT only'}
+                {company.opt_support.supports_opt === false && '❌ Reported to not support OPT/STEM OPT'}
+                {company.opt_support.supports_opt === null && 'ℹ️ Mixed reports — no clear consensus yet'}
+              </p>
+              <p className="text-xs text-muted mt-1">
+                Based on {company.opt_support.reports_count} report{company.opt_support.reports_count === 1 ? '' : 's'}
+                {' '}&middot; avg confidence {(company.opt_support.confidence * 100).toFixed(0)}%
+              </p>
+              {company.opt_support.contact_emails.length > 0 && (
+                <p className="text-xs text-muted mt-2">
+                  Contact for clarification:{' '}
+                  {company.opt_support.contact_emails.map((email, i) => (
+                    <span key={email}>
+                      {i > 0 && ', '}
+                      <a href={`mailto:${email}`} className="text-blue-600 hover:underline">{email}</a>
+                    </span>
+                  ))}
+                </p>
+              )}
+            </div>
+          )}
+
           {optSubmitted ? (
             <div className="flex items-center gap-2 text-sm text-brand-deep bg-brand/10 rounded-xl px-4 py-3">
               <CheckCircle className="w-4 h-4" /> Thank you for your report!
@@ -579,6 +611,15 @@ export default function CompanyPage() {
                 className="px-4 py-2 text-sm font-medium bg-red-50 text-red-600 rounded-xl hover:bg-red-100 disabled:opacity-50 transition-colors border border-red-100">
                 ❌ Does not support
               </button>
+              {user && (
+                <input
+                  type="email"
+                  value={optContactEmail}
+                  onChange={e => setOptContactEmail(e.target.value)}
+                  placeholder="Optional: HR/recruiter contact email for others to verify"
+                  className="w-full mt-1 px-3 py-2 text-sm border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+              )}
               {!user && (
                 <p className="w-full text-xs text-muted mt-1">
                   <Link href="/auth" className="text-blue-600 hover:underline">Sign in</Link> to submit a report

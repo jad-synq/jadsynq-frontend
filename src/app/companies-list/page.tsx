@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, CheckCircle, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck } from 'lucide-react'
+import { Search, TrendingUp, DollarSign, SlidersHorizontal, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, X, Bookmark, BookmarkCheck, ThumbsUp } from 'lucide-react'
 import { getCompaniesCached, CompanyListItem, saveCompany, unsaveCompany } from '@/lib/api'
 import BrandedLoader from '@/components/ui/BrandedLoader'
 import { SkeletonCard, Sparkline } from '@/components/ui/Skeleton'
@@ -77,7 +77,7 @@ export default function CompaniesPage() {
   const [query, setQuery] = useState('')
   const [inputValue, setInputValue] = useState('')
   const [sort, setSort] = useState('petitions')
-  const [everifyOnly, setEverifyOnly] = useState(false)
+  const [optAcceptingOnly, setOptAcceptingOnly] = useState(false)
   const [h1bOnly, setH1bOnly] = useState(false)
   const [companySize, setCompanySize] = useState<'' | 'startup' | 'small_medium' | 'medium_large' | 'mnc'>('')
   const [showFilters, setShowFilters] = useState(false)
@@ -92,7 +92,7 @@ export default function CompaniesPage() {
         q: query || undefined,
         page: p,
         per_page: PER_PAGE,
-        everify_only: everifyOnly,
+        opt_accepting_only: optAcceptingOnly,
         h1b_only: h1bOnly,
         sort: sort as 'petitions' | 'approval_rate' | 'avg_wage' | 'name',
         company_size: companySize || undefined,
@@ -113,7 +113,7 @@ export default function CompaniesPage() {
       setSlowLoad(false)
       setLoading(false)
     }
-  }, [query, sort, everifyOnly, h1bOnly, companySize])
+  }, [query, sort, optAcceptingOnly, h1bOnly, companySize])
 
   useEffect(() => { fetchCompanies(1) }, [fetchCompanies])
 
@@ -121,7 +121,7 @@ export default function CompaniesPage() {
   const clearSearch = () => { setInputValue(''); setQuery('') }
 
   const totalPages = Math.ceil(total / PER_PAGE)
-  const activeFilters = [everifyOnly && 'E-Verify', h1bOnly && 'H-1B sponsors', companySize && COMPANY_SIZE_LABEL[companySize]].filter(Boolean)
+  const activeFilters = [optAcceptingOnly && 'OPT/STEM OPT accepting', h1bOnly && 'H-1B sponsors', companySize && COMPANY_SIZE_LABEL[companySize]].filter(Boolean)
 
   const gated = !user && page === 1 && companies.length > FREE_VISIBLE
   const visibleCompanies = gated ? companies.slice(0, FREE_VISIBLE) : companies
@@ -150,9 +150,9 @@ export default function CompaniesPage() {
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-ink group-hover:text-blue-600 transition-colors truncate">{company.legal_name}</p>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-          {company.everify_status === 'enrolled' && (
+          {company.opt_accepting && (
             <span className="flex items-center gap-1 text-xs text-brand-deep font-medium">
-              <CheckCircle className="w-3 h-3" /> E-Verify
+              <ThumbsUp className="w-3 h-3" /> OPT/STEM OPT accepting
             </span>
           )}
           {company.h1b_petitions_last_year > 0 && (
@@ -297,13 +297,13 @@ export default function CompaniesPage() {
               <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Filter</label>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setEverifyOnly(!everifyOnly)}
+                  onClick={() => setOptAcceptingOnly(!optAcceptingOnly)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                    everifyOnly ? 'bg-brand text-white' : 'bg-line text-ink-soft hover:bg-line'
+                    optAcceptingOnly ? 'bg-brand text-white' : 'bg-line text-ink-soft hover:bg-line'
                   )}
                 >
-                  <CheckCircle className="w-3.5 h-3.5" /> E-Verify only
+                  <ThumbsUp className="w-3.5 h-3.5" /> OPT/STEM OPT accepting
                 </button>
                 <button
                   onClick={() => setH1bOnly(!h1bOnly)}
@@ -345,9 +345,9 @@ export default function CompaniesPage() {
                 <button onClick={clearSearch} className="text-muted hover:text-ink-soft"><X className="w-3 h-3" /></button>
               </span>
             )}
-            {everifyOnly && (
+            {optAcceptingOnly && (
               <span className="flex items-center gap-1.5 px-3 py-1 bg-brand/10 text-brand-deep rounded-full text-sm border border-brand/20">
-                E-Verify only <button onClick={() => setEverifyOnly(false)} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
+                OPT/STEM OPT accepting <button onClick={() => setOptAcceptingOnly(false)} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
               </span>
             )}
             {h1bOnly && (

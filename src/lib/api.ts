@@ -61,7 +61,13 @@ export interface CompanyProfile {
     avg_wage: number
     top_job_titles: string[]
   } | null
-  opt_support: null
+  opt_support: {
+    supports_opt: boolean | null
+    supports_stem_opt: boolean | null
+    confidence: number
+    reports_count: number
+    contact_emails: string[]
+  } | null
   open_jobs_count: number
   // Enrichment fields
   is_public: boolean | null
@@ -128,6 +134,8 @@ export interface CompanyListItem {
   match_confidence: number
   petition_trend: number[]
   company_size: CompanySize | null
+  opt_accepting: boolean
+  opt_reports_count: number
 }
 
 export interface CompaniesListResponse {
@@ -143,6 +151,7 @@ export const getCompanies = (params: {
   per_page?: number
   everify_only?: boolean
   h1b_only?: boolean
+  opt_accepting_only?: boolean
   sort?: 'petitions' | 'approval_rate' | 'avg_wage' | 'name'
   company_size?: CompanySize
 }) => api.get<CompaniesListResponse>('/api/companies', { params })
@@ -198,7 +207,7 @@ export const updateApplication = (id: string, data: {
 export const deleteApplication = (id: string) =>
   api.delete(`/api/users/me/applications/${id}`)
 
-export const submitOPTReport = (companyId: string, data: { supports_opt: boolean; supports_stem_opt: boolean }) =>
+export const submitOPTReport = (companyId: string, data: { supports_opt: boolean; supports_stem_opt: boolean; contact_email?: string }) =>
   api.post(`/api/companies/${companyId}/opt-report`, data)
 
 // ── Jobs ─────────────────────────────────────────────────────────────────────
